@@ -2,7 +2,7 @@ desc:Spectral Matcher
 
 slider1:30<10,50,10>-bands
 slider2:4<1,10,0.1>-peak bias
-slider3:30<10,200>-smoothing period (ms)
+slider3:50<10,200>-smoothing period (ms)
 
 import ui-lib.jsfx-inc
 
@@ -18,6 +18,8 @@ function allocate(N) local(result) (
   result;
 );
 function allocate_reset() (
+  debug.allocate_reset += 1;
+
   allocated_end = allocated_start;
   model_target = allocate(MODEL_MAX_N);
   model_shortperiod = allocate(MODEL_MAX_N);
@@ -27,13 +29,18 @@ function allocate_reset() (
   correction_poles_i = allocate(CORRECTION_MAX_N);
   correction_zeroes_r = allocate(CORRECTION_MAX_N);
   correction_zeroes_i = allocate(CORRECTION_MAX_N);
+
+  correction_poles_dr = allocate(CORRECTION_MAX_N);
+  correction_poles_di = allocate(CORRECTION_MAX_N);
+  correction_zeroes_dr = allocate(CORRECTION_MAX_N);
+  correction_zeroes_di = allocate(CORRECTION_MAX_N);
   // Each pole/zero has a conjugate counterpart
-  correction_a = allocate(CORRECTION_MAX_N*2);
-  correction_b = allocate(CORRECTION_MAX_N*2);
-  correction_x_l = allocate[CORRECTION_MAX_N*2];
-  correction_y_l = allocate[CORRECTION_MAX_N*2];
-  correction_x_r = allocate[CORRECTION_MAX_N*2];
-  correction_y_r = allocate[CORRECTION_MAX_N*2];
+  correction_a = allocate(CORRECTION_MAX_N*2 + 1);
+  correction_b = allocate(CORRECTION_MAX_N*2 + 1);
+  correction_x_l = allocate(CORRECTION_MAX_N*2 + 1);
+  correction_y_l = allocate(CORRECTION_MAX_N*2 + 1);
+  correction_x_r = allocate(CORRECTION_MAX_N*2 + 1);
+  correction_y_r = allocate(CORRECTION_MAX_N*2 + 1);
 );
 allocate_reset();
 
@@ -112,7 +119,7 @@ function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
 
 function reset_model(N) local(i, freq) (
   model_N = N;
-  model_shortperiod = 0.03;
+  model_shortperiod = 0.05;
   model_longpower = 4;
   i = 0;
   while (i < model_N) (
@@ -145,9 +152,10 @@ function calculate_correction_coefficients() local(i, j, prev0, prev1, prev2, m0
     correction_x_r[i] = 0;
     correction_y_l[i] = 0;
     correction_y_r[i] = 0;
+    i += 1;
   );
   correction_a[0] = 1;
-  correction_b[0] = 1;
+  correction_b[0] = correction_gain;
 
   i = 0;
   // Add poles  
@@ -200,18 +208,20 @@ function reset_correction() local(i, ratio, angle, radius) (
   correction_learning = 0;
   bands_N != model_N ? reset_bands(model_N);
   
-  correction_N = 1;
+  correction_N = 4;
+  correction_gain = 1;
   correction_coeffs_N = correction_N*2 + 1;
   i = 0;
   while (i < correction_N) (
     ratio = (i + 0.5)/correction_N;
-    angle = ratio*ratio*$pi; // Bias towards low frequencies
+    ratio = low_freq*exp(log(high_freq/low_freq)*ratio)*2/srate;
+    angle = ratio*$pi; // Bias towards low frequencies
     // Equally distributed around 0.5 circle
     radius = 0.8;
     correction_poles_r[i] = correction_zeroes_r[i] = cos(angle)*radius;
     correction_poles_i[i] = correction_zeroes_i[i] = sin(angle)*radius;
-    
-    /*
+
+    /*    
     correction_poles_r[i] *= 1 - rand(0.01);
     correction_poles_i[i] *= 1 - rand(0.01);
     correction_zeroes_r[i] *= 1 - rand(0.01);
@@ -219,12 +229,13 @@ function reset_correction() local(i, ratio, angle, radius) (
     */
     i += 1;
   );
-  correction_poles_r[0] *= 0.9;
-  //correction_poles_i[0] *= 0.9;
+  //correction_poles_r[0] *= 1.1;
+  //correction_poles_i[0] *= 1.1;
   calculate_correction_coefficients();
 );
 !correction_N ? reset_correction();
 
+/*
 function correction_amp(freq) local(w0, wr, wi, pr, pi, zr, zi, hr, hi, i, pm2) (
   w0 = freq/srate*2*$pi;
   zr = 0;
@@ -249,13 +260,22 @@ function correction_amp(freq) local(w0, wr, wi, pr, pi, zr, zi, hr, hi, i, pm2) 
 
   sqrt(hr*hr + hi*hi);
 );
+*/
 
-function correction_amp(freq) local(w0, zr, zi, vr, vi, v2, hr, hi, i, tmpr, tmpi) (
+function correction_amp_diff(freq, differentialType, diffReal, diffImag) local(w0, zr, zi, vr, vi, v2, hr, hi, dr, di, i, tmpr, tmpi) (
   w0 = freq/srate*2*$pi;
   zr = cos(w0);
   zi = sin(w0);
-  hr = 1;
+  hr = correction_gain;
   hi = 0;
+  
+  dr = 0;
+  di = 0;
+
+  debug.iir_pole0r = correction_poles_r[0];
+  debug.iir_pole0i = correction_poles_i[0];
+  debug.iir_zero0r = correction_zeroes_r[0];
+  debug.iir_zero0i = correction_zeroes_i[0];
   
   i = 0;
   while (i < correction_N) (
@@ -283,12 +303,144 @@ function correction_amp(freq) local(w0, zr, zi, vr, vi, v2, hr, hi, i, tmpr, tmp
         
     i += 1;
   );
-  sqrt(hr*hr + hi*hi);
+  
+  differentialType ? (
+    vr = (zr*zr - zi*zi) - 2*zr*diffReal + (diffReal*diffReal + diffImag*diffImag);
+    vi = 2*zr*zi - 2*zi*diffReal;
+    v2 = vr*vr + vi*vi;
+    
+    // H(f)/((f - X)(f - X*))   - common element for all differentials
+    tmpr = (hr*vr + hi*vi)/v2;
+    tmpi = (hr*vi - hi*vr)/v2;
+    
+    differentialType == 1 ? (
+      dr = (2*diffReal - 2*zr)*tmpr - (2*zi)*tmpi;
+      di = (2*diffReal - 2*zr)*tmpi + (2*zi)*tmpr;
+    ) : (
+      dr = (2*diffImag)*tmpr;
+      di = (2*diffImag)*tmpi;
+    );
+    
+    tmpr = dr;
+    tmpi = di;
+    
+    dr = 2*tmpr*hr;
+    di = 2*tmpi*hi;
+    (dr + di);
+  ) : (
+    sqrt(hr*hr + hi*hi);
+  );
+);
+
+function correction_amp(freq) (
+  correction_amp_diff(freq, 0, 0, 0);
+);
+
+function correction_amp_dpole_r(freq, pole) (
+  -correction_amp_diff(freq, 1, correction_poles_r[pole], correction_poles_i[pole]);
+);
+function correction_amp_dpole_i(freq, pole) (
+  -correction_amp_diff(freq, 2, correction_poles_r[pole], correction_poles_i[pole]);
+);
+
+function model_adjustment(i) (
+  sqrt(model_target[i]/pow(average2_sum[i]/average2_counter[i], 1/average2_power));
+);
+
+function correction_walk(strength) local(i, j, freq, da, dr, di, s2) (
+  i = 0;
+  
+  sum2 = 0;
+  sum2count = 0;
+  while (i < correction_N) (
+    // Zeroes
+    dr = di = 0;
+    j = 0;
+    while (j < model_N) (
+      freq = low_freq*exp(log(high_freq/low_freq)*(j + rand())/model_N);
+      delta = log(model_adjustment(j)/correction_amp(freq));
+      
+      dr += delta*correction_amp_diff(freq, 1, correction_zeroes_r[i], correction_zeroes_i[i]);
+      di += delta*correction_amp_diff(freq, 2, correction_zeroes_r[i], correction_zeroes_i[i]);
+      j += 1;
+    );
+    correction_zeroes_dr[i] = dr/model_N;
+    correction_zeroes_di[i] = di/model_N;
+    sum2 += correction_zeroes_dr[i]*correction_zeroes_dr[i] + correction_zeroes_di[i]*correction_zeroes_di[i];
+    sum2count += 1;
+
+    // Poles
+    dr = di = 0;
+    j = 0;
+    while (j < model_N) (
+      freq = low_freq*exp(log(high_freq/low_freq)*(j + rand())/model_N);
+      delta = log(model_adjustment(j)/correction_amp(freq));
+      
+      // Differential is the same as the zeroes, just negative
+      dr += delta*-correction_amp_diff(freq, 1, correction_poles_r[i], correction_poles_i[i]);
+      di += delta*-correction_amp_diff(freq, 2, correction_poles_r[i], correction_poles_i[i]);
+      j += 1;
+    );
+    correction_poles_dr[i] = dr/model_N;
+    correction_poles_di[i] = di/model_N;
+    sum2 += correction_zeroes_dr[i]*correction_zeroes_dr[i] + correction_zeroes_di[i]*correction_zeroes_di[i];
+    sum2count += 1;
+    
+    i += 1;
+  );
+
+  // Gain
+  dr = 0;
+  j = 0;
+  while (j < model_N) (
+    freq = low_freq*exp(log(high_freq/low_freq)*(j + 0.5)/model_N);
+    delta = log(model_adjustment(j)/correction_amp(freq));
+    
+    dr += delta/model_N;
+    j += 1;
+  );
+  sum2 += dr*dr;
+  sum2count += 1;
+  
+  sum2 = sqrt(sum2/sum2count);
+  strength *= 1/sum2/(correction_N + 1);
+  
+  // Move
+  correction_gain = max(0.01, correction_gain + strength*dr);
+  i = 0;
+  while (i < correction_N) (
+    correction_poles_r[i] += strength*correction_poles_dr[i];
+    correction_poles_i[i] += strength*correction_poles_di[i];
+    s2 = sqrt(correction_poles_r[i]*correction_poles_r[i] + correction_poles_i[i]*correction_poles_i[i]);
+    s2 >= 0.9 ? (
+      correction_poles_r[i] /= s2;
+      correction_poles_i[i] /= s2;
+    );
+    
+    correction_zeroes_r[i] += strength*correction_zeroes_dr[i];
+    correction_zeroes_i[i] += strength*correction_zeroes_di[i];
+    s2 = sqrt(correction_zeroes_r[i]*correction_zeroes_r[i] + correction_zeroes_i[i]*correction_zeroes_i[i]);
+    s2 >= 0.9 ? (
+      correction_zeroes_r[i] /= s2;
+      correction_zeroes_i[i] /= s2;
+    );
+
+    i += 1;
+  );
+  calculate_correction_coefficients();
 );
 
 @slider
 
+debug.slider += 1;
+
 !bands_N ? reset_bands(model_N);
+
+@block
+
+correction_learning && correction_N ? (
+  correction_walk(0.001);
+);
 
 @sample
 
@@ -360,14 +512,16 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
   ui_color(0, 0, 0);
   ui_fill();
   
+  debug.amp2000 = correction_amp(2000);
+  
   correction_viable ? (
     gi = 0;
     while (gi < bands_N) (
       g_left = ui_left() + (gi/bands_N)*ui_width();
       g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
       
-      g_ratio = model_target[gi]/pow(average2_sum[gi]/average2_counter[gi], 1/average2_power);
-      g_db = log(g_ratio)*10/log(10);
+      g_ratio = model_adjustment(gi);
+      g_db = log(g_ratio)*20/log(10);
       g_y_ratio = max(0, min(1, (20 - g_db)/40));
       g_y = ui_top() + g_y_ratio*ui_height();
       ui_color(255, 0, 0);
@@ -395,6 +549,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
   
       gi += 1;
     );
+    gi = 0;
   );
   
   control_finish_enabled(1);
@@ -514,6 +669,8 @@ ui_screen() == "main" ? (
 ) : ui_system();
 
 @serialize
+
+debug.serialize += 1;
 
 file_var(0, correction_active);
 file_var(0, low_freq);
