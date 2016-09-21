@@ -259,8 +259,9 @@ function update_correction() local(i) (
 function calculate_correction() local(i, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, strength) (
 	i = 0;
 	prev_amp = 1;
-	strength = min(1,  bands_total_energy/0.3);
+	strength = correction_learning ? min(1,  bands_total_energy/0.3) : 1;
 	debug.strength = strength;
+	debug.correction_learning = correction_learning;
 	while (i < model_N) (
 		boundary_freq = low_freq*exp(log(high_freq/low_freq)*i/model_N);
 		debug.i = i;
@@ -295,7 +296,6 @@ function calculate_correction() local(i, boundary_freq, prev_amp, amp, Q, A, w0,
 	);
 );
 calculate_correction();
-
 
 @block
 
@@ -335,7 +335,13 @@ correction_learning && correction_viable ? (
 	update_correction();
 );
 
-model_N && correction_learning ? (
+slider4 != last_sharpness ? (
+	action_recalculate = 1;
+);
+last_sharpness = slider4;
+
+model_N && (correction_learning || action_recalculate) ? (
+	action_recalculate = 0;
 	calculate_correction();
 );
 
@@ -419,7 +425,7 @@ correction_active ? (
 spl0 = max(-hard_limit, min(hard_limit, spl0));
 spl1 = max(-hard_limit, min(hard_limit, spl1));
 
-@gfx 520 380
+@gfx 620 450
 
 function labelled_dial(value, default, low, high, bias, label, displayvalue, displayformat) (
 	ui_push_height(50);
@@ -442,65 +448,143 @@ function labelled_dial(value, default, low, high, bias, label, displayvalue, dis
 	value;
 );
 
+function draw_frequency_grid() local(fi, fmag, freq, xratio) (
+	ui_push();
+		fi = 1;
+		fmag = 10;
+		while (fi*fmag < high_freq) (
+			freq = fi*fmag;
+			freq > low_freq ? (
+				xratio = log(freq/low_freq)/log(high_freq/low_freq);
+				gfx_x = ui_left() + xratio*ui_width();
+				gfx_y = ui_top();
+				ui_colora(255, 255, 255, 0.3);
+				gfx_lineto(gfx_x, ui_bottom());
+				
+				fi == 1 ? (
+					ui_fontsize(10);
+					ui_colora(255, 255, 255, 0.5);
+					gfx_x += ui_texth()*0.5;
+					gfx_y = ui_bottom() - ui_texth()*1.5;
+					fmag >= 1000 ? (
+						gfx_printf("%ikHz", freq/1000);
+					) : (
+						gfx_printf("%iHz", freq);
+					);
+				);
+			);
+			fi += 1;
+			fi >= 10 ? (
+				fi /= 10;
+				fmag *= 10;
+			);
+		);
+	ui_pop();
+);
+
+function correction_db_yratio(db) (
+	max(0, min(1, (20 - db)/40));
+);
+
 function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 	ui_color(0, 0, 0);
 	ui_fill();
+
+	draw_frequency_grid();
+	ui_colora(255, 255, 255, 0.5);
+	g_y = ui_top() + correction_db_yratio(0)*ui_height();
+	gfx_line(ui_left(), g_y, ui_right(), g_y);
+	
+	g_db = 3;
+	while (g_db <= 24) (
+		g_y = ui_top() + correction_db_yratio(g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_y = ui_top() + correction_db_yratio(-g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_db *= 2;
+	);
 	
 	correction_viable ? (
+		ui_hover() ? (
+			ui_color(255, 255, 255);
+			freq = low_freq*exp(log(high_freq/low_freq)*ui_mouse_xratio());
+			gfx_x = ui_left() + ui_texth();
+			gfx_y = ui_top() + ui_texth();
+			gfx_printf("%iHz", freq);
+
+			g_ratio = correction_amp(freq);
+			g_db = log(g_ratio)*20/log(10);
+			gfx_x = ui_left() + ui_width()*2/3;
+			gfx_y = ui_top() + ui_texth();
+			gfx_printf("%0.1fdB", g_db);
+		);
 		gi = 0;
 		while (gi < bands_N) (
+			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/bands_N);
 			g_left = ui_left() + (gi/bands_N)*ui_width();
 			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
 			
 			g_ratio = model_adjustment(gi);
 			g_db = log(g_ratio)*20/log(10);
-			g_y_ratio = max(0, min(1, (20 - g_db)/40));
+			g_y_ratio = correction_db_yratio(g_db);
 			g_y = ui_top() + g_y_ratio*ui_height();
 			ui_color(255, 0, 0);
 			gfx_line(g_left, g_y, g_right, g_y, 1);
+			
+			ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
+				gfx_x = ui_left() + ui_width()/3;
+				gfx_y = ui_top() + ui_texth();
+				gfx_printf("%0.1fdB", g_db);
+			);
 	
 			gi += 1;
 		);
 
-		gi = 0;
-		while (gi < ui_width()) (
-			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
-			g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
-			g_y = ui_top() + g_y_ratio*ui_height();
-			ui_colora(192, 128, 64, 0.5);
-			
-			g_x = ui_left() + gi;
-			gi > 0 ? (
-				gfx_lineto(g_x, g_y);
-			) : (
-				gfx_x = g_x;
-				gfx_y = g_y;
-			);
-	
-			gi += 1;
-		);
-		gi = 0;
+		correction_active ? (
+			gi = 0;
+			while (gi < ui_width()) (
+				freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+				g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
+				g_y = ui_top() + g_y_ratio*ui_height();
+				ui_colora(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
+				
+				g_x = ui_left() + gi;
+				gi > 0 ? (
+					gfx_lineto(g_x, g_y);
+				) : (
+					gfx_x = g_x;
+					gfx_y = g_y;
+				);
 		
-		gi = 0;
-		while (gi < ui_width()) (
-			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
-			g_ratio = correction_amp(freq);
-			g_db = log(g_ratio)*20/log(10);
-			g_y_ratio = max(0, min(1, (20 - g_db)/40));
-			g_y = ui_top() + g_y_ratio*ui_height();
-			ui_color(192, 192, 192);
-			
-			g_x = ui_left() + gi;
-			gi > 0 ? (
-				gfx_lineto(g_x, g_y);
-			) : (
-				gfx_x = g_x;
-				gfx_y = g_y;
+				gi += 1;
 			);
-	
-			gi += 1;
+			gi = 0;
+			
+			gi = 0;
+			while (gi < ui_width()) (
+				freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+				g_ratio = correction_amp(freq);
+				g_db = log(g_ratio)*20/log(10);
+				g_y_ratio = correction_db_yratio(g_db);
+				g_y = ui_top() + g_y_ratio*ui_height();
+				ui_color(192, 192, 192);
+				
+				g_x = ui_left() + gi;
+				gi > 0 ? (
+					gfx_lineto(g_x, g_y);
+				) : (
+					gfx_x = g_x;
+					gfx_y = g_y;
+				);
+		
+				gi += 1;
+			);
+			gi = 0;
 		);
-		gi = 0;
 		
 		!correction_learning && correction_active ? (
 			gi = 0;
@@ -510,7 +594,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 				
 				g_ratio = correction_amp[gi];
 				g_db = log(g_ratio)*20/log(10);
-				g_y_ratio = max(0, min(1, (20 - g_db)/40));
+				g_y_ratio = correction_db_yratio(g_db);
 				g_y = ui_top() + g_y_ratio*ui_height();
 				ui_color(64, 192, 256);
 				gfx_line(g_left, g_y, g_right, g_y, 1);
@@ -523,9 +607,26 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 	control_finish_enabled(1);
 );
 
+function averages_db_yratio(db) (
+	max(0, min(1, (15 - db)/60));
+);
+
 function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g_y_ratio, g_y) (
 	ui_color(0, 0, 0);
 	ui_fill();
+
+	draw_frequency_grid();
+	
+	g_db = 15;
+	while (g_db > -60) (
+		g_y = ui_top() + averages_db_yratio(g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+		
+		gfx_x = ui_left() + ui_texth()*0.5;
+
+		g_db -= 6;
+	);
 	
 	gi = 0;
 	while (gi < bands_N) (
@@ -534,14 +635,14 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 		
 		g_avg = bands_N*average1_value[gi];
 		g_avg_db = log(g_avg)*10/log(10);
-		g_y_ratio = max(0, min(1, (15 - g_avg_db)/60));
+		g_y_ratio = averages_db_yratio(g_avg_db);
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(0, 255, 0);
 		gfx_line(g_left, g_y, g_right, g_y, 1);
 
 		g_avg = bands_N*pow(average2_sum[gi]/average2_counter[gi], 1/average2_power);
 		g_avg_db = log(g_avg)*10/log(10);
-		g_y_ratio = max(0, min(1, (15 - g_avg_db)/60));
+		g_y_ratio = averages_db_yratio(g_avg_db);
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(192, 192, 0);
 		gfx_line(g_left, g_y, g_right, g_y, 1);
@@ -554,9 +655,9 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 		g_left = ui_left() + (gi/model_N)*ui_width();
 		g_right = ui_left() + ((gi + 1)/model_N)*ui_width();
 
-		g_avg = model_N*model_target[gi];
+		g_avg = bands_N*model_target[gi];
 		g_avg_db = log(g_avg)*10/log(10);
-		g_y_ratio = max(0, min(1, (15 - g_avg_db)/60));
+		g_y_ratio = averages_db_yratio(g_avg_db);
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(64, 192, 256);
 		gfx_line(g_left, g_y, g_right, g_y, 1);
@@ -687,3 +788,4 @@ model_N != bands_N ? (
 );
 
 calculate_correction();
+
