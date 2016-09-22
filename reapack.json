@@ -1,0 +1,58 @@
+{
+	"name": "Geraint's JSFX",
+	"packages": {
+		"Bad Connection": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Bad Connection.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"links": {
+				"screenshot": "Bad Connection.png"
+			}
+		},
+		"Dual Distortion": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Dual Distortion.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"links": {
+				"screenshot": "Dual Distortion.png"
+			}
+		},
+		"Spectrum Matcher": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Spectrum Matcher.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"links": {
+				"screenshot": [
+					"Spectrum Matcher 1.png",
+					"Spectrum Matcher 2.png"
+				]
+			}
+		}
+	},
+	"url": "https://geraintluff.github.io/jsfx/",
+	"links": {
+		"website": "https://geraintluff.github.io/jsfx/"
+	},
+	"readme": "README.md"
+}

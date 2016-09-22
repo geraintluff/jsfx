@@ -1,4 +1,4 @@
-desc: Dual Distortion (Geraint Luff)
+desc: Dual Distortion
 
 slider1:-24<-60,12,0.1>-upper threshhold (dB)
 slider2:2<1,10,0.01>-upper ratio

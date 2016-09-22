@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<index version="1" name="Geraint&apos;s JSFX">
+	<category name="Misc">
+		<reapack name="Bad Connection" type="effect">
+			<metadata>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/Bad%20Connection.png</link>
+			</metadata>
+		</reapack>
+		<reapack name="Dual Distortion" type="effect">
+			<metadata>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/Dual%20Distortion.png</link>
+			</metadata>
+		</reapack>
+		<reapack name="Spectrum Matcher" type="effect">
+			<metadata>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%201.png</link>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png</link>
+			</metadata>
+		</reapack>
+	</category>
+	<metadata>
+		<description>{\rtf1\ansi\fs24{\fs48\b Geraint&apos;s JSFX repository\b}\line\line This is a collection of audio effects I have written in REAPER&apos;s JSFX language.\line\line {\par \bullet\tab Bad Connection - flips between two volumes to simulate poor connection or dropouts\line \bullet\tab Dual Distortion - simple distortion with asymmetric parameters\line \bullet\tab Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ\line }\lineThere are also some presets (RPL) available for Bad Connection &lt;Bad Connection.rpl&gt; and Spectrum Matcher &lt;Spectrum Matcher.rpl&gt;.\line\line These effects are available on ReaPack &lt;https://reapack.com/&gt; - add the repository: https://geraintluff.github.io/jsfx/index.xml\line\line }</description>
+		<link rel="website">https://geraintluff.github.io/jsfx/</link>
+	</metadata>
+</index>

@@ -1,4 +1,4 @@
-desc:Spectral Matcher (Geraint Luff)
+desc:Spectrum Matcher
 
 slider1:30<10,50,10>-bands
 slider2:4<1,10,0.1>-peak bias
