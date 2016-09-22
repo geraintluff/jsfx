@@ -11,8 +11,8 @@
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Bad%20Connection.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:01.400Z">
-				<source file="Bad Connection.jsfx">https://geraintluff.github.io/jsfx/Bad%20Connection.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/ui-lib.jsfx-inc</source>
+				<source file="Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.0/Bad%20Connection.jsfx</source>
+				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.0/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Dual Distortion" type="effect">
@@ -20,8 +20,8 @@
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Dual%20Distortion.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:05.876Z">
-				<source file="Dual Distortion.jsfx">https://geraintluff.github.io/jsfx/Dual%20Distortion.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/ui-lib.jsfx-inc</source>
+				<source file="Dual Distortion.jsfx">https://geraintluff.github.io/jsfx/releases/Dual-Distortion/1.0.0/Dual%20Distortion.jsfx</source>
+				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Dual-Distortion/1.0.0/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -32,8 +32,8 @@
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:10.452Z">
-				<source file="Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/Spectrum%20Matcher.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/ui-lib.jsfx-inc</source>
+				<source file="Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.0/Spectrum%20Matcher.jsfx</source>
+				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.0/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
