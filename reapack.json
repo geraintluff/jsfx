@@ -3,7 +3,7 @@
 	"packages": {
 		"Bad Connection": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Distortion",
 			"files": {
 				"Bad Connection.jsfx": {
 					"main": false
@@ -21,7 +21,7 @@
 		"Dual Distortion": {
 			"type": "effect",
 			"author": "Geraint Luff",
-			"category": "Misc",
+			"category": "Distortion",
 			"files": {
 				"Dual Distortion.jsfx": {
 					"main": false
@@ -38,7 +38,7 @@
 		"Spectrum Matcher": {
 			"type": "effect",
 			"author": "Geraint Luff",
-			"category": "Misc",
+			"category": "Utility",
 			"files": {
 				"Spectrum Matcher.jsfx": {
 					"main": false
