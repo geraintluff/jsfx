@@ -1,0 +1,22 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Misc",
+	"files": {
+		"Spectrum Matcher.jsfx": {
+			"main": false
+		},
+		"ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": [
+			"Spectrum Matcher 1.png",
+			"Spectrum Matcher 2.png"
+		]
+	},
+	"version": "1.0.0",
+	"package": "Spectrum Matcher",
+	"time": "2016-09-22T14:07:10.452Z"
+}

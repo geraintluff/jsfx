@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Misc",
+	"files": {
+		"Dual Distortion.jsfx": {
+			"main": false
+		},
+		"ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "Dual Distortion.png"
+	},
+	"version": "1.0.0",
+	"package": "Dual Distortion",
+	"time": "2016-09-22T14:07:05.876Z"
+}

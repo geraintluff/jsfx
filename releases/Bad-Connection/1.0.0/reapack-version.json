@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Bad Connection.jsfx": {
+			"main": false
+		},
+		"ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"author": "Geraint Luff",
+	"links": {
+		"screenshot": "Bad Connection.png"
+	},
+	"version": "1.0.0",
+	"package": "Bad Connection",
+	"time": "2016-09-22T14:07:01.400Z"
+}

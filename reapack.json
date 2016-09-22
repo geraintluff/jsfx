@@ -12,12 +12,15 @@
 					"main": false
 				}
 			},
+			"author": "Geraint Luff",
 			"links": {
 				"screenshot": "Bad Connection.png"
-			}
+			},
+			"version": "1.0.0"
 		},
 		"Dual Distortion": {
 			"type": "effect",
+			"author": "Geraint Luff",
 			"category": "Misc",
 			"files": {
 				"Dual Distortion.jsfx": {
@@ -29,10 +32,12 @@
 			},
 			"links": {
 				"screenshot": "Dual Distortion.png"
-			}
+			},
+			"version": "1.0.0"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
+			"author": "Geraint Luff",
 			"category": "Misc",
 			"files": {
 				"Spectrum Matcher.jsfx": {
@@ -47,7 +52,8 @@
 					"Spectrum Matcher 1.png",
 					"Spectrum Matcher 2.png"
 				]
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx/",
