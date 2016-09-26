@@ -1,0 +1,100 @@
+desc:Bad Connection
+
+slider1:8<0,50,0.1>-Changes per second
+slider2:0.6<0.0,1,0.01>-Bias (off - on)
+slider3:5<0,20,0.1>-Transition speed (ms)
+slider4:-15<-60,0,0.5>-"Off" level (dB)
+slider5:0<-12,12,0.2>-Gain (dB)
+
+// v1.0.0 or higher
+import ui-lib.jsfx-inc
+
+@init
+blocked = (rand(1) < 0.5);
+multiplier = 0.5;
+
+ui_setup(0);
+
+function calculate_params() (
+  totalprob = slider1/srate;
+  
+  slider2 < 1 ? (
+      slider2 > 0 ? (
+          r = slider2/(1 - slider2);
+          onprob = totalprob*(1 + r)/2;
+          offprob = totalprob*(1 + r)/(2*r);
+      ) : (
+          onprob = totalprob/2;
+          offprob = 1;
+      );
+  ) : (
+      onprob = 1;
+      offprob = totalprob/2;
+  );
+  
+  holdfactor = 0.5^(1000/srate/slider3);
+  driftfactor = 1 - holdfactor;
+  offlevel = (10^(slider4/20));
+  onlevel = 1 - offlevel;
+  gain = 10^(slider5/20);
+);
+
+@slider
+
+calculate_params();
+
+@sample
+
+blocked ? (
+    multiplier = holdfactor*multiplier;
+    rand(1) < onprob ? blocked = 0;
+) : (
+    multiplier = holdfactor*multiplier + driftfactor;
+    rand(1) < offprob ? blocked = 1;
+);
+
+spl0 = gain*spl0*(onlevel*multiplier + offlevel);
+spl1 = gain*
+spl1*(onlevel*multiplier + offlevel);
+
+(rand(1) < prob) ? (blocked  = 1 - blocked);
+
+@gfx 400 250
+
+function labelled_slider(value, low, high, bias, label, display) (
+  ui_split_right(50);
+    ui_align(0, 0.5);
+    ui_padleft();
+    ui_textnumber(value, display);
+  ui_pop();
+  ui_split_left(150);
+    ui_align(1, 0.5);
+    ui_padright();
+    ui_text(label);
+  ui_pop();
+    
+  ui_push_heighttext(label);
+    value = control_hslider(value, low, high, bias);
+  ui_pop();
+  value;
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+  control_navbar("Bad Connection", -1, -1);
+
+  ui_split_topratio(1/5);
+    slider1 = labelled_slider(slider1, 0, 50, 3, "changes/second", "%i");
+  ui_split_next();
+    slider2 = labelled_slider(slider2*100, 0, 100, 0, "ratio (off/on)", "%i%%")/100;
+  ui_split_next();
+    slider3 = labelled_slider(slider3, 0, 200, 5, "transition", "%ims");
+  ui_split_next();
+    slider4 = labelled_slider(slider4, -60, 0, -2, "\"off\" level", "%idB");
+  ui_split_next();
+    slider5 = labelled_slider(slider5, -20, 20, 0, "gain", "%idB");
+  ui_pop();
+) : ui_system();
+
+calculate_params();

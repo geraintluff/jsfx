@@ -8,32 +8,44 @@
 	<category name="Distortion">
 		<reapack name="Bad Connection" type="effect">
 			<metadata>
-				<link rel="screenshot">https://geraintluff.github.io/jsfx/Bad%20Connection.png</link>
+				<link rel="screenshot">Spectrum Matcher/Bad%20Connection.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:01.400Z">
-				<source file="Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.0/Bad%20Connection.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.0/ui-lib.jsfx-inc</source>
+				<source file="Bad Connection.jsfx">Spectrum Matcher/releases/Bad-Connection/1.0.0/Bad%20Connection.jsfx</source>
+				<source file="ui-lib.jsfx-inc">Spectrum Matcher/releases/Bad-Connection/1.0.0/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2016-09-26T11:39:02.656Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">Spectrum Matcher/releases/Bad-Connection/1.0.1/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">Spectrum Matcher/releases/Bad-Connection/1.0.1/Bad-Connection/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Dual Distortion" type="effect">
 			<metadata>
-				<link rel="screenshot">https://geraintluff.github.io/jsfx/Dual%20Distortion.png</link>
+				<link rel="screenshot">Spectrum Matcher/Dual%20Distortion.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:05.876Z">
-				<source file="Dual Distortion.jsfx">https://geraintluff.github.io/jsfx/releases/Dual-Distortion/1.0.0/Dual%20Distortion.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Dual-Distortion/1.0.0/ui-lib.jsfx-inc</source>
+				<source file="Dual Distortion.jsfx">Spectrum Matcher/releases/Dual-Distortion/1.0.0/Dual%20Distortion.jsfx</source>
+				<source file="ui-lib.jsfx-inc">Spectrum Matcher/releases/Dual-Distortion/1.0.0/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2016-09-26T11:39:02.843Z">
+				<source file="Dual-Distortion/Dual Distortion.jsfx">Spectrum Matcher/releases/Dual-Distortion/1.0.1/Dual-Distortion/Dual%20Distortion.jsfx</source>
+				<source file="Dual-Distortion/ui-lib.jsfx-inc">Spectrum Matcher/releases/Dual-Distortion/1.0.1/Dual-Distortion/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
 	<category name="Utility">
 		<reapack name="Spectrum Matcher" type="effect">
 			<metadata>
-				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%201.png</link>
-				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png</link>
+				<link rel="screenshot">Spectrum Matcher/Spectrum%20Matcher%201.png</link>
+				<link rel="screenshot">Spectrum Matcher/Spectrum%20Matcher%202.png</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:10.452Z">
-				<source file="Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.0/Spectrum%20Matcher.jsfx</source>
-				<source file="ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.0/ui-lib.jsfx-inc</source>
+				<source file="Spectrum Matcher.jsfx">Spectrum Matcher/releases/Spectrum-Matcher/1.0.0/Spectrum%20Matcher.jsfx</source>
+				<source file="ui-lib.jsfx-inc">Spectrum Matcher/releases/Spectrum-Matcher/1.0.0/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2016-09-26T11:39:03.021Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">Spectrum Matcher/releases/Spectrum-Matcher/1.0.1/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">Spectrum Matcher/releases/Spectrum-Matcher/1.0.1/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>

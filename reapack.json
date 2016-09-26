@@ -1,5 +1,6 @@
 {
 	"name": "Geraint's JSFX",
+	"git": true,
 	"packages": {
 		"Bad Connection": {
 			"type": "effect",
@@ -16,7 +17,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Dual Distortion": {
 			"type": "effect",
@@ -33,7 +34,7 @@
 			"links": {
 				"screenshot": "Dual Distortion.png"
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -53,10 +54,10 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		}
 	},
-	"url": "https://geraintluff.github.io/jsfx/",
+	"url": "Spectrum Matcher",
 	"links": {
 		"website": "https://geraintluff.github.io/jsfx/"
 	},
