@@ -22,6 +22,12 @@ Dual Distortion is a simple clipping/distortion effect where you control the pos
 
 ![screenshot](Dual Distortion.png)
 
+## Spring-Box
+
+Spring-Box is a simple echo effect made from 4 delay lines feeding back into each other. It can be used with shorter delays to create metallic reverbs, or with slightly longer delays to get complex echo patterns.  ([audio demo](audio-demos/spring-box.mp3))
+
+![screenshot](Spring Box.png)
+
 ## Spectrum Matcher
 
 Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.
