@@ -1,0 +1,124 @@
+desc:Spring-Box Delay
+
+slider1:20<1,100,0.01>-plate size
+slider2:50<0,99,1>-feedback (%)
+slider3:75<0,100,1>-wet (%)
+slider4:100<0,100,1>-dry (%)
+
+import ui-lib.jsfx-inc
+
+@init
+
+buffersize = 65536;
+
+delaybuffer1 = 0;
+delaybuffer2 = delaybuffer1 + buffersize;
+delaybuffer3 = delaybuffer2 + buffersize;
+delaybuffer4 = delaybuffer3 + buffersize;
+freemem = delaybuffer4 + buffersize;
+
+freemem_end = ui_setup(freemem);
+
+writepos = 0;
+
+function update_delays() local(scale, delay1, delay2, delay3, delay4) (
+  scale = slider1/1000;
+  delay1 = scale*1;
+  delay2 = scale*exp(0.5);
+  delay3 = scale*exp(1);
+  delay4 = scale*exp(1.5);
+
+  delaysamples1 = min(buffersize - 1, floor(delay1*srate));
+  delaysamples2 = min(buffersize - 1, floor(delay2*srate));
+  delaysamples3 = min(buffersize - 1, floor(delay3*srate));
+  delaysamples4 = min(buffersize - 1, floor(delay4*srate));
+);
+
+// Matrix:
+/*
+ 0  a  b  c
+-a  0 -c  b
+ b -c  0  a
+ c  b -a  0
+*/
+matA = 1;
+matB = 2;
+matC = -3;
+matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
+matA *= matScaling;
+matB *= matScaling;
+matC *= matScaling;
+
+@slider
+
+update_delays();
+
+@block
+
+update_delays();
+
+@sample
+
+readpos1 = writepos - delaysamples1;
+readpos1 < 0 ? (readpos1 += buffersize);
+value1 = delaybuffer1[readpos1];
+
+readpos2 = writepos - delaysamples2;
+readpos2 < 0 ? (readpos2 += buffersize);
+value2 = delaybuffer2[readpos2];
+
+readpos3 = writepos - delaysamples3;
+readpos3 < 0 ? (readpos3 += buffersize);
+value3 = delaybuffer3[readpos3];
+
+readpos4 = writepos - delaysamples4;
+readpos4 < 0 ? (readpos4 += buffersize);
+value4 = delaybuffer4[readpos4];
+
+scaling = slider2/100;
+wetAmount = slider3/100;
+dryAmount = slider4/100;
+
+delaybuffer1[writepos] = (0*value1 + matA*value2 + matB*value3 + matC*value4)*scaling + spl0*0.5;
+delaybuffer2[writepos] = (-matA*value1 + 0*value2 - matC*value3 + matB*value4)*scaling + spl1*0.5;
+delaybuffer3[writepos] = (matB*value1 - matC*value2 + 0*value3 + matA*value4)*scaling + spl0*0.5;
+delaybuffer4[writepos] = (matC*value1 + matB*value2 - matA*value3 + 0*value4)*scaling + spl1*0.5;
+spl0 = (value1*0.75 + value3*0.25)*wetAmount + dryAmount*spl0;
+spl1 = (value2*0.75 + value4*0.25)*wetAmount + dryAmount*spl1;
+
+writepos += 1;
+writepos >= buffersize ? (
+  writepos -= buffersize;
+);
+
+@gfx 450 300
+
+function labelled_slider(value, low, high, bias, label, number_format) (
+    ui_split_toptext(-1);
+      ui_text(label);
+    ui_pop();
+    ui_split_bottomtext(-1);
+      number_format >= 0 ? (
+        ui_textnumber(value, number_format);
+      );
+    ui_pop();
+    ui_push_width(50);    
+      value = control_vslider(value, low, high, bias);
+    ui_pop();
+    value;
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+  control_navbar("Spring-Box Delay", -1, -1);
+  ui_split_leftratio(1/4);
+    slider1 = labelled_slider(slider1, 1, 100, 2, "delay", "%ims");
+  ui_split_next();
+    slider2 = labelled_slider(slider2, 0, 99, 0, "feedback", "%i%%");
+  ui_split_next();
+    slider3 = labelled_slider(slider3, 1, 100, 0, "wet", "%i%%");
+  ui_split_next();
+    slider4 = labelled_slider(slider4, 1, 100, 0, "dry", "%i%%");
+  ui_pop();
+) : control_system();

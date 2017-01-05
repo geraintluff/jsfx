@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"category": "Distortion",
+	"files": {
+		"Bad-Connection/Bad Connection.jsfx": {
+			"main": false
+		},
+		"Bad-Connection/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"author": "Geraint Luff",
+	"links": {
+		"screenshot": "Bad Connection.png"
+	},
+	"version": "1.0.2",
+	"package": "Bad Connection",
+	"time": "2017-01-05T16:01:36.911Z"
+}

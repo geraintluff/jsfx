@@ -17,7 +17,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Dual Distortion": {
 			"type": "effect",
@@ -34,7 +34,7 @@
 			"links": {
 				"screenshot": "Dual Distortion.png"
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -54,7 +54,23 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
+		},
+		"Spring-Box": {
+			"type": "effect",
+			"category": "Delay",
+			"files": {
+				"Spring-Box.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"links": {
+				"screenshot": "Spring-Box.png"
+			},
+			"version": "1.0.2"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
