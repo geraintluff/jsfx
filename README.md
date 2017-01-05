@@ -12,13 +12,22 @@ There are also some presets (RPL) available for [Bad Connection](Bad Connection.
 
 ## Bad Connection
 
+Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate [dodgy radios](audio-demos/Bad Connection/radio-dropout.mp3) or [glitchy CPU overloads](audio-demos/Bad Connection/cpu-overload.mp3).
+
 ![screenshot](Bad Connection.png)
 
 ## Dual Distortion
+
+Dual Distortion is a simple clipping/distortion effect where you control the positive and negative sides independently.
 
 ![screenshot](Dual Distortion.png)
 
 ## Spectrum Matcher
 
+Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.
+
 ![screenshot](Spectrum Matcher 1.png)
+
+It can learn new models from the incoming audio, and save this as a preset for later use:
+
 ![screenshot](Spectrum Matcher 2.png)
