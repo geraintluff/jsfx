@@ -1,5 +1,10 @@
 desc:Spring-Box Delay (by Geraint Luff)
 
+in_pin:Ch1
+in_pin:Ch2
+out_pin:Ch1
+out_pin:Ch2
+
 slider1:50<1,1000,1>-density (ms)
 slider2:60<0,99,1>-feedback
 slider3:80<0,95,1>-late-bias (%)
