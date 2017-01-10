@@ -24,7 +24,7 @@ Dual Distortion is a simple clipping/distortion effect where you control the pos
 
 ## Spring-Box
 
-Spring-Box is a simple echo effect made from 4 delay lines feeding back into each other. It can be used with shorter delays to create metallic reverbs, or with slightly longer delays to get complex echo patterns.  ([audio demo](audio-demos/spring-box.mp3))
+Spring-Box is an echo effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  ([audio demo](audio-demos/spring-box.mp3))
 
 ![screenshot](Spring-Box.png)
 

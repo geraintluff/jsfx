@@ -1,95 +1,156 @@
-desc:Spring-Box Delay
+desc:Spring-Box Delay (by Geraint Luff)
 
-slider1:20<1,100,0.01>-plate size
-slider2:50<0,99,1>-feedback (%)
-slider3:75<0,100,1>-wet (%)
-slider4:100<0,100,1>-dry (%)
+slider1:50<1,1000,1>-density (ms)
+slider2:60<0,99,1>-feedback
+slider3:80<0,95,1>-late-bias (%)
+slider4:50<0,100,1>-wet (%)
+slider5:100<0,100,1>-dry (%)
 
 import ui-lib.jsfx-inc
 
 @init
 
-buffersize = 65536;
-
-delaybuffer1 = 0;
-delaybuffer2 = delaybuffer1 + buffersize;
-delaybuffer3 = delaybuffer2 + buffersize;
-delaybuffer4 = delaybuffer3 + buffersize;
-freemem = delaybuffer4 + buffersize;
-
-freemem_end = ui_setup(freemem);
-
-writepos = 0;
-
-function update_delays() local(scale, delay1, delay2, delay3, delay4) (
-  scale = slider1/1000;
-  delay1 = scale*1;
-  delay2 = scale*exp(0.5);
-  delay3 = scale*exp(1);
-  delay4 = scale*exp(1.5);
-
-  delaysamples1 = min(buffersize - 1, floor(delay1*srate));
-  delaysamples2 = min(buffersize - 1, floor(delay2*srate));
-  delaysamples3 = min(buffersize - 1, floor(delay3*srate));
-  delaysamples4 = min(buffersize - 1, floor(delay4*srate));
+freemem = ui_setup(0);
+function alloc(N) local(result, i) (
+  result = freemem;
+  i = 0;
+  while (i < N) (
+    result[i] = 0;
+  );
+  freemem += N;
+  result;
 );
 
-// Matrix:
-/*
- 0  a  b  c
--a  0 -c  b
- b -c  0  a
- c  b -a  0
-*/
-matA = 1;
-matB = 2;
-matC = -3;
-matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
-matA *= matScaling;
-matB *= matScaling;
-matC *= matScaling;
+buffersize = srate;
+buffer1a = alloc(buffersize);
+buffer1b = alloc(buffersize);
+buffer2a = alloc(buffersize);
+buffer2b = alloc(buffersize);
+buffer3a = alloc(buffersize);
+buffer3b = alloc(buffersize);
+buffer4a = alloc(buffersize);
+buffer4b = alloc(buffersize);
+
+writepos = 0;
+delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
+
+delayfactor1 = exp(0.3);
+delayfactor2 = exp(0.1);
+delayfactor3 = exp(-0.1);
+delayfactor4 = exp(-0.3);
+
+function update() local(delay) (
+  delay = slider1*srate/1000;
+  delaysamples1 = floor(delay*delayfactor1);
+  delaysamples2 = floor(delay*delayfactor2);
+  delaysamples3 = floor(delay*delayfactor3);
+  delaysamples4 = floor(delay*delayfactor4);
+
+  feedbackA = slider2/100;
+  feedbackRatio = slider3/100;
+  feedbackB = feedbackA*feedbackRatio;
+  dry = slider5/100;
+  wet = slider4/100;
+  // Feedback-racing compensation
+  amp = (1 - feedbackA*feedbackRatio)/(1 - feedbackRatio);
+  
+  ampB = amp*min(1, feedbackRatio*1.1);
+);
+
+coeff_a = 1;
+coeff_b = exp(0);
+coeff_c = -coeff_a;
+coeff_d = 1/coeff_b;
+
+coeff_scale = sqrt(coeff_a*coeff_a + coeff_b*coeff_b + coeff_c*coeff_c + coeff_d*coeff_d);
+coeff_a /= coeff_scale;
+coeff_b /= coeff_scale;
+coeff_c /= coeff_scale;
+coeff_d /= coeff_scale;
+
+mat11 = coeff_a;
+mat12 = coeff_b;
+mat13 = coeff_c;
+mat14 = coeff_d;
+mat21 = -coeff_d;
+mat22 = -coeff_a;
+mat23 = -coeff_b;
+mat24 = -coeff_c;
+mat31 = -coeff_c;
+mat32 = -coeff_d;
+mat33 = -coeff_a;
+mat34 = -coeff_b;
+mat41 = coeff_b;
+mat42 = coeff_c;
+mat43 = coeff_d;
+mat44 = coeff_a;
+
+0 ? (
+  matA = 1;
+  matB = 1;
+  matC = -1;
+  matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
+  matA *= matScaling;
+  matB *= matScaling;
+  matC *= matScaling;
+  
+  mat11 = 0; mat12 = matA; mat13 = matB; mat14 = matC;
+  mat21 = -matA; mat22 = 0; mat23 = -matC; mat24 = matB;
+  mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
+  mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
+);
 
 @slider
 
-update_delays();
+update();
 
 @block
 
-update_delays();
-
 @sample
 
-readpos1 = writepos - delaysamples1;
-readpos1 < 0 ? (readpos1 += buffersize);
-value1 = delaybuffer1[readpos1];
+readpos = writepos - delaysamples1;
+readpos < 0 ? readpos += buffersize;
+echo1a = buffer1a[readpos];
+echo1b = buffer1b[readpos];
 
-readpos2 = writepos - delaysamples2;
-readpos2 < 0 ? (readpos2 += buffersize);
-value2 = delaybuffer2[readpos2];
+readpos = writepos - delaysamples2;
+readpos < 0 ? readpos += buffersize;
+echo2a = buffer2a[readpos];
+echo2b = buffer2b[readpos];
 
-readpos3 = writepos - delaysamples3;
-readpos3 < 0 ? (readpos3 += buffersize);
-value3 = delaybuffer3[readpos3];
+readpos = writepos - delaysamples3;
+readpos < 0 ? readpos += buffersize;
+echo3a = buffer3a[readpos];
+echo3b = buffer3b[readpos];
 
-readpos4 = writepos - delaysamples4;
-readpos4 < 0 ? (readpos4 += buffersize);
-value4 = delaybuffer4[readpos4];
+readpos = writepos - delaysamples4;
+readpos < 0 ? readpos += buffersize;
+echo4a = buffer4a[readpos];
+echo4b = buffer4b[readpos];
 
-scaling = slider2/100;
-wetAmount = slider3/100;
-dryAmount = slider4/100;
+y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
+y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
+y2a = echo1a*mat21 + echo2a*mat22 + echo3a*mat23 + echo4a*mat24;
+y2b = echo1b*mat21 + echo2b*mat22 + echo3b*mat23 + echo4b*mat24;
+y3a = echo1a*mat31 + echo2a*mat32 + echo3a*mat33 + echo4a*mat34;
+y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
+y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
+y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
 
-delaybuffer1[writepos] = (0*value1 + matA*value2 + matB*value3 + matC*value4)*scaling + spl0*0.5;
-delaybuffer2[writepos] = (-matA*value1 + 0*value2 - matC*value3 + matB*value4)*scaling + spl1*0.5;
-delaybuffer3[writepos] = (matB*value1 - matC*value2 + 0*value3 + matA*value4)*scaling + spl0*0.5;
-delaybuffer4[writepos] = (matC*value1 + matB*value2 - matA*value3 + 0*value4)*scaling + spl1*0.5;
-spl0 = (value1*0.75 + value3*0.25)*wetAmount + dryAmount*spl0;
-spl1 = (value2*0.75 + value4*0.25)*wetAmount + dryAmount*spl1;
+buffer1a[writepos] = y1a*feedbackA + spl0*amp;
+buffer1b[writepos] = y1b*feedbackB + spl0*ampB;
+buffer2a[writepos] = y2a*feedbackA + spl1*amp;
+buffer2b[writepos] = y2b*feedbackB + spl1*ampB;
+buffer3a[writepos] = y3a*feedbackA;
+buffer3b[writepos] = y3b*feedbackB;
+buffer4a[writepos] = y4a*feedbackA;
+buffer4b[writepos] = y4b*feedbackB;
+
+spl0 = spl0*dry + (y3a - y3b)*wet;
+spl1 = spl1*dry + (y4a - y4b)*wet;
 
 writepos += 1;
-writepos >= buffersize ? (
-  writepos -= buffersize;
-);
+writepos >= buffersize ? writepos = 0;
 
 @gfx 450 300
 
@@ -112,13 +173,17 @@ ui_start("main");
 
 ui_screen() == "main" ? (
   control_navbar("Spring-Box Delay", -1, -1);
-  ui_split_leftratio(1/4);
-    slider1 = labelled_slider(slider1, 1, 100, 2, "delay", "%ims");
+  ui_split_leftratio(1/5);
+    slider1 = labelled_slider(slider1, 1, 1000, 4, "density", "%ims");
   ui_split_next();
-    slider2 = labelled_slider(slider2, 0, 99, 0, "feedback", "%i%%");
+    slider2 = labelled_slider(slider2, 0, 99, -1, "feedback", "%i%%");
   ui_split_next();
-    slider3 = labelled_slider(slider3, 1, 100, 0, "wet", "%i%%");
+    slider3 = labelled_slider(slider3, 1, 95, 0, "late-bias", "%i%%");
   ui_split_next();
-    slider4 = labelled_slider(slider4, 1, 100, 0, "dry", "%i%%");
+    slider4 = labelled_slider(slider4, 1, 100, 0, "wet", "%i%%");
+  ui_split_next();
+    slider5 = labelled_slider(slider5, 1, 100, 0, "dry", "%i%%");
   ui_pop();
 ) : control_system();
+
+mouse_cap ? update();
