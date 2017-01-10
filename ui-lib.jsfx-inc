@@ -830,7 +830,7 @@ function ui_push_rightof(width) local(newwidth) (
 	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	ui_push();
 	newwidth = (uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] - width)*(1 - uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/]);
-	uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] = uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] - newwidth;
+	uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] = uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] + uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] - newwidth;
 	uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] = newwidth;
 	newwidth;
 );

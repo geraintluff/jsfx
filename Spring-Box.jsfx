@@ -11,6 +11,7 @@ slider3:80<0,95,1>-late-bias (%)
 slider4:50<0,100,1>-wet (%)
 slider5:100<0,100,1>-dry (%)
 slider6:0<0,1,1{even,long}>-room shape
+slider7:8000<100,20000,1>-prefilter (lowpass Hz)
 
 import ui-lib.jsfx-inc
 
@@ -36,6 +37,11 @@ buffer3a = alloc(buffersize);
 buffer3b = alloc(buffersize);
 buffer4a = alloc(buffersize);
 buffer4b = alloc(buffersize);
+
+filterLx1 = filterLx2 = 0;
+filterRx1 = filterRx2 = 0;
+filterLy1 = filterLy2 = 0;
+filterRy1 = filterRy2 = 0;
 
 writepos = 0;
 delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
@@ -121,6 +127,35 @@ update();
 
 @sample
 
+filter_Q = 0.5;
+filter_freq = slider7;
+filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
+filter_cosW0 = cos(filter_w0);
+filter_alpha = sin(filter_w0)/(2*filter_Q);
+
+filter_a0 = 1 + filter_alpha;
+filter_a1 = (-2*filter_cosW0)/filter_a0;
+filter_a2 = (1 - filter_alpha)/filter_a0;
+filter_b1 = (1 - filter_cosW0)/filter_a0;
+filter_b0 = filter_b1/2;
+filter_b2 = filter_b0;
+
+x = spl0;
+y = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
+filterLx2 = filterLx1;
+filterLx1 = x;
+filterLy2 = filterLy1;
+filterLy1 = y;
+left = y;
+
+x = spl1;
+y = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
+filterRx2 = filterRx1;
+filterRx1 = x;
+filterRy2 = filterRy1;
+filterRy1 = y;
+right = y;
+
 readpos = writepos - delaysamples1;
 readpos < 0 ? readpos += buffersize;
 echo1a = buffer1a[readpos];
@@ -150,10 +185,10 @@ y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
 y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
 y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
 
-buffer1a[writepos] = y1a*feedbackA + spl0*amp;
-buffer1b[writepos] = y1b*feedbackB + spl0*ampB;
-buffer2a[writepos] = y2a*feedbackA + spl1*amp;
-buffer2b[writepos] = y2b*feedbackB + spl1*ampB;
+buffer1a[writepos] = y1a*feedbackA + left*amp;
+buffer1b[writepos] = y1b*feedbackB + left*ampB;
+buffer2a[writepos] = y2a*feedbackA + right*amp;
+buffer2b[writepos] = y2b*feedbackB + right*ampB;
 buffer3a[writepos] = y3a*feedbackA;
 buffer3b[writepos] = y3b*feedbackB;
 buffer4a[writepos] = y4a*feedbackA;
@@ -186,14 +221,38 @@ ui_start("main");
 
 ui_screen() == "main" ? (
   control_navbar("Spring-Box Delay", -1, -1);
-  ui_split_bottom(50);
-    ui_split_right(180);
+  ui_split_bottom(60);
+    ui_split_leftratio(1/2);
+      ui_split_right(180);
+        ui_pad();
+        ui_push_heighttext(-1);
+          slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+        ui_pop();
+      ui_pop();
+  
+      ui_align(1, 0.5);
+      ui_text("echo distribution:");
+    ui_split_next();
       ui_pad();
-      slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+      ui_push_width(50);
+        slider7 = control_dial(slider7, 100, 20000, 2);
+      ui_pop();
+      ui_push_leftof(50);
+        ui_pad();
+        ui_align(1, 0.5);
+        ui_text("pre-filter (lowpass):");
+      ui_pop();
+      ui_push_rightof(50);
+        ui_push_heighttext(-1);
+          control_readout("");
+          slider7 < 1500 ? (
+            ui_textnumber(slider7, "%iHz");
+          ) : (
+            ui_textnumber(slider7/1000, "%0.2fkHz");
+          );
+        ui_pop();
+      ui_pop();
     ui_pop();
-
-    ui_align(1, 0.5);
-    ui_text("echo distribution:");
   ui_pop();
   
   ui_split_leftratio(1/5);
