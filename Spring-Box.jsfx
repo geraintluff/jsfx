@@ -10,6 +10,7 @@ slider2:60<0,99,1>-feedback
 slider3:80<0,95,1>-late-bias (%)
 slider4:50<0,100,1>-wet (%)
 slider5:100<0,100,1>-dry (%)
+slider6:0<0,1,1{even,long}>-room shape
 
 import ui-lib.jsfx-inc
 
@@ -26,7 +27,7 @@ function alloc(N) local(result, i) (
   result;
 );
 
-buffersize = srate;
+buffersize = ceil(srate*exp(0.3) + 1); // Longest possible delay is 1*delayfactor
 buffer1a = alloc(buffersize);
 buffer1b = alloc(buffersize);
 buffer2a = alloc(buffersize);
@@ -39,17 +40,24 @@ buffer4b = alloc(buffersize);
 writepos = 0;
 delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
 
-delayfactor1 = exp(0.3);
-delayfactor2 = exp(0.1);
-delayfactor3 = exp(-0.1);
-delayfactor4 = exp(-0.3);
-
 function update() local(delay) (
+  delayfactor1 = exp(0.3);
+  delayfactor2 = exp(0.1);
+  delayfactor3 = exp(-0.1);
+  delayfactor4 = exp(-0.3);
+
+  slider6 == 1 ? (
+    delayfactor1 = exp(0.0);
+    delayfactor2 = exp(0.04);
+    delayfactor3 = exp(-0.09);
+    delayfactor4 = exp(0.13);
+  );
+
   delay = slider1*srate/1000;
-  delaysamples1 = floor(delay*delayfactor1);
-  delaysamples2 = floor(delay*delayfactor2);
-  delaysamples3 = floor(delay*delayfactor3);
-  delaysamples4 = floor(delay*delayfactor4);
+  delaysamples1 = min(buffersize - 1, floor(delay*delayfactor1));
+  delaysamples2 = min(buffersize - 1, floor(delay*delayfactor2));
+  delaysamples3 = min(buffersize - 1, floor(delay*delayfactor3));
+  delaysamples4 = min(buffersize - 1, floor(delay*delayfactor4));
 
   feedbackA = slider2/100;
   feedbackRatio = slider3/100;
@@ -157,7 +165,7 @@ spl1 = spl1*dry + (y4a - y4b)*wet;
 writepos += 1;
 writepos >= buffersize ? writepos = 0;
 
-@gfx 450 300
+@gfx 450 350
 
 function labelled_slider(value, low, high, bias, label, number_format) (
     ui_split_toptext(-1);
@@ -178,17 +186,27 @@ ui_start("main");
 
 ui_screen() == "main" ? (
   control_navbar("Spring-Box Delay", -1, -1);
+  ui_split_bottom(50);
+    ui_split_right(180);
+      ui_pad();
+      slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+    ui_pop();
+
+    ui_align(1, 0.5);
+    ui_text("echo distribution:");
+  ui_pop();
+  
   ui_split_leftratio(1/5);
     slider1 = labelled_slider(slider1, 1, 1000, 4, "density", "%ims");
   ui_split_next();
     slider2 = labelled_slider(slider2, 0, 99, -1, "feedback", "%i%%");
   ui_split_next();
-    slider3 = labelled_slider(slider3, 1, 95, 0, "late-bias", "%i%%");
+    slider3 = labelled_slider(slider3, 0, 95, 0, "late-bias", "%i%%");
   ui_split_next();
-    slider4 = labelled_slider(slider4, 1, 100, 0, "wet", "%i%%");
+    slider4 = labelled_slider(slider4, 0, 100, 0, "wet", "%i%%");
   ui_split_next();
-    slider5 = labelled_slider(slider5, 1, 100, 0, "dry", "%i%%");
+    slider5 = labelled_slider(slider5, 0, 100, 0, "dry", "%i%%");
   ui_pop();
 ) : control_system();
 
-mouse_cap ? update();
+ui_interacted() ? update();

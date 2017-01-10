@@ -27,6 +27,7 @@ uix_click2_x = uix_click2_y = uix_click2_t = 0; // Right
 uix_click64_x = uix_click64_y = uix_click3_t = 0; // Middle
 uix_mouse_x = uix_prev_mouse_x = 0;
 uix_mouse_y = uix_prev_mouse_y = 0;
+uix_interacted = 0;
 
 uix_default_fontsize = 16;
 uix_default_fontface = "Arial";
@@ -169,7 +170,7 @@ function ui_screen_set(index, value) local(screen, offset) (
 );
 
 function ui_setup(stackstart) local(uix_screenstack_end, uix_drawconfig_end) (
-	!uix_hassetup ? (
+	!uix_hassetup || stackstart != uix_screenstack ? (
 		uix_hassetup = 1;
 		
 		uix_screenstack = stackstart;
@@ -183,6 +184,7 @@ function ui_setup(stackstart) local(uix_screenstack_end, uix_drawconfig_end) (
 		// Stop the pre-processor complaining
 		4/*UI_SPLIT_DIRECTION: TOP, BOTTOM, LEFT, RIGHT*/;
 	);
+
 	uix_reserved_end;
 );
 
@@ -227,6 +229,8 @@ function ui_start(defaultScreen) local(i, click, clickdelta) (
 		
 		uix_font_dirty = 1;
 		uix_setgfxfont();
+		
+		uix_interacted = (!!mouse_cap) || (mouse_cap != uix_mousecap_prev);
 		
 		uix_prev_mouse_x = uix_mouse_x;
 		uix_prev_mouse_y = uix_mouse_y;
@@ -274,6 +278,8 @@ function ui_start(defaultScreen) local(i, click, clickdelta) (
 			uix_latestchar == -1 ? uix_latestchar = 0;
 		);
 		uix_char_consumed = 0;
+		
+		uix_latestchar ? uix_interacted = 1;
 	) : (
 		uix_error = "ui_setup() has not been called";
 	);
@@ -651,7 +657,7 @@ function ui_pop() local(prev) (
 	0;
 );
 function ui_split_top(height) local(oldTop) (
-	height == -1 ? height = ui_text() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
+	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
 
 	height = min(height, uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/]);
 	oldTop = uix_drawconfig_current[10/*uix_DRAWCONFIG:TOP*/];
@@ -672,7 +678,7 @@ function ui_split_toptext(text) local(text_height) (
 	ui_split_top(text_height + 2*uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]);
 );
 function ui_split_bottom(height) local(oldBottom) (
-	height == -1 ? height = ui_text() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
+	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
 	height = min(height, uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/]);
 	oldBottom = uix_drawconfig_current[10/*uix_DRAWCONFIG:TOP*/] + uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/];
 	uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] -= height;
@@ -691,7 +697,7 @@ function ui_split_bottomtext(text) (
 	ui_split_bottom(text_height + 2*uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]);
 );
 function ui_split_left(width) local(oldLeft) (
-	width == -1 ? width = ui_text()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
+	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	width = min(width, uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/]);
 	oldLeft = uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/];
 	uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] += width;
@@ -710,7 +716,7 @@ function ui_split_lefttext(text) (
 	ui_split_left(ui_text_width(text) + 2*uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]);
 );
 function ui_split_right(width) local(oldRight) (
-	width == -1 ? width = ui_text()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
+	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	width = min(width, uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/]);
 	oldRight = uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] + uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/];
 	uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] -= width;
@@ -748,7 +754,7 @@ function ui_split_next() local(direction, width, height) (
 );
 
 function ui_push_height(height) (
-	height == -1 ? height = ui_text() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
+	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
 	ui_push();
 	height = min(height, uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/]);
 	uix_drawconfig_current[10/*uix_DRAWCONFIG:TOP*/] += (uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] - height)*uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
@@ -763,7 +769,7 @@ function ui_push_heighttext(text) local(text_height) (
 	ui_push_height(text_height + 2*uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]);
 );
 function ui_push_width(width) (
-	width == -1 ? width = ui_text()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
+	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	ui_push();
 	width = min(width, uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/]);
 	uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] += (uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] - width)*uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
@@ -778,7 +784,7 @@ function ui_push_widthtext(text) local(text_width) (
 );
 
 function ui_push_above(height) local(newheight) (
-	height == -1 ? height = ui_text() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
+	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
 	ui_push();
 	newheight = (uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] - height)*uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
 	uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] = newheight;
@@ -792,7 +798,7 @@ function ui_push_abovetext(text) local(text_height)  (
 	ui_push_above(text_height + 2*uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]);
 );
 function ui_push_below(height) local(newheight) (
-	height == -1 ? height = ui_text() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
+	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
 	ui_push();
 	newheight = (uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] - height)*(1 - uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/]);
 	uix_drawconfig_current[10/*uix_DRAWCONFIG:TOP*/] = uix_drawconfig_current[10/*uix_DRAWCONFIG:TOP*/] + uix_drawconfig_current[12/*uix_DRAWCONFIG:HEIGHT*/] - newheight;
@@ -807,7 +813,7 @@ function ui_push_belowtext(text) local(text_height)  (
 	ui_push_below(text_height + 2*uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]);
 );
 function ui_push_leftof(width) local(newwidth) (
-	width == -1 ? width = ui_text()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
+	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	ui_push();
 	newwidth = (uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] - width)*uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
 	uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] = newwidth;
@@ -821,7 +827,7 @@ function ui_push_leftoftext(text) local(text_width)  (
 	ui_push_leftof(text_width + 2*uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]);
 );
 function ui_push_rightof(width) local(newwidth) (
-	width == -1 ? width = ui_text()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
+	width == -1 ? width = ui_texth()*4 + uix_drawconfig_current[15/*uix_DRAWCONFIG:HPADDING*/]*2;
 	ui_push();
 	newwidth = (uix_drawconfig_current[11/*uix_DRAWCONFIG:WIDTH*/] - width)*(1 - uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/]);
 	uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] = uix_drawconfig_current[9/*uix_DRAWCONFIG:LEFT*/] - newwidth;
@@ -889,6 +895,10 @@ function ui_vpadding() (
 );
 
 //////// Mouse functions ////////
+
+function ui_interacted() (
+	uix_interacted;
+);
 
 function uix_click1wasinside() (
 	!uix_mouseblocked && uix_click1_x >= ui_left() && uix_click1_x < ui_right() && uix_click1_y >= ui_top() && uix_click1_y < ui_bottom();
@@ -1112,7 +1122,7 @@ function control_color_fill_inset() (
 );
 
 function control_color_text_enabled() (
-	ui_color(255, 255, 255);
+	ui_press() ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
 );
 
 function control_color_text_disabled() (
@@ -1187,7 +1197,7 @@ function control_indicator_button(text, status) local(click) (
 
 		status ? control_color_text_enabled() : control_color_text_disabled();
 		ui_text(text);
-		status ? control_finish_enabled(1) : control_finish_disabled(1);
+		status ? ui_press() ? control_finish_enabled(0.5) : control_finish_enabled(1) : control_finish_disabled(1);
 		
 		click = ui_click();
 	ui_pop();
