@@ -17,7 +17,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -34,7 +34,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -54,7 +54,7 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Spring-Box": {
 			"type": "effect",
@@ -70,7 +70,7 @@
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

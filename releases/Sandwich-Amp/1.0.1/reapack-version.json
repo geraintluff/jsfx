@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Distortion",
+	"files": {
+		"Sandwich-Amp/Sandwich Amp.jsfx": {
+			"main": false
+		},
+		"Sandwich-Amp/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "Sandwich Amp.png"
+	},
+	"version": "1.0.1",
+	"package": "Sandwich Amp",
+	"time": "2017-01-11T16:17:18.713Z"
+}

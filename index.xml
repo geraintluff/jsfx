@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <index version="1" name="Geraint&apos;s JSFX" generated-by="https://www.npmjs.com/package/reapack">
 	<metadata>
-		<description>{\rtf1\ansi\fs24{\fs48\b Geraint&apos;s JSFX repository\b}\line\line This is a collection of audio effects I have written in REAPER&apos;s JSFX language.\line\line Download them from GitHub &lt;https://github.com/geraintluff/jsfx&gt; or on ReaPack &lt;https://reapack.com/&gt; by adding the repository: https://geraintluff.github.io/jsfx/index.xml\line\line {\par \bullet\tab Spring-Box - an echo/reverb effect\line \bullet\tab Bad Connection - flips between two volumes to simulate poor connection or dropouts\line \bullet\tab Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input\line \bullet\tab Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ\line }\lineYou can download some presets (RPL) for these effects from GitHub.\line\line {\fs24\b Spring-Box\b}\line\line Spring-Box is an echo/reverb effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  (audio demo &lt;audio-demos/spring-box.mp3&gt;)\line\line (img)\line\line {\fs24\b Bad Connection\b}\line\line Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate dodgy radios &lt;audio-demos/Bad Connection/radio-dropout.mp3&gt; or glitchy CPU overloads &lt;audio-demos/Bad Connection/cpu-overload.mp3&gt;.\line\line (img)\line\line {\fs24\b Sandwich Amp\b}\line\line Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (audio demo &lt;audio-demos/sandwich-amp.mp3&gt;)\line\line The underlying distortion function is (inlinecode)tanh() (which is a fairly &quot;soft&quot; distortion), and an offset can be added to get asymmetrical response.  The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central without the sound itself sounding narrow.  The &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.\line\line It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.\line\line (img)\line\line {\fs24\b Spectrum Matcher\b}\line\line Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.\line\line (img)\line\line It can learn new models from the incoming audio, and save this as a preset for later use:\line\line (img)\line\line }</description>
+		<description>{\rtf1\ansi\fs24{\fs48\b Geraint&apos;s JSFX repository\b}\line\line This is a collection of audio effects I have written in REAPER&apos;s JSFX language.\line\line Download them from GitHub &lt;https://github.com/geraintluff/jsfx&gt; or on ReaPack &lt;https://reapack.com/&gt; by adding the repository: https://geraintluff.github.io/jsfx/index.xml\line\line {\par \bullet\tab Spring-Box - an echo/reverb effect\line \bullet\tab Bad Connection - flips between two volumes to simulate poor connection or dropouts\line \bullet\tab Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input\line \bullet\tab Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ\line }\lineYou can download some presets (RPL) for these effects from GitHub.\line\line {\fs24\b Spring-Box\b}\line\line Spring-Box is an echo/reverb effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  (audio demo &lt;audio-demos/spring-box.mp3&gt;)\line\line (img)\line\line {\fs24\b Bad Connection\b}\line\line Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate dodgy radios &lt;audio-demos/Bad Connection/radio-dropout.mp3&gt; or glitchy CPU overloads &lt;audio-demos/Bad Connection/cpu-overload.mp3&gt;.\line\line (img)\line\line {\fs24\b Sandwich Amp\b}\line\line Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (audio demo &lt;audio-demos/sandwich-amp.mp3&gt;)\line\line The underlying distortion function is (inlinecode)tanh() (which is a fairly &quot;soft&quot; distortion, as opposed to a hard clip), but it can be driven quite hard, and an offset can be added to get asymmetrical response.\line\line The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central while preserving the stereo feel of the sound.  Similarly, the &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.\line\line It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.\line\line (img)\line\line {\fs24\b Spectrum Matcher\b}\line\line Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.\line\line (img)\line\line It can learn new models from the incoming audio, and save this as a preset for later use:\line\line (img)\line\line }</description>
 		<link rel="website">https://geraintluff.github.io/jsfx/</link>
 	</metadata>
 	<category name="Distortion">
@@ -21,6 +21,10 @@
 				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.2/Bad-Connection/Bad%20Connection.jsfx</source>
 				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.2/Bad-Connection/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.0.3" author="Geraint Luff" time="2017-01-11T16:17:18.059Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.3/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/1.0.3/Bad-Connection/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -29,6 +33,10 @@
 			<version name="1.0.0" author="Geraint Luff" time="2017-01-11T02:56:00.189Z">
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.0/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
 				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.0/Sandwich-Amp/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2017-01-11T16:17:18.713Z">
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.1/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
+				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.1/Sandwich-Amp/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -50,6 +58,10 @@
 				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.2/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.2/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.0.3" author="Geraint Luff" time="2017-01-11T16:17:18.958Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.3/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.0.3/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Delay">
@@ -60,6 +72,10 @@
 			<version name="1.0.2" time="2017-01-05T16:01:37.544Z">
 				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.2/Spring-Box/Spring-Box.jsfx</source>
 				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.2/Spring-Box/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.3" time="2017-01-11T16:17:19.209Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.3/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.3/Spring-Box/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
