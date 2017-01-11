@@ -4,11 +4,18 @@ This is a collection of audio effects I have written in REAPER's JSFX language.
 
 Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack](https://reapack.com/) by adding the repository: https://geraintluff.github.io/jsfx/index.xml
 
+* Spring-Box - an echo/reverb effect
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
-* Dual Distortion - simple distortion with asymmetric parameters
+* Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 
-There are also some presets (RPL) available for [Bad Connection](Bad Connection.rpl) and [Spectrum Matcher](Spectrum Matcher.rpl).
+You can download some presets (RPL) for these effects from GitHub.
+
+## Spring-Box
+
+Spring-Box is an echo/reverb effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  ([audio demo](audio-demos/spring-box.mp3))
+
+![screenshot](Spring-Box.png)
 
 ## Bad Connection
 
@@ -16,17 +23,15 @@ Bad Connection is an effect that randomly changes the audio between two volume l
 
 ![screenshot](Bad Connection.png)
 
-## Dual Distortion
+## Sandwich Amp
 
-Dual Distortion is a simple clipping/distortion effect where you control the positive and negative sides independently.
+Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  ([audio demo](audio-demos/sandwich-amp.mp3))
 
-![screenshot](Dual Distortion.png)
+The underlying distortion function is `tanh()` (which is a fairly "soft" distortion), and an offset can be added to get asymmetrical response.  The "width" parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central without the sound itself sounding narrow.  The "filter" section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.
 
-## Spring-Box
+It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.
 
-Spring-Box is an echo effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  ([audio demo](audio-demos/spring-box.mp3))
-
-![screenshot](Spring-Box.png)
+![screenshot](Amp Distortion.png)
 
 ## Spectrum Matcher
 

@@ -1,4 +1,4 @@
-desc:Spectrum Matcher
+desc:Spectrum Matcher (by Geraint Luff)
 
 slider1:30<10,50,10>-bands
 slider2:4<1,10,0.1>-peak bias
@@ -167,6 +167,7 @@ function clear_correction_filters() local(i) (
 );
 
 function reset_correction() local(i) (
+	debug.reset_correction += 1;
 	i = 0;
 	while (i < MODEL_MAX_N) (
 		correction_amp[i] = 1;
@@ -178,10 +179,6 @@ function reset_correction() local(i) (
 		i += 1;
 	);
 	clear_correction_filters();
-);
-last_srate != srate ? (
-	last_srate = srate;
-	reset_correction();
 );
 
 function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
@@ -297,7 +294,19 @@ function calculate_correction() local(i, boundary_freq, prev_amp, amp, Q, A, w0,
 );
 calculate_correction();
 
+last_srate != srate ? (
+	last_srate = srate;
+	calculate_correction();
+	clear_correction_filters();
+);
+
 @block
+
+action_recalculate ? (
+	action_recalculate = 0;
+	calculate_correction();
+	debug.action_recalculate += 1;
+);
 
 action_reset ? (
 	action_reset = 0;
@@ -783,9 +792,9 @@ while (si < model_N) (
 	si += 1;
 );
 
-model_N != bands_N ? (
+model_N != bands_N || !model_N ? (
 	reset_bands();
+	debug.reset += 1;
 );
 
-calculate_correction();
-
+action_recalculate = 1;

@@ -224,20 +224,23 @@ a[href] code {
 <p>This is a collection of audio effects I have written in REAPER&#39;s JSFX language.</p>
 <p>Download them from <a href="https://github.com/geraintluff/jsfx">GitHub</a> or on <a href="https://reapack.com/">ReaPack</a> by adding the repository: <a href="https://geraintluff.github.io/jsfx/index.xml">https://geraintluff.github.io/jsfx/index.xml</a></p>
 <ul>
+<li>Spring-Box - an echo/reverb effect</li>
 <li>Bad Connection - flips between two volumes to simulate poor connection or dropouts</li>
-<li>Dual Distortion - simple distortion with asymmetric parameters</li>
+<li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 </ul>
-<p>There are also some presets (RPL) available for <a href="Bad Connection.rpl">Bad Connection</a> and <a href="Spectrum Matcher.rpl">Spectrum Matcher</a>.</p>
-<h2 id="bad-connection">Bad Connection</h2><div class="section section2">
+<p>You can download some presets (RPL) for these effects from GitHub.</p>
+<h2 id="spring-box">Spring-Box</h2><div class="section section2">
+<p>Spring-Box is an echo/reverb effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
+<p><img src="Spring-Box.png" alt="screenshot"></p>
+</div><h2 id="bad-connection">Bad Connection</h2><div class="section section2">
 <p>Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate <a href="audio-demos/Bad Connection/radio-dropout.mp3">dodgy radios</a> or <a href="audio-demos/Bad Connection/cpu-overload.mp3">glitchy CPU overloads</a>.</p>
 <p><img src="Bad Connection.png" alt="screenshot"></p>
-</div><h2 id="dual-distortion">Dual Distortion</h2><div class="section section2">
-<p>Dual Distortion is a simple clipping/distortion effect where you control the positive and negative sides independently.</p>
-<p><img src="Dual Distortion.png" alt="screenshot"></p>
-</div><h2 id="spring-box">Spring-Box</h2><div class="section section2">
-<p>Spring-Box is an echo effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
-<p><img src="Spring-Box.png" alt="screenshot"></p>
+</div><h2 id="sandwich-amp">Sandwich Amp</h2><div class="section section2">
+<p>Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</p>
+<p>The underlying distortion function is <code>tanh()</code> (which is a fairly &quot;soft&quot; distortion), and an offset can be added to get asymmetrical response.  The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central without the sound itself sounding narrow.  The &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.</p>
+<p>It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.</p>
+<p><img src="Amp Distortion.png" alt="screenshot"></p>
 </div><h2 id="spectrum-matcher">Spectrum Matcher</h2><div class="section section2">
 <p>Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.</p>
 <p><img src="Spectrum Matcher 1.png" alt="screenshot"></p>

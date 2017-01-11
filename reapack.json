@@ -19,12 +19,12 @@
 			},
 			"version": "1.0.2"
 		},
-		"Dual Distortion": {
+		"Sandwich Amp": {
 			"type": "effect",
 			"author": "Geraint Luff",
 			"category": "Distortion",
 			"files": {
-				"Dual Distortion.jsfx": {
+				"Sandwich Amp.jsfx": {
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
@@ -32,9 +32,9 @@
 				}
 			},
 			"links": {
-				"screenshot": "Dual Distortion.png"
+				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.2"
+			"version": "1.0.0"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",

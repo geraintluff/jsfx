@@ -1,4 +1,4 @@
-desc:Bad Connection
+desc:Bad Connection (by Geraint Luff)
 
 slider1:8<0,50,0.1>-Changes per second
 slider2:0.6<0.0,1,0.01>-Bias (off - on)
