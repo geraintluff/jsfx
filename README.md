@@ -31,7 +31,7 @@ The underlying distortion function is `tanh()` (which is a fairly "soft" distort
 
 It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.
 
-![screenshot](Amp Distortion.png)
+![screenshot](Sandwich Amp.png)
 
 ## Spectrum Matcher
 
