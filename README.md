@@ -4,6 +4,7 @@ This is a collection of audio effects I have written in REAPER's JSFX language.
 
 Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack](https://reapack.com/) by adding the repository: https://geraintluff.github.io/jsfx/index.xml
 
+* PadSynth - a synth that produces thick sounds, including per-note effects and modulators
 * Spring-Box - an echo/reverb effect
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
@@ -13,7 +14,7 @@ Presets (RPL) for these effects can be downloaded from GitHub.
 
 ## PadSynth
 
-This is a synth that specialises in big thick sounds, with a bank of effects and assignable modulators. ([audio demo](audio-demos/padsynth.mp3))
+This is a synth that specialises in smooth and thick sounds, with a bank of effects and assignable modulators that are calculated per-note. ([audio demo](audio-demos/padsynth.mp3))
 
 You can find more information and demos for this synth on its [main project page](https://github.com/geraintluff/jsfx-pad-synth).
 
