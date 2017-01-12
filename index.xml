@@ -79,4 +79,11 @@
 			</version>
 		</reapack>
 	</category>
+	<category name="Synth">
+		<reapack name="PadSynth" type="effect">
+			<metadata>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/PadSynth.png</link>
+			</metadata>
+		</reapack>
+	</category>
 </index>

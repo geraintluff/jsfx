@@ -71,6 +71,21 @@
 				"screenshot": "Spring-Box.png"
 			},
 			"version": "1.0.3"
+		},
+		"PadSynth": {
+			"type": "effect",
+			"category": "Synth",
+			"files": {
+				"pad-synth.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"links": {
+				"screenshot": "PadSynth.png"
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

@@ -9,7 +9,15 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 
-You can download some presets (RPL) for these effects from GitHub.
+Presets (RPL) for these effects can be downloaded from GitHub.
+
+## PadSynth
+
+This is a synth that specialises in big thick sounds, with a bank of effects and assignable modulators. ([audio demo](audio-demos/padsynth.mp3))
+
+You can find more information and demos for this synth on its [main project page](https://github.com/geraintluff/jsfx-pad-synth).
+
+![screenshot](PadSynth.png) ![screenshot](PadSynth2.png)
 
 ## Spring-Box
 

@@ -223,7 +223,7 @@ ui_screen() == "main" ? (
   control_navbar("Spring-Box Delay", -1, -1);
   ui_split_bottom(60);
     ui_split_leftratio(1/2);
-      ui_split_right(180);
+      ui_split_right(150);
         ui_pad();
         ui_push_heighttext(-1);
           slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
@@ -231,7 +231,7 @@ ui_screen() == "main" ? (
       ui_pop();
   
       ui_align(1, 0.5);
-      ui_text("echo distribution:");
+      ui_text("echoes:");
     ui_split_next();
       ui_pad();
       ui_push_width(50);
@@ -240,7 +240,7 @@ ui_screen() == "main" ? (
       ui_push_leftof(50);
         ui_pad();
         ui_align(1, 0.5);
-        ui_text("pre-filter (lowpass):");
+        ui_text("pre-filter:");
       ui_pop();
       ui_push_rightof(50);
         ui_push_heighttext(-1);
