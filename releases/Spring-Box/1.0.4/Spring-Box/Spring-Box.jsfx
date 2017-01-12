@@ -1,0 +1,271 @@
+desc:Spring-Box Delay/Reverb (by Geraint Luff)
+
+in_pin:Ch1
+in_pin:Ch2
+out_pin:Ch1
+out_pin:Ch2
+
+slider1:50<1,1000,1>-density (ms)
+slider2:60<0,99,1>-feedback
+slider3:80<0,95,1>-late-bias (%)
+slider4:50<0,100,1>-wet (%)
+slider5:100<0,100,1>-dry (%)
+slider6:0<0,1,1{even,long}>-room shape
+slider7:8000<100,20000,1>-prefilter (lowpass Hz)
+
+import ui-lib.jsfx-inc
+
+@init
+
+freemem = ui_setup(0);
+function alloc(N) local(result, i) (
+  result = freemem;
+  i = 0;
+  while (i < N) (
+    result[i] = 0;
+  );
+  freemem += N;
+  result;
+);
+
+buffersize = ceil(srate*exp(0.3) + 1); // Longest possible delay is 1*delayfactor
+buffer1a = alloc(buffersize);
+buffer1b = alloc(buffersize);
+buffer2a = alloc(buffersize);
+buffer2b = alloc(buffersize);
+buffer3a = alloc(buffersize);
+buffer3b = alloc(buffersize);
+buffer4a = alloc(buffersize);
+buffer4b = alloc(buffersize);
+
+filterLx1 = filterLx2 = 0;
+filterRx1 = filterRx2 = 0;
+filterLy1 = filterLy2 = 0;
+filterRy1 = filterRy2 = 0;
+
+writepos = 0;
+delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
+
+function update() local(delay) (
+  delayfactor1 = exp(0.3);
+  delayfactor2 = exp(0.1);
+  delayfactor3 = exp(-0.1);
+  delayfactor4 = exp(-0.3);
+
+  slider6 == 1 ? (
+    delayfactor1 = exp(0.0);
+    delayfactor2 = exp(0.04);
+    delayfactor3 = exp(-0.09);
+    delayfactor4 = exp(0.13);
+  );
+
+  delay = slider1*srate/1000;
+  delaysamples1 = min(buffersize - 1, floor(delay*delayfactor1));
+  delaysamples2 = min(buffersize - 1, floor(delay*delayfactor2));
+  delaysamples3 = min(buffersize - 1, floor(delay*delayfactor3));
+  delaysamples4 = min(buffersize - 1, floor(delay*delayfactor4));
+
+  feedbackA = slider2/100;
+  feedbackRatio = slider3/100;
+  feedbackB = feedbackA*feedbackRatio;
+  dry = slider5/100;
+  wet = slider4/100;
+  // Feedback-racing compensation
+  amp = (1 - feedbackA*feedbackRatio)/(1 - feedbackRatio);
+  
+  ampB = amp*min(1, feedbackRatio*1.1);
+);
+
+coeff_a = 1;
+coeff_b = exp(0);
+coeff_c = -coeff_a;
+coeff_d = 1/coeff_b;
+
+coeff_scale = sqrt(coeff_a*coeff_a + coeff_b*coeff_b + coeff_c*coeff_c + coeff_d*coeff_d);
+coeff_a /= coeff_scale;
+coeff_b /= coeff_scale;
+coeff_c /= coeff_scale;
+coeff_d /= coeff_scale;
+
+mat11 = coeff_a;
+mat12 = coeff_b;
+mat13 = coeff_c;
+mat14 = coeff_d;
+mat21 = -coeff_d;
+mat22 = -coeff_a;
+mat23 = -coeff_b;
+mat24 = -coeff_c;
+mat31 = -coeff_c;
+mat32 = -coeff_d;
+mat33 = -coeff_a;
+mat34 = -coeff_b;
+mat41 = coeff_b;
+mat42 = coeff_c;
+mat43 = coeff_d;
+mat44 = coeff_a;
+
+0 ? (
+  matA = 1;
+  matB = 1;
+  matC = -1;
+  matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
+  matA *= matScaling;
+  matB *= matScaling;
+  matC *= matScaling;
+  
+  mat11 = 0; mat12 = matA; mat13 = matB; mat14 = matC;
+  mat21 = -matA; mat22 = 0; mat23 = -matC; mat24 = matB;
+  mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
+  mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
+);
+
+@slider
+
+update();
+
+@block
+
+@sample
+
+filter_Q = 0.5;
+filter_freq = slider7;
+filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
+filter_cosW0 = cos(filter_w0);
+filter_alpha = sin(filter_w0)/(2*filter_Q);
+
+filter_a0 = 1 + filter_alpha;
+filter_a1 = (-2*filter_cosW0)/filter_a0;
+filter_a2 = (1 - filter_alpha)/filter_a0;
+filter_b1 = (1 - filter_cosW0)/filter_a0;
+filter_b0 = filter_b1/2;
+filter_b2 = filter_b0;
+
+x = spl0;
+y = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
+filterLx2 = filterLx1;
+filterLx1 = x;
+filterLy2 = filterLy1;
+filterLy1 = y;
+left = y;
+
+x = spl1;
+y = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
+filterRx2 = filterRx1;
+filterRx1 = x;
+filterRy2 = filterRy1;
+filterRy1 = y;
+right = y;
+
+readpos = writepos - delaysamples1;
+readpos < 0 ? readpos += buffersize;
+echo1a = buffer1a[readpos];
+echo1b = buffer1b[readpos];
+
+readpos = writepos - delaysamples2;
+readpos < 0 ? readpos += buffersize;
+echo2a = buffer2a[readpos];
+echo2b = buffer2b[readpos];
+
+readpos = writepos - delaysamples3;
+readpos < 0 ? readpos += buffersize;
+echo3a = buffer3a[readpos];
+echo3b = buffer3b[readpos];
+
+readpos = writepos - delaysamples4;
+readpos < 0 ? readpos += buffersize;
+echo4a = buffer4a[readpos];
+echo4b = buffer4b[readpos];
+
+y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
+y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
+y2a = echo1a*mat21 + echo2a*mat22 + echo3a*mat23 + echo4a*mat24;
+y2b = echo1b*mat21 + echo2b*mat22 + echo3b*mat23 + echo4b*mat24;
+y3a = echo1a*mat31 + echo2a*mat32 + echo3a*mat33 + echo4a*mat34;
+y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
+y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
+y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
+
+buffer1a[writepos] = y1a*feedbackA + left*amp;
+buffer1b[writepos] = y1b*feedbackB + left*ampB;
+buffer2a[writepos] = y2a*feedbackA + right*amp;
+buffer2b[writepos] = y2b*feedbackB + right*ampB;
+buffer3a[writepos] = y3a*feedbackA;
+buffer3b[writepos] = y3b*feedbackB;
+buffer4a[writepos] = y4a*feedbackA;
+buffer4b[writepos] = y4b*feedbackB;
+
+spl0 = spl0*dry + (y3a - y3b)*wet;
+spl1 = spl1*dry + (y4a - y4b)*wet;
+
+writepos += 1;
+writepos >= buffersize ? writepos = 0;
+
+@gfx 450 350
+
+function labelled_slider(value, low, high, bias, label, number_format) (
+    ui_split_toptext(-1);
+      ui_text(label);
+    ui_pop();
+    ui_split_bottomtext(-1);
+      number_format >= 0 ? (
+        ui_textnumber(value, number_format);
+      );
+    ui_pop();
+    ui_push_width(50);    
+      value = control_vslider(value, low, high, bias);
+    ui_pop();
+    value;
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+  control_navbar("Spring-Box Delay", -1, -1);
+  ui_split_bottom(60);
+    ui_split_leftratio(1/2);
+      ui_split_right(150);
+        ui_pad();
+        ui_push_heighttext(-1);
+          slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+        ui_pop();
+      ui_pop();
+  
+      ui_align(1, 0.5);
+      ui_text("echoes:");
+    ui_split_next();
+      ui_pad();
+      ui_push_width(50);
+        slider7 = control_dial(slider7, 100, 20000, 2);
+      ui_pop();
+      ui_push_leftof(50);
+        ui_pad();
+        ui_align(1, 0.5);
+        ui_text("pre-filter:");
+      ui_pop();
+      ui_push_rightof(50);
+        ui_push_heighttext(-1);
+          control_readout("");
+          slider7 < 1500 ? (
+            ui_textnumber(slider7, "%iHz");
+          ) : (
+            ui_textnumber(slider7/1000, "%0.2fkHz");
+          );
+        ui_pop();
+      ui_pop();
+    ui_pop();
+  ui_pop();
+  
+  ui_split_leftratio(1/5);
+    slider1 = labelled_slider(slider1, 1, 1000, 4, "density", "%ims");
+  ui_split_next();
+    slider2 = labelled_slider(slider2, 0, 99, -1, "feedback", "%i%%");
+  ui_split_next();
+    slider3 = labelled_slider(slider3, 0, 95, 0, "late-bias", "%i%%");
+  ui_split_next();
+    slider4 = labelled_slider(slider4, 0, 100, 0, "wet", "%i%%");
+  ui_split_next();
+    slider5 = labelled_slider(slider5, 0, 100, 0, "dry", "%i%%");
+  ui_pop();
+) : control_system();
+
+ui_interacted() ? update();
