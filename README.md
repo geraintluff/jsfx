@@ -18,7 +18,11 @@ This is a synth that specialises in smooth and thick sounds, with a bank of effe
 
 You can find more information and demos for this synth on its [main project page](https://github.com/geraintluff/jsfx-pad-synth).
 
-![screenshot](PadSynth.png) ![screenshot](PadSynth2.png)
+![screenshot](PadSynth.png)
+
+The per-note effects can re-ordered and renamed, and the modulators can modulate any later effect in the chain, including other modulators.
+
+![screenshot](PadSynth2.png)
 
 ## Spring-Box
 
