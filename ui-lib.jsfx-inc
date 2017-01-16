@@ -189,7 +189,7 @@ function ui_setup(stackstart) local(uix_screenstack_end, uix_drawconfig_end) (
 	uix_reserved_end;
 );
 
-function ui_start(defaultScreen) local(i, click, clickdelta) (
+function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 	uix_drawconfig_currentindex = 0;
 	uix_drawconfig_current = uix_drawconfig;
 
@@ -205,6 +205,8 @@ function ui_start(defaultScreen) local(i, click, clickdelta) (
 			uix_screenstack[0] = defaultScreen;
 		);
 		
+		gfx_dest = -1; // Draw to main screen
+		gfx_a = 1;
 		// Default colours
 		gfx_clear = uix_clearcolor(242, 242, 242);
 		
@@ -1012,7 +1014,22 @@ function ui_key_next() (
 
 /////////////// LEVEL 2 ///////////////
 
-uix_control_labelratio = 0.2;
+// Total number of themes: 2/*uix_THEME: */
+uix_control_theme = 0/*uix_THEME:DEFAULT*/;
+
+function control_start(defaultPage, theme) (
+	ui_start(defaultPage);
+	
+	theme == "black" ? (
+		uix_control_theme = 1/*uix_THEME:BLACK_AND_WHITE*/;
+		gfx_clear = 0;
+		ui_color(255, 255, 255);
+		ui_fontface("Trebuchet MS");
+		ui_fontsize(22);
+	) : (
+		uix_control_theme = 0/*uix_THEME:DEFAULT*/;
+	);
+);
 
 function control_state() (
 	shade = ui_press() ? "press" : ui_hover() ? "hover" : ui_drag() ? "drag" : "none";
@@ -1056,51 +1073,93 @@ function uix_gloss(strength) local(height, topalpha, bottomalpha) (
 
 function control_finish_enabled(state) (
 	ui_push();
-		uix_gloss(1);
-		ui_colora(102, 102, 102, 0.25);
-		ui_border();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(255, 255, 255);
+//			ui_border();
+		) : (
+			uix_gloss(1);
+			ui_colora(102, 102, 102, 0.25);
+			ui_border();
+		);
 	ui_pop();
+);
+
+function uix_dotted_line(x1, y1, x2, y2, drawlength, skiplength) local(distance, steps, drawR, i, r1, r2) (
+	distance = sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+	steps = distance/(drawlength + skiplength);
+
+	x1 = floor(x1) + 0.5;
+	y1 = floor(y1) + 0.5;
+	x2 = floor(x2) + 0.5;
+	y2 = floor(y2) + 0.5;
+	
+	drawR = (drawlength - 1)/(drawlength + skiplength);
+	i = 0;
+	while (i < steps) (
+		r1 = i/steps;
+		r2 = min(1, (i + drawR)/steps);
+		gfx_line(x1 + (x2 - x1)*r1, y1 + (y2 - y1)*r1, x1 + (x2 - x1)*r2, y1 + (y2 - y1)*r2, 1);
+		i += 1;
+	);
 );
 
 function control_finish_passive(state) (
 	ui_push();
-		uix_gloss(0.5);
-		ui_colora(102, 102, 102, 0.5);
-		ui_border();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(255, 255, 255);
+			uix_dotted_line(ui_left(), ui_top(), ui_right() - 1, ui_top(), 2, 2);
+			uix_dotted_line(ui_right() - 1, ui_top(), ui_right() - 1, ui_bottom(), 2, 2);
+			uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 2, 2);
+			uix_dotted_line(ui_left(), ui_bottom(), ui_left(), ui_top(), 2, 2);
+		) : (
+			uix_gloss(0.5);
+			ui_colora(102, 102, 102, 0.5);
+			ui_border();
+		);
 	ui_pop();
 );
 
 function control_finish_disabled(strength) (
 	ui_push();
-		ui_colora(0, 0, 0, 0.1);
-		ui_border();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(127, 127, 127);
+			ui_border();
+		) : (
+			ui_colora(0, 0, 0, 0.1);
+			ui_border();
+		);
 	ui_pop();
 );
 
 function control_finish_inset(strength) local(height, topalpha, bottomalpha) (
 	ui_push();
-		// Black fade
-		height = min(5, ui_height()/2);
-		topalpha = strength*0.1;
-		bottomalpha = 0;
-		gfx_gradrect(
-			ui_left(), ui_top(), ui_width(), height,
-			0, 0, 0, topalpha,
-			0, 0, 0, 0,
-			0, 0, 0, (bottomalpha - topalpha)/height
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(255, 255, 255);
+			ui_border();
+		) : (
+			// Black fade
+			height = min(5, ui_height()/2);
+			topalpha = strength*0.1;
+			bottomalpha = 0;
+			gfx_gradrect(
+				ui_left(), ui_top(), ui_width(), height,
+				0, 0, 0, topalpha,
+				0, 0, 0, 0,
+				0, 0, 0, (bottomalpha - topalpha)/height
+			);
+			// White fade
+			height = min(5, ui_height()/2);
+			topalpha = 0;
+			bottomalpha = strength*0.3;
+			gfx_gradrect(
+				ui_left(), ui_bottom() - height, ui_width(), height,
+				1, 1, 1, topalpha,
+				0, 0, 0, 0,
+				0, 0, 0, (bottomalpha - topalpha)/height
+			);
+			ui_colora(102, 102, 102, 0.5);
+			ui_border();
 		);
-		// White fade
-		height = min(5, ui_height()/2);
-		topalpha = 0;
-		bottomalpha = strength*0.3;
-		gfx_gradrect(
-			ui_left(), ui_bottom() - height, ui_width(), height,
-			1, 1, 1, topalpha,
-			0, 0, 0, 0,
-			0, 0, 0, (bottomalpha - topalpha)/height
-		);
-		ui_colora(102, 102, 102, 0.5);
-		ui_border();
 	ui_pop();
 );
 
@@ -1125,56 +1184,106 @@ function uix_circle_shade(x, y, r, angle, shadowstrength) (
 );
 
 function control_finish_enabled_circle(x, y, r, state) (
-	uix_circle_shade(x, y, r, 0, 1);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		0
+	) : (
+		uix_circle_shade(x, y, r, 0, 1);
+	);
+);
+
+function control_finish_passive_circle(x, y, r, state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		0
+	) : (
+		uix_circle_shade(x, y, r, 0, 0.5);
+	);
 );
 
 function control_finish_inset_circle(x, y, r, state) (
-	uix_circle_shade(x, y, r, $pi, 0.6);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		0
+	) : (
+		uix_circle_shade(x, y, r, $pi, 0.6);
+	);
 );
 
 function control_finish_disabled_circle(x, y, r, state) (
 	ui_push();
-		ui_colora(0, 0, 0, 0.1);
-		gfx_circle(x, y, r, 0, 1);
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			0
+		) : (
+			ui_colora(0, 0, 0, 0.1);
+			gfx_circle(x, y, r, 0, 1);
+		);
 	ui_pop();
 );
 
 function control_background_enabled(state) (
 	state = state ? state : control_state();
 	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
-	ui_color(64*shade, 102*shade, 140*shade);
-	
-	ui_fill();
-
-	(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_push();
+			ui_color(255*shade, 255*shade, 255*shade);
+			ui_pad1(2);
+			ui_fill();
+		ui_pop();
+		ui_color(0, 0, 0);
+	) : (
+		ui_color(64*shade, 102*shade, 140*shade);
+		ui_fill();
+		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+	);
 );
 
 function control_background_enabled_circle(x, y, r, state) (
 	state = state ? state : control_state();
 	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
-	ui_color(64*shade, 102*shade, 140*shade);
-
-	gfx_circle(x, y, r, 1, 1);
-
-	(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+	
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(255*shade, 255*shade, 255*shade);
+		gfx_circle(x, y, r, 1, 1);
+		ui_color(0, 0, 0);
+	) : (
+		ui_color(64*shade, 102*shade, 140*shade);
+		gfx_circle(x, y, r, 1, 1);
+		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+	);
 );
 
 function control_background_disabled() (
-	ui_color(180, 180, 180);
-	ui_fill();
-	ui_color(255, 255, 255);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(127, 127, 127);
+		ui_fill();
+		ui_color(0, 0, 0);
+	) : (
+		ui_color(180, 180, 180);
+		ui_fill();
+		ui_color(255, 255, 255);
+	);
 );
 
 function control_background_inset() (
-	ui_color(255, 255, 255);
-	ui_fill();
-	ui_color(0, 0, 0);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(0, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+	) : (
+		ui_color(255, 255, 255);
+		ui_fill();
+		ui_color(0, 0, 0);
+	);
 );
 
 function control_background_passive() (
-	ui_color(255, 255, 255);
-	ui_fill();
-	ui_color(0, 0, 0);
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(0, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+	) : (
+		ui_color(255, 255, 255);
+		ui_fill();
+		ui_color(0, 0, 0);
+	);
 );
 
 function control_group(text) local(texth, textw, textl, textr, textv) (
@@ -1184,7 +1293,11 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 
 	ui_push();
 		ui_pad2(ui_hpadding()/2, 0);
-		ui_colora(102, 102, 102, 0.5); // Border color
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(255, 255, 255); // Border color
+		) : (
+			ui_colora(102, 102, 102, 0.5); // Border color
+		);
 	
 		ui_split_top(texth);
 			ui_padleft();
@@ -1200,11 +1313,19 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 		ui_push();
 			gfx_x = textr;
 			gfx_y = textv;
-			gfx_lineto(ui_right(), gfx_y);
-			gfx_lineto(gfx_x, ui_bottom());
-			gfx_lineto(ui_left(), gfx_y);
-			gfx_lineto(gfx_x, textv);
-			gfx_lineto(textl, gfx_y);
+			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+				uix_dotted_line(textr, textv, ui_right() - 1, textv, 1, 1);
+				uix_dotted_line(ui_right() - 1, textv, ui_right() - 1, ui_bottom(), 1, 1);
+				uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 1, 1);
+				uix_dotted_line(ui_left(), ui_bottom(), ui_left(), textv, 1, 1);
+				uix_dotted_line(ui_left(), textv, textl, textv, 1, 1);
+			) : (
+				gfx_lineto(ui_right() - 1, gfx_y);
+				gfx_lineto(gfx_x, ui_bottom());
+				gfx_lineto(ui_left(), gfx_y);
+				gfx_lineto(gfx_x, textv);
+				gfx_lineto(textl, gfx_y);
+			);
 		ui_pop();
 	ui_pop();
 	ui_pad();
@@ -1368,7 +1489,7 @@ function control_hslider(value, range_low, range_high, curve_bias) local(valuera
 		ui_push();
 			barwidth = floor((ui_width() - 1)*screenratio + 1.5);
 			ui_split_left(barwidth);
-				control_background_enabled();
+				control_background_enabled(state);
 				control_finish_enabled(state);
 			ui_pop();
 		ui_pop();

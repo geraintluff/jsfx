@@ -87,6 +87,18 @@
 				"screenshot": "PadSynth.png"
 			},
 			"version": "1.0.0"
+		},
+		"Smooth Limiter": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Smooth Limiter.jsfx": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

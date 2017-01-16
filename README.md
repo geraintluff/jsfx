@@ -9,6 +9,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
+* Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -57,3 +58,13 @@ Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against
 It can learn new models from the incoming audio, and save this as a preset for later use:
 
 ![screenshot](Spectrum Matcher 2.png)
+
+## Smooth Limiter
+
+This is a brick-wall limiter that aims to keep the correction curve smooth while remaining responsive.
+
+It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal function (`1 + cos(x)`), with the goal of reducing cross-modulation as much as possible.
+
+![screenshot](Smooth Limiter.png)
+
+The "distortion" parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion, which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.

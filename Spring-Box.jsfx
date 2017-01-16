@@ -1,4 +1,4 @@
-desc:Spring-Box Delay/Reverb (by Geraint Luff)
+desc:Spring-Box Delay-Reverb (by Geraint Luff)
 
 in_pin:Ch1
 in_pin:Ch2
@@ -217,7 +217,7 @@ function labelled_slider(value, low, high, bias, label, number_format) (
     value;
 );
 
-ui_start("main");
+control_start("main", "default");
 
 ui_screen() == "main" ? (
   control_navbar("Spring-Box Delay", -1, -1);
