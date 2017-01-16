@@ -797,4 +797,6 @@ model_N != bands_N || !model_N ? (
 	debug.reset += 1;
 );
 
+file_var(0, correction_learning);
+
 action_recalculate = 1;

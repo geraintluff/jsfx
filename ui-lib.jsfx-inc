@@ -28,6 +28,9 @@ uix_click2_x = uix_click2_y = uix_click2_t = 0; // Right
 uix_click64_x = uix_click64_y = uix_click3_t = 0; // Middle
 uix_mouse_x = uix_prev_mouse_x = 0;
 uix_mouse_y = uix_prev_mouse_y = 0;
+uix_scroll_y = uix_scroll_x = 0;
+uix_scroll_scale = 5000;
+uix_drag_scale = 200;
 uix_interacted = 0;
 
 uix_default_fontsize = 16;
@@ -48,6 +51,7 @@ function uix_setgfxcolorrgba(r, g, b, a) (
 	gfx_g = uix_clamp1(g/255);
 	gfx_b = uix_clamp1(b/255);
 	gfx_a = uix_clamp1(a);
+	0;
 );
 function uix_setgfxcolor() (
 	uix_setgfxcolorrgba(
@@ -239,6 +243,11 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 		uix_prev_mouse_y = uix_mouse_y;
 		uix_mouse_x = mouse_x;
 		uix_mouse_y = mouse_y;
+		
+		uix_scroll_y = mouse_wheel;
+		uix_scroll_x = mouse_hwheel;
+		mouse_wheel = mouse_hwheel = 0;
+		uix_scroll_y || uix_scroll_x ? uix_interacted = 1;
 		
 		uix_unclick1 = (!(mouse_cap&1) && uix_mousecap_prev&1);
 		uix_click1 = (mouse_cap&1 && !(uix_mousecap_prev&1)) ? (
@@ -663,7 +672,7 @@ function ui_pop() local(prev) (
 		uix_font_dirty ? uix_setgfxfont();
 		1;
 	);
-	0;
+	uix_setgfxcolor();
 );
 function ui_split_top(height) local(oldTop) (
 	height == -1 ? height = ui_texth() + uix_drawconfig_current[16/*uix_DRAWCONFIG:VPADDING*/]*2;
@@ -977,6 +986,14 @@ function ui_mouse_dx() (
 
 function ui_mouse_dy() (
 	mouse_y - uix_prev_mouse_y;
+);
+
+function ui_scroll_y() (
+	ui_hover() ? uix_scroll_y : 0;
+);
+
+function ui_scroll_x() (
+	ui_hover() ? uix_scroll_x : 0;
 );
 
 function ui_press() (
@@ -1498,6 +1515,11 @@ function control_hslider(value, range_low, range_high, curve_bias) local(valuera
 	ui_mouse_down() || ui_drag() ? (
 		value = uix_slider_ratio_to_value(ui_mouse_xratio(), range_low, range_high, curve_bias);
 	);
+	ui_scroll_y() ? (
+		valueratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
+		valueratio += ui_scroll_y()/uix_scroll_scale;
+		value = uix_slider_ratio_to_value(valueratio, range_low, range_high, curve_bias);
+	);
 	value;
 );
 
@@ -1522,13 +1544,18 @@ function control_vslider(value, range_low, range_high, curve_bias) local(valuera
 	ui_mouse_down() || ui_drag() ? (
 		value = uix_slider_ratio_to_value(1 - ui_mouse_yratio(), range_low, range_high, curve_bias);
 	);
+	ui_scroll_y() ? (
+		valueratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
+		valueratio += ui_scroll_y()/uix_scroll_scale;
+		value = uix_slider_ratio_to_value(valueratio, range_low, range_high, curve_bias);
+	);
 	value;
 );
 
-function control_dragvalue(value, range_low, range_high, curve_bias) local(valueratio, deltay) (
-	ui_drag() ? (
+function uix_control_dragvalue(value, range_low, range_high, curve_bias) local(valueratio, deltay) (
+	ui_drag() || ui_scroll_y() ? (
 		valueratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
-		deltay = ui_mouse_dy()/200*exp(-abs(ui_drag_x())/200);
+		deltay = ui_mouse_dy()/uix_drag_scale*exp(-abs(ui_drag_x())/uix_drag_scale) - ui_scroll_y()/5000;
 		value = uix_slider_ratio_to_value(valueratio - deltay, range_low, range_high, curve_bias);
 	);
 	value;
@@ -1558,7 +1585,7 @@ function control_dial(value, range_low, range_high, curve_bias)  local(valuerati
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
 
-	control_dragvalue(value, range_low, range_high, curve_bias);
+	uix_control_dragvalue(value, range_low, range_high, curve_bias);
 );
 
 function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius) (
@@ -1575,7 +1602,7 @@ function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius)
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
 	
-	angle = control_dragvalue(angle, -0.1, 2*$pi + 0.1, 0);
+	angle = uix_control_dragvalue(angle, -0.1, 2*$pi + 0.1, 0);
 	angle < 0 ? angle += 2*$pi;
 	angle >= 2*$pi ? angle -= 2*$pi;
 	angle;

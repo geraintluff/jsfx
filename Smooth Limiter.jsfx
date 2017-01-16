@@ -15,6 +15,8 @@ buffer1 = buffer0 + bufferlength;
 bufferpeak = buffer1 + bufferlength;
 freemem = bufferpeak + bufferlength;
 
+overcorrect_factor = 1.002; // about 0.02dB
+
 freemem = ui_setup(freemem);
 
 function tanh(x) (
@@ -101,6 +103,9 @@ peak < limit ? (
 	releasestartvalue = limit;
 	releaseindex = srate;
 ) : (truepeak == peak) ? (
+	// It's a new peak
+	peak *= overcorrect_factor; // Add just a little bit extra, in the hopes that we don't have to do this again soon
+
 	// For future decay
 	//releasegradient = (peak - limit)/releasesamples;
 	releasestartvalue = peak;
@@ -200,17 +205,16 @@ function value_to_y(v) (
 
 function draw_response() local(i, x, y, ref) (
 	control_background_passive();
-	i = 0;
-	ref = limit*2;
-	ui_color(192, 0, 0);
-	y = value_to_y(limit/ref);
-	gfx_line(ui_left(), y, ui_right() - 1, y);
-	y = value_to_y(-limit/ref);
-	gfx_line(ui_left(), y, ui_right() - 1, y);
+	ui_push(0.2);
+		ref = limit*2;
+		ui_color(192, 0, 0);
+		y = value_to_y(limit/ref);
+		gfx_line(ui_left(), y, ui_right() - 1, y);
+		y = value_to_y(-limit/ref);
+		gfx_line(ui_left(), y, ui_right() - 1, y);
+	ui_pop();
 
-	ui_color(255, 255, 255);
-	gfx_a = 1;
-	
+	i = 0;
 	while (i < ui_width()) (
 		x = 2*i/(ui_width() - 1) - 1;
 		y = value_to_y(dist(x*ref)/ref);
