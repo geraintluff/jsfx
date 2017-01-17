@@ -229,6 +229,7 @@ a[href] code {
 <li>Bad Connection - flips between two volumes to simulate poor connection or dropouts</li>
 <li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
+<li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -238,7 +239,8 @@ a[href] code {
 <p>The per-note effects can re-ordered and renamed, and the modulators can modulate any later effect in the chain, including other modulators.</p>
 <p><img src="PadSynth2.png" alt="screenshot"></p>
 </div><h2 id="spring-box">Spring-Box</h2><div class="section section2">
-<p>Spring-Box is an echo/reverb effect based on a matrix of 4 delay lines feeding back into each other.  Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
+<p>Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
+<p>Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.</p>
 <p><img src="Spring-Box.png" alt="screenshot"></p>
 </div><h2 id="bad-connection">Bad Connection</h2><div class="section section2">
 <p>Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate <a href="audio-demos/Bad Connection/radio-dropout.mp3">dodgy radios</a> or <a href="audio-demos/Bad Connection/cpu-overload.mp3">glitchy CPU overloads</a>.</p>
@@ -251,7 +253,16 @@ a[href] code {
 <p><img src="Sandwich Amp.png" alt="screenshot"></p>
 </div><h2 id="spectrum-matcher">Spectrum Matcher</h2><div class="section section2">
 <p>Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.</p>
+<p>The bottom half of the screen shows the short-term spectrum (green), the long-term spectrum (yellow), and the long-term reference spectrum (blue).</p>
+<p>The top half of the screen shows the current difference between the long-term spectrums (red).  If correction is enabled, it shows the correction curve (white) and phase (dotted brown).  If the correction is frozen, it shows the frozen correction values in blue.</p>
+<p>To disable correction and re-start/clear the long-term spectrum measurements, hit &quot;Reset&quot;.  To start correction, hit &quot;Correct&quot;.  Once correction is enabled, hit &quot;Freeze&quot; to set or update the fixed correction values.</p>
 <p><img src="Spectrum Matcher 1.png" alt="screenshot"></p>
 <p>It can learn new models from the incoming audio, and save this as a preset for later use:</p>
 <p><img src="Spectrum Matcher 2.png" alt="screenshot"></p>
+<p>This effect is quite CPU-intensive, so if you&#39;re not using it it could be good to bypass it.</p>
+</div><h2 id="smooth-limiter">Smooth Limiter</h2><div class="section section2">
+<p>This is a brick-wall limiter that aims to keep the correction curve smooth while remaining responsive.</p>
+<p>It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal function (<code>1 + cos(x)</code>), with the goal of reducing cross-modulation as much as possible.</p>
+<p><img src="Smooth Limiter.png" alt="screenshot"></p>
+<p>The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.</p>
 </div></div></div><script></script></body></html>
