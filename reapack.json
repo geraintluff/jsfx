@@ -17,7 +17,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "1.0.4"
+			"version": "1.0.5"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -34,7 +34,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -54,7 +54,7 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.0.4"
+			"version": "1.0.5"
 		},
 		"Spring-Box": {
 			"type": "effect",
@@ -70,7 +70,7 @@
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.0.4"
+			"version": "1.0.5"
 		},
 		"PadSynth": {
 			"type": "effect",
@@ -86,7 +86,7 @@
 			"links": {
 				"screenshot": "PadSynth.png"
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Smooth Limiter": {
 			"type": "effect",
@@ -98,7 +98,8 @@
 				"Smooth Limiter.jsfx": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
