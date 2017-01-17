@@ -11,7 +11,9 @@ slider3:80<0,95,1>-late-bias (%)
 slider4:50<0,100,1>-wet (%)
 slider5:100<0,100,1>-dry (%)
 slider6:0<0,1,1{even,long}>-room shape
-slider7:8000<100,20000,1>-prefilter (lowpass Hz)
+slider7:8000<100,20000,1>-filter (lowpass Hz)
+slider8:0<0,100,1>-detuning (cents)
+slider9:2<0.1,10,0.1>-chorus speed (Hz)
 
 import ui-lib.jsfx-inc
 
@@ -28,7 +30,9 @@ function alloc(N) local(result, i) (
   result;
 );
 
-buffersize = ceil(srate*exp(0.3) + 1); // Longest possible delay is 1*delayfactor
+maxdetunefactor = pow(2, 110/1200)*exp(0.15); // 110 cents plus variation
+mindetunefreq = 0.1;
+buffersize = ceil(srate*exp(0.3) + maxdetunefactor/mindetunefreq/(2*$pi)*srate + 1); // Longest possible delay, plus 100 samples
 buffer1a = alloc(buffersize);
 buffer1b = alloc(buffersize);
 buffer2a = alloc(buffersize);
@@ -45,8 +49,12 @@ filterRy1 = filterRy2 = 0;
 
 writepos = 0;
 delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
+chorusphase1 = rand()*2*$pi;
+chorusphase2 = rand()*2*$pi;
+chorusphase3 = rand()*2*$pi;
+chorusphase4 = rand()*2*$pi;
 
-function update() local(delay) (
+function update() local(delay, chorus, chorusfactor) (
   delayfactor1 = exp(0.3);
   delayfactor2 = exp(0.1);
   delayfactor3 = exp(-0.1);
@@ -60,10 +68,22 @@ function update() local(delay) (
   );
 
   delay = slider1*srate/1000;
-  delaysamples1 = min(buffersize - 1, floor(delay*delayfactor1));
-  delaysamples2 = min(buffersize - 1, floor(delay*delayfactor2));
-  delaysamples3 = min(buffersize - 1, floor(delay*delayfactor3));
-  delaysamples4 = min(buffersize - 1, floor(delay*delayfactor4));
+  delaysamples1 = min(buffersize - 1, delay*delayfactor1);
+  delaysamples2 = min(buffersize - 1, delay*delayfactor2);
+  delaysamples3 = min(buffersize - 1, delay*delayfactor3);
+  delaysamples4 = min(buffersize - 1, delay*delayfactor4);
+  delaysamples1i = ceil(delaysamples1);
+  delaysamples2i = ceil(delaysamples2);
+  delaysamples3i = ceil(delaysamples3);
+  delaysamples4i = ceil(delaysamples4);
+  
+  chorus = slider9*2*$pi/srate;
+  chorusphasespeed1 = chorus*exp(-0.15);
+  chorusphasespeed2 = chorus*exp(-0.05);
+  chorusphasespeed3 = chorus*exp(0.05);
+  chorusphasespeed4 = chorus*exp(0.15);
+  chorusfactor = pow(2, slider8/1200) - 1;
+  chorussamples = chorusfactor*srate/(slider9*2*$pi);
 
   feedbackA = slider2/100;
   feedbackRatio = slider3/100;
@@ -127,6 +147,107 @@ update();
 
 @sample
 
+chorusphase1 += chorusphasespeed1;
+chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
+chorusphase2 += chorusphasespeed2;
+chorusphase2 > 2*$pi ? chorusphase2 -= 2*$pi;
+chorusphase3 += chorusphasespeed3;
+chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
+chorusphase4 += chorusphasespeed4;
+chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
+
+1 ? (
+	// Linearly interpolated delay
+	d = delaysamples1 + (1 + sin(chorusphase1))*0.5*chorussamples;
+	di = floor(d);
+	dr = d - di;
+	dr *= dr*(0.5 - dr*0.3333);
+	readpos1 = writepos - di;
+	readpos1 < 0 ? readpos1 += buffersize;
+	readpos2 = writepos - di - 1;
+	readpos2 < 0 ? readpos2 += buffersize;
+	echo1a = buffer1a[readpos1] + (buffer1a[readpos2] - buffer1a[readpos1])*dr;
+	echo1b = buffer1b[readpos1] + (buffer1b[readpos2] - buffer1b[readpos1])*dr;
+
+	d = delaysamples2 + (1 + sin(chorusphase2))*0.5*chorussamples;
+	di = floor(d);
+	dr = d - di;
+	dr *= dr*(0.5 - dr*0.3333);
+	readpos1 = writepos - di;
+	readpos1 < 0 ? readpos1 += buffersize;
+	readpos2 = writepos - di - 1;
+	readpos2 < 0 ? readpos2 += buffersize;
+	echo2a = buffer2a[readpos1] + (buffer2a[readpos2] - buffer2a[readpos1])*dr;
+	echo2b = buffer2b[readpos1] + (buffer2b[readpos2] - buffer2b[readpos1])*dr;
+
+	d = delaysamples3 + (1 + sin(chorusphase3))*0.5*chorussamples;
+	di = floor(d);
+	dr = d - di;
+	dr *= dr*(0.5 - dr*0.3333);
+	readpos1 = writepos - di;
+	readpos1 < 0 ? readpos1 += buffersize;
+	readpos2 = writepos - di - 1;
+	readpos2 < 0 ? readpos2 += buffersize;
+	echo3a = buffer3a[readpos1] + (buffer3a[readpos2] - buffer3a[readpos1])*dr;
+	echo3b = buffer3b[readpos1] + (buffer3b[readpos2] - buffer3b[readpos1])*dr;
+
+	d = delaysamples4 + (1 + sin(chorusphase4))*0.5*chorussamples;
+	di = floor(d);
+	dr = d - di;
+	dr *= dr*(0.5 - dr*0.3333);
+	readpos1 = writepos - di;
+	readpos1 < 0 ? readpos1 += buffersize;
+	readpos2 = writepos - di - 1;
+	readpos2 < 0 ? readpos2 += buffersize;
+	echo4a = buffer4a[readpos1] + (buffer4a[readpos2] - buffer4a[readpos1])*dr;
+	echo4b = buffer4b[readpos1] + (buffer4b[readpos2] - buffer4b[readpos1])*dr;
+) : (
+	readpos = writepos - delaysamples1i;
+	readpos < 0 ? readpos += buffersize;
+	echo1a = buffer1a[readpos];
+	echo1b = buffer1b[readpos];
+
+	readpos = writepos - delaysamples2i;
+	readpos < 0 ? readpos += buffersize;
+	echo2a = buffer2a[readpos];
+	echo2b = buffer2b[readpos];
+
+	readpos = writepos - delaysamples3i;
+	readpos < 0 ? readpos += buffersize;
+	echo3a = buffer3a[readpos];
+	echo3b = buffer3b[readpos];
+
+	readpos = writepos - delaysamples4i;
+	readpos < 0 ? readpos += buffersize;
+	echo4a = buffer4a[readpos];
+	echo4b = buffer4b[readpos];
+);
+
+y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
+y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
+y2a = echo1a*mat21 + echo2a*mat22 + echo3a*mat23 + echo4a*mat24;
+y2b = echo1b*mat21 + echo2b*mat22 + echo3b*mat23 + echo4b*mat24;
+y3a = echo1a*mat31 + echo2a*mat32 + echo3a*mat33 + echo4a*mat34;
+y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
+y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
+y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
+
+left = spl0;
+right = spl1;
+
+buffer1a[writepos] = y1a*feedbackA + left*amp;
+buffer1b[writepos] = y1b*feedbackB + left*ampB;
+buffer2a[writepos] = y2a*feedbackA + right*amp;
+buffer2b[writepos] = y2b*feedbackB + right*ampB;
+buffer3a[writepos] = y3a*feedbackA + left*amp;
+buffer3b[writepos] = y3b*feedbackB + left*ampB;
+buffer4a[writepos] = y4a*feedbackA + right*amp;
+buffer4b[writepos] = y4b*feedbackB + right*ampB;
+
+left = (y1a - y1b + y3a - y3b)*0.71;
+right = (y2a - y2b + y4a - y4b)*0.71;
+
+// Filter
 filter_Q = 0.5;
 filter_freq = slider7;
 filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
@@ -140,7 +261,7 @@ filter_b1 = (1 - filter_cosW0)/filter_a0;
 filter_b0 = filter_b1/2;
 filter_b2 = filter_b0;
 
-x = spl0;
+x = left;
 y = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
 filterLx2 = filterLx1;
 filterLx1 = x;
@@ -148,7 +269,7 @@ filterLy2 = filterLy1;
 filterLy1 = y;
 left = y;
 
-x = spl1;
+x = right;
 y = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
 filterRx2 = filterRx1;
 filterRx1 = x;
@@ -156,46 +277,8 @@ filterRy2 = filterRy1;
 filterRy1 = y;
 right = y;
 
-readpos = writepos - delaysamples1;
-readpos < 0 ? readpos += buffersize;
-echo1a = buffer1a[readpos];
-echo1b = buffer1b[readpos];
-
-readpos = writepos - delaysamples2;
-readpos < 0 ? readpos += buffersize;
-echo2a = buffer2a[readpos];
-echo2b = buffer2b[readpos];
-
-readpos = writepos - delaysamples3;
-readpos < 0 ? readpos += buffersize;
-echo3a = buffer3a[readpos];
-echo3b = buffer3b[readpos];
-
-readpos = writepos - delaysamples4;
-readpos < 0 ? readpos += buffersize;
-echo4a = buffer4a[readpos];
-echo4b = buffer4b[readpos];
-
-y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
-y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
-y2a = echo1a*mat21 + echo2a*mat22 + echo3a*mat23 + echo4a*mat24;
-y2b = echo1b*mat21 + echo2b*mat22 + echo3b*mat23 + echo4b*mat24;
-y3a = echo1a*mat31 + echo2a*mat32 + echo3a*mat33 + echo4a*mat34;
-y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
-y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
-y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
-
-buffer1a[writepos] = y1a*feedbackA + left*amp;
-buffer1b[writepos] = y1b*feedbackB + left*ampB;
-buffer2a[writepos] = y2a*feedbackA + right*amp;
-buffer2b[writepos] = y2b*feedbackB + right*ampB;
-buffer3a[writepos] = y3a*feedbackA;
-buffer3b[writepos] = y3b*feedbackB;
-buffer4a[writepos] = y4a*feedbackA;
-buffer4b[writepos] = y4b*feedbackB;
-
-spl0 = spl0*dry + (y3a - y3b)*wet;
-spl1 = spl1*dry + (y4a - y4b)*wet;
+spl0 = spl0*dry + left*wet;
+spl1 = spl1*dry + right*wet;
 
 writepos += 1;
 writepos >= buffersize ? writepos = 0;
@@ -240,7 +323,7 @@ ui_screen() == "main" ? (
       ui_push_leftof(50);
         ui_pad();
         ui_align(1, 0.5);
-        ui_text("pre-filter:");
+        ui_text("filter:");
       ui_pop();
       ui_push_rightof(50);
         ui_push_heighttext(-1);
@@ -255,7 +338,7 @@ ui_screen() == "main" ? (
     ui_pop();
   ui_pop();
   
-  ui_split_leftratio(1/5);
+  ui_split_leftratio(1/7);
     slider1 = labelled_slider(slider1, 1, 1000, 4, "density", "%ims");
   ui_split_next();
     slider2 = labelled_slider(slider2, 0, 99, -1, "feedback", "%i%%");
@@ -265,6 +348,10 @@ ui_screen() == "main" ? (
     slider4 = labelled_slider(slider4, 0, 100, 0, "wet", "%i%%");
   ui_split_next();
     slider5 = labelled_slider(slider5, 0, 100, 0, "dry", "%i%%");
+  ui_split_next();
+    slider8 = labelled_slider(slider8, 0, 100, 2, "detuning", "%i cents");
+  ui_split_next();
+    slider9 = labelled_slider(slider9, 0.1, 10, 0, "chorus speed", "%.1fHz");
   ui_pop();
 ) : control_system();
 
