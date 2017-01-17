@@ -21,13 +21,13 @@ import ui-lib.jsfx-inc
 
 freemem = ui_setup(0);
 function alloc(N) local(result, i) (
-  result = freemem;
-  i = 0;
-  while (i < N) (
-    result[i] = 0;
-  );
-  freemem += N;
-  result;
+	result = freemem;
+	i = 0;
+	while (i < N) (
+		result[i] = 0;
+	);
+	freemem += N;
+	result;
 );
 
 maxdetunefactor = pow(2, 110/1200)*exp(0.15); // 110 cents plus variation
@@ -55,45 +55,45 @@ chorusphase3 = rand()*2*$pi;
 chorusphase4 = rand()*2*$pi;
 
 function update() local(delay, chorus, chorusfactor) (
-  delayfactor1 = exp(0.3);
-  delayfactor2 = exp(0.1);
-  delayfactor3 = exp(-0.1);
-  delayfactor4 = exp(-0.3);
+	delayfactor1 = exp(0.3);
+	delayfactor2 = exp(0.1);
+	delayfactor3 = exp(-0.1);
+	delayfactor4 = exp(-0.3);
 
-  slider6 == 1 ? (
-    delayfactor1 = exp(0.0);
-    delayfactor2 = exp(0.04);
-    delayfactor3 = exp(-0.09);
-    delayfactor4 = exp(0.13);
-  );
+	slider6 == 1 ? (
+		delayfactor1 = exp(0.0);
+		delayfactor2 = exp(0.04);
+		delayfactor3 = exp(-0.09);
+		delayfactor4 = exp(0.13);
+	);
 
-  delay = slider1*srate/1000;
-  delaysamples1 = min(buffersize - 1, delay*delayfactor1);
-  delaysamples2 = min(buffersize - 1, delay*delayfactor2);
-  delaysamples3 = min(buffersize - 1, delay*delayfactor3);
-  delaysamples4 = min(buffersize - 1, delay*delayfactor4);
-  delaysamples1i = ceil(delaysamples1);
-  delaysamples2i = ceil(delaysamples2);
-  delaysamples3i = ceil(delaysamples3);
-  delaysamples4i = ceil(delaysamples4);
-  
-  chorus = slider9*2*$pi/srate;
-  chorusphasespeed1 = chorus*exp(-0.15);
-  chorusphasespeed2 = chorus*exp(-0.05);
-  chorusphasespeed3 = chorus*exp(0.05);
-  chorusphasespeed4 = chorus*exp(0.15);
-  chorusfactor = pow(2, slider8/1200) - 1;
-  chorussamples = chorusfactor*srate/(slider9*2*$pi);
+	delay = slider1*srate/1000;
+	delaysamples1 = min(buffersize - 1, delay*delayfactor1);
+	delaysamples2 = min(buffersize - 1, delay*delayfactor2);
+	delaysamples3 = min(buffersize - 1, delay*delayfactor3);
+	delaysamples4 = min(buffersize - 1, delay*delayfactor4);
+	delaysamples1i = ceil(delaysamples1);
+	delaysamples2i = ceil(delaysamples2);
+	delaysamples3i = ceil(delaysamples3);
+	delaysamples4i = ceil(delaysamples4);
+	
+	chorus = slider9*2*$pi/srate;
+	chorusphasespeed1 = chorus*exp(-0.15);
+	chorusphasespeed2 = chorus*exp(-0.05);
+	chorusphasespeed3 = chorus*exp(0.05);
+	chorusphasespeed4 = chorus*exp(0.15);
+	chorusfactor = pow(2, slider8/1200) - 1;
+	chorussamples = chorusfactor*srate/(slider9*2*$pi);
 
-  feedbackA = slider2/100;
-  feedbackRatio = slider3/100;
-  feedbackB = feedbackA*feedbackRatio;
-  dry = slider5/100;
-  wet = slider4/100;
-  // Feedback-racing compensation
-  amp = (1 - feedbackA*feedbackRatio)/(1 - feedbackRatio);
-  
-  ampB = amp*min(1, feedbackRatio*1.1);
+	feedbackA = slider2/100;
+	feedbackRatio = slider3/100;
+	feedbackB = feedbackA*feedbackRatio;
+	dry = slider5/100;
+	wet = slider4/100;
+	// Feedback-racing compensation
+	amp = (1 - feedbackA*feedbackRatio)/(1 - feedbackRatio);
+	
+	ampB = amp*min(1, feedbackRatio*1.1);
 );
 
 coeff_a = 1;
@@ -125,18 +125,18 @@ mat43 = coeff_d;
 mat44 = coeff_a;
 
 0 ? (
-  matA = 1;
-  matB = 1;
-  matC = -1;
-  matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
-  matA *= matScaling;
-  matB *= matScaling;
-  matC *= matScaling;
-  
-  mat11 = 0; mat12 = matA; mat13 = matB; mat14 = matC;
-  mat21 = -matA; mat22 = 0; mat23 = -matC; mat24 = matB;
-  mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
-  mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
+	matA = 1;
+	matB = 1;
+	matC = -1;
+	matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
+	matA *= matScaling;
+	matB *= matScaling;
+	matC *= matScaling;
+	
+	mat11 = 0; mat12 = matA; mat13 = matB; mat14 = matC;
+	mat21 = -matA; mat22 = 0; mat23 = -matC; mat24 = matB;
+	mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
+	mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
 );
 
 @slider
@@ -283,76 +283,71 @@ spl1 = spl1*dry + right*wet;
 writepos += 1;
 writepos >= buffersize ? writepos = 0;
 
-@gfx 450 350
+@gfx 510 360
 
-function labelled_slider(value, low, high, bias, label, number_format) (
-    ui_split_toptext(-1);
-      ui_text(label);
-    ui_pop();
-    ui_split_bottomtext(-1);
-      number_format >= 0 ? (
-        ui_textnumber(value, number_format);
-      );
-    ui_pop();
-    ui_push_width(50);    
-      value = control_vslider(value, low, high, bias);
-    ui_pop();
-    value;
+function labelled_dial(value, low, high, bias, label, number_format) (
+	ui_push_height(50);		
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	ui_push_above(50);
+		ui_align(0.5, 0.85);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_align(0.5, 0.15);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+	value;
 );
 
 control_start("main", "default");
 
 ui_screen() == "main" ? (
-  control_navbar("Spring-Box Delay", -1, -1);
-  ui_split_bottom(60);
-    ui_split_leftratio(1/2);
-      ui_split_right(150);
-        ui_pad();
-        ui_push_heighttext(-1);
-          slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
-        ui_pop();
-      ui_pop();
-  
-      ui_align(1, 0.5);
-      ui_text("echoes:");
-    ui_split_next();
-      ui_pad();
-      ui_push_width(50);
-        slider7 = control_dial(slider7, 100, 20000, 2);
-      ui_pop();
-      ui_push_leftof(50);
-        ui_pad();
-        ui_align(1, 0.5);
-        ui_text("filter:");
-      ui_pop();
-      ui_push_rightof(50);
-        ui_push_heighttext(-1);
-          control_readout("");
-          slider7 < 1500 ? (
-            ui_textnumber(slider7, "%iHz");
-          ) : (
-            ui_textnumber(slider7/1000, "%0.2fkHz");
-          );
-        ui_pop();
-      ui_pop();
-    ui_pop();
-  ui_pop();
-  
-  ui_split_leftratio(1/7);
-    slider1 = labelled_slider(slider1, 1, 1000, 4, "density", "%ims");
-  ui_split_next();
-    slider2 = labelled_slider(slider2, 0, 99, -1, "feedback", "%i%%");
-  ui_split_next();
-    slider3 = labelled_slider(slider3, 0, 95, 0, "late-bias", "%i%%");
-  ui_split_next();
-    slider4 = labelled_slider(slider4, 0, 100, 0, "wet", "%i%%");
-  ui_split_next();
-    slider5 = labelled_slider(slider5, 0, 100, 0, "dry", "%i%%");
-  ui_split_next();
-    slider8 = labelled_slider(slider8, 0, 100, 2, "detuning", "%i cents");
-  ui_split_next();
-    slider9 = labelled_slider(slider9, 0.1, 10, 0, "chorus speed", "%.1fHz");
-  ui_pop();
+	control_navbar("Spring-Box Delay", -1, -1);
+	ui_split_rightratio(0.7);
+		ui_split_topratio(0.55);
+			control_group("Delay");
+			ui_split_bottomratio(0.3);
+				ui_split_right(150);
+					ui_pad();
+					ui_push_heighttext(-1);
+						slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+					ui_pop();
+				ui_pop();
+		
+				ui_align(1, 0.5);
+				ui_text("echoes:");
+			ui_pop();
+
+			ui_split_leftratio(1/3);
+				slider1 = labelled_dial(slider1, 1, 1000, 4, "density", "%ims");
+			ui_split_next();
+				slider2 = labelled_dial(slider2, 0, 99, -1, "feedback", "%i%%");
+			ui_split_next();
+				slider3 = labelled_dial(slider3, 0, 95, 0, "late-bias", "%i%%");
+			ui_pop();
+		ui_split_next();
+			control_group("Output");
+			ui_split_leftratio(1/3);
+				slider4 = labelled_dial(slider4, 0, 100, 0, "wet", "%i%%");
+			ui_split_next();
+				slider5 = labelled_dial(slider5, 0, 100, 0, "dry", "%i%%");
+			ui_split_next();
+				slider7 = labelled_dial(slider7, 100, 20000, 2, "filter", "%iHz");
+			ui_pop();
+		ui_pop();
+	ui_split_next();
+		control_group("Chorus");
+		ui_split_leftratio(1);
+			ui_split_topratio(1/2);
+				slider8 = labelled_dial(slider8, 0, 100, 2, "detuning", "%i cents");
+			ui_split_next();
+				slider9 = labelled_dial(slider9, 0.1, 10, 0, "chorus speed", "%.1fHz");
+			ui_pop();
+		ui_pop();
+	ui_pop();
 ) : control_system();
 
 ui_interacted() ? update();
