@@ -5,7 +5,7 @@ This is a collection of audio effects I have written in REAPER's JSFX language.
 Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack](https://reapack.com/) by adding the repository: https://geraintluff.github.io/jsfx/index.xml
 
 * PadSynth - a synth that produces thick sounds, including per-note effects and modulators
-* Spring-Box - an echo/reverb effect
+* Spring-Box - an echo/chorus effect
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
@@ -29,7 +29,7 @@ The per-note effects can re-ordered and renamed, and the modulators can modulate
 
 Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  ([audio demo](audio-demos/spring-box.mp3))
 
-Early echoes can be suppressed to get a smoother sound, by using two parallel delay structures with different feedback ratios, and subtracting the results.
+Early echoes can be suppressed to get a smoother sound (the "late bias" control), by using two parallel delay structures with different feedback ratios, and subtracting the results.
 
 ![screenshot](Spring-Box.png)
 
@@ -73,7 +73,7 @@ This effect is quite CPU-intensive, so if you're not using it it could be good t
 
 This is a brick-wall limiter that aims to keep the correction curve smooth while remaining responsive.
 
-It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal function (`1 + cos(x)`), with the goal of reducing cross-modulation as much as possible.
+It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal segment (`1 + cos(x)`), with the goal of reducing cross-modulation.
 
 ![screenshot](Smooth Limiter.png)
 
