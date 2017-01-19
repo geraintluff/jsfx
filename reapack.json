@@ -86,11 +86,11 @@
 			"links": {
 				"screenshot": "PadSynth.png"
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Smooth Limiter": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Utility",
 			"files": {
 				"ui-lib.jsfx-inc": {
 					"main": false
@@ -100,6 +100,18 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Pitch Readout": {
+			"type": "effect",
+			"category": "Utility",
+			"files": {
+				"Pitch Readout.jsfx": {
+					"main": false
+				},
+				"pitch-detection.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
