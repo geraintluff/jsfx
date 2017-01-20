@@ -100,18 +100,6 @@
 				}
 			},
 			"version": "1.0.0"
-		},
-		"Pitch Readout": {
-			"type": "effect",
-			"category": "Utility",
-			"files": {
-				"Pitch Readout.jsfx": {
-					"main": false
-				},
-				"pitch-detection.jsfx-inc": {
-					"main": false
-				}
-			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

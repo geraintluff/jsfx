@@ -95,10 +95,6 @@
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.0/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 			</version>
 		</reapack>
-		<reapack name="Pitch Readout" type="effect">
-			<metadata>
-			</metadata>
-		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
