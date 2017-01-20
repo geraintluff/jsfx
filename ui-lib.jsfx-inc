@@ -526,7 +526,7 @@ function uix_fitline(text, start, text_end, width) local(i, result, line, line_e
 	hadspace = 0;
 	overflowed = 0;
 	i = result = start;
-	i < text_end ? while (
+	while (!overflowed && i < text_end) (
 		char = str_getchar(text, i);
 		char == 10 ? (
 			result = i;
@@ -543,7 +543,10 @@ function uix_fitline(text, start, text_end, width) local(i, result, line, line_e
 			line_end += 1;
 		);
 		i += 1;
-		!overflowed && i < text_end;
+	);
+	!overflowed ? (
+		gfx_measurestr(line, text_w, text_h);
+		overflowed = text_w > width;
 	);
 	overflowed ? result : text_end;
 );
@@ -555,11 +558,10 @@ function ui_wraptext_height(text) local(text_length, line_start, line_end, width
 	
 	text_length = strlen(text);
 	line_start = 0;
-	line_start < text_length ? while (
+	while (line_start < text_length) (
 		line_end = uix_fitline(text, line_start, text_length, width);
 		height += gfx_texth;
 		line_start = line_end + 1;
-		line_start < text_length;
 	);
 	height;
 );
@@ -579,7 +581,7 @@ function ui_wraptext(text) local(text_length, line_start, line_end, width, heigh
 	
 	text_length = strlen(text);
 	line_start = 0;
-	line_start < text_length ? while (
+	while (line_start < text_length) (
 		line_end = uix_fitline(text, line_start, text_length, width);
 		line = #;
 		strcpy_substr(line, text, line_start, line_end - line_start);
@@ -589,7 +591,6 @@ function ui_wraptext(text) local(text_length, line_start, line_end, width, heigh
 		gfx_y += gfx_texth;
 		height += gfx_texth;
 		line_start = line_end + 1;
-		line_start < text_length;
 	);
 	height;
 );
@@ -1029,6 +1030,73 @@ function ui_key_next() (
 	uix_latestchar;
 );
 
+/////////////// DEBUG/TUTORIAL ///////////////
+
+function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner, config, top, left, bottom, right, textX, textY, textW, textH) (
+	oldR = gfx_r;
+	oldG = gfx_g;
+	oldB = gfx_b;
+	oldA = gfx_a;
+	oldX = gfx_x;
+	oldY = gfx_y;
+	oldFont = gfx_getfont();
+	
+	gfx_setfont(0);
+	gfx_a = 0.6;
+
+	i = 0;
+	while (i <= uix_drawconfig_currentindex) (
+		config = uix_drawconfig + uix_drawconfig_step*i;
+
+		left = config[9/*uix_DRAWCONFIG:LEFT*/];
+		top = config[10/*uix_DRAWCONFIG:TOP*/];
+		right = config[9/*uix_DRAWCONFIG:LEFT*/] + config[11/*uix_DRAWCONFIG:WIDTH*/] - 1;;
+		bottom = config[10/*uix_DRAWCONFIG:TOP*/] + config[12/*uix_DRAWCONFIG:HEIGHT*/] - 1;
+
+		sprintf(#uix_debug_text, "%i", i + 1);
+		gfx_measurestr(#uix_debug_text, textW, textH);
+
+		corner = 0;
+		while (corner < 4) (
+			gfx_r = gfx_g = gfx_b = 1;
+			textX = left + 2;
+			textY = top + 2;
+			(corner%4 == 1 || corner%4 == 2) ? (
+				textX = right - 1 - textW;
+			);
+			(corner%4 > 1) ? (
+				textY = bottom - 1 - textH;
+			);
+			gfx_rect(textX - 1, textY - 1, textW + 3, textH + 3);
+
+			hue = $pi*sqrt(2)*i + time_precise()*0.1;
+			gfx_r = max(0, min(1, 0.5 + sin(hue)))*0.6;
+			gfx_g = max(0, min(1, 0.5 + sin(hue + $pi*2/3)))*0.6;
+			gfx_b = max(0, min(1, 0.5 + sin(hue + $pi*4/3)))*0.6;
+			
+			gfx_x = textX;
+			gfx_y = textY;
+			gfx_drawstr(#uix_debug_text);
+			corner += 1;
+		);
+
+		gfx_line(left, top, right, top);
+		gfx_line(right, top, right, bottom);
+		gfx_line(right, bottom, left, bottom);
+		gfx_line(left, bottom, left, top);
+		
+		i += 1;
+	);
+	
+	gfx_r = oldR;
+	gfx_g = oldG;
+	gfx_b = oldB;
+	gfx_a = oldA;
+	gfx_x = oldX;
+	gfx_y = oldY;
+	gfx_setfont(oldFont);
+);
+
 /////////////// LEVEL 2 ///////////////
 
 // Total number of themes: 2/*uix_THEME: */
@@ -1346,6 +1414,7 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 		ui_pop();
 	ui_pop();
 	ui_pad();
+	ui_padtop();
 	ui_padbottom();
 );
 
@@ -1890,6 +1959,42 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 
 	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
 	prompt_selectpacked;
+);
+
+function control_graph_step(buffer, length, step, low, high) local(i, v, x, y, mid, top, bottom) (
+	low == high ? (
+		i = 0;
+		mid = low;
+		while (i < length) (
+			v = buffer[i*step];
+			low = min(low, v);
+			high = max(high, v);
+			i += 1;
+		);
+		// Keep it symmetrical
+		low = min(low, 2*mid - high);
+		high = max(high, 2*mid - low);
+	);
+	
+	top = ui_top();
+	bottom = ui_bottom() - 1;
+	i = 0;
+	while (i < length) (
+		v = buffer[i*step];
+		x = ui_left() + i/(length - 1)*(ui_width() - 1);
+		y = ui_top() + max(0, min(1, (v - high)/(low - high)))*(ui_height() - 1);
+		i == 0 ? (
+			gfx_x = x;
+			gfx_y = y;
+		) : (
+			gfx_lineto(x, y);
+		);
+		i += 1;
+	);
+);
+
+function control_graph(buffer, length, low, high) (
+	control_graph_step(buffer, length, 1, low, high);
 );
 
 function control_system() local(prompt_title, prompt_text, prompt_init, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, OK) (

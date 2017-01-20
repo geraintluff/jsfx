@@ -1,32 +1,119 @@
 @init
 
-function pitch_detection_init(freemem) local(buffer_length) (
+function debug_vector(v) (
+	this.0 = v[0];
+	this.1 = v[1];
+	this.2 = v[2];
+	this.3 = v[3];
+	this.4 = v[4];
+);
+
+function matrix_sane(A, rows, cols) local(row, col, sum, factor) (
+	sum = 0;
+	row = 0;
+	while (row < rows) (
+		col = 0;
+		while (col < cols) (
+			sum += A[row*cols + col];
+			col += 1;
+		);
+		row += 1;
+	);
+	factor = 1/sum;
+	row = 0;
+	while (row < rows) (
+		col = 0;
+		while (col < cols) (
+			A[row*cols + col] *= factor;
+			col += 1;
+		);
+		row += 1;
+	);
+);
+
+// Row-first means (11 12 13 21 22 23 31 32 33)
+function matrix_mult(A, B, C, rowsA, midN, colsB) local(sum, row, col, i) (
+	row = 0;
+	while (row < rowsA) (
+		col = 0;
+		while (col < colsB) (
+			sum = 0;
+			i = 0;
+			while (i < midN) (
+				sum += A[row*midN + i]*B[i*colsB + col];
+				i += 1;
+			);
+			C[row*colsB + col] = sum;
+			col += 1;
+		);
+		row += 1;
+	);
+);
+// Col-first would be (11 21 31 12 22 32 13 23 33)
+// This is a transposition operation, so to multiply col-first matrices, swap the order
+// 	to get T(T(A)T(B)) = BA
+// Vectors are just 1xN matrices, so premultiplying a column vector is matrix_mult(A, v, v2, rowsA, colsA, 1)
+
+function pitch_detection_init(freemem) local(buffer_length, min_delay, mem_start) (
+	mem_start = freemem;
 	this.window_length = ceil(0.05*srate);
-	this.fft_size = pow(2, ceil(log(this.window_length)/log(2)));
+	this.fft_size = pow(2, ceil(log(this.window_length*2)/log(2)));
 	this.fft_buffer = freemem;
 	freemem += this.fft_size*2;
 	this.sdft_step = ceil(this.window_length*0.5);
 	this.sdft_remaining = this.window_length;
-	this.noise_limit = 0;
+	
+	min_delay = 0.5*srate;
+	this.options_N = 2;
+	this.matrix_size = this.options_N*this.options_N;
+	this.matrix_scales = ceil(log(min_delay/this.sdft_step + 1)/log(2)) + 1;
+	// Each history entry is (freqs, matrix1, matrix2, matrix4, ...)
+	this.history_step = (this.options_N + this.matrix_size*this.matrix_scales);
+	this.history_delay_steps = pow(2, this.matrix_scales - 1);
+	this.history_length = this.history_delay_steps + 1;
+	this.history_index = 0; // The oldest one (current result), which is also the one about to be re-written
+	this.history_current_index = 0;
+	this.history = freemem;
+	freemem += this.history_step*this.history_length;
+	
+	// TODO: the scores below are independent of the step period, but the peak-probs are not
+	//this.prob_power = this.sdft_step/srate; // seconds per step, therefore power to use for probs
+	this.prob_power = this.sdft_step/this.window_length; // take window length as useful period?
+	this.prob_power = this.sdft_step/(0.1*srate);
+	this.prob_power = 1;
+
+	this.score_sweep_log2 = -1; // Penalty for sweeping up/down by an octave
+	this.score_sweep_log = this.score_sweep_log2*log(2); // Penalty for sweeping up/down by E
+	this.score_onoff = exp(-1); // Penalty for transitioning on/off
+	
+	this.score_noise_prob = 0.3; // Minimal signal/(signal + noise)
+	
+	this.working_vector = freemem;
+	freemem += this.options_N;
+	this.working_vector_2 = freemem;
+	freemem += this.options_N;
+	this.working_vector_3 = freemem;
+	freemem += this.options_N;
 	
 	buffer_length = this.buffer_length = ceil(this.window_length);
 	this.buffer_left = freemem;
 	this.buffer_right = freemem + buffer_length;
 	this.buffer_index = 0;
+	freemem += buffer_length*2;
 	
 	this.current_freq = 0;
-	this.current_amp = 0;
-	this.current_snr = 0;
 	
-	freemem += buffer_length*2;
+	// Wipe clean
+	memset(mem_start, 0, freemem - mem_start);
+	
 	freemem;
 );
 
 function pitch_detection_delay() (
-	floor(this.window_length*0.5);
+	floor(this.sdft_step*this.history_delay_steps);
 );
 
-function pitch_detection_recalc(dt) local(i, i2, real1, imag1, real2, imag2, mag2, index, ratio, window, value, peak_high, peak_low, peak_index, l, r, a, b, ratio, window) (
+function pitch_detection_recalc(freqs, observations) local(i, i2, real1, imag1, real2, imag2, mag2, index, ratio, window, value, peak_high, peak_low, peak_index, l, r, a, b, ratio, window, freq, amp) (
 	i = 0;
 	while (i < this.window_length) (
 		index = this.buffer_index - i - 1;
@@ -66,8 +153,17 @@ function pitch_detection_recalc(dt) local(i, i2, real1, imag1, real2, imag2, mag
 	// Find the highest peak after the lowest peak
 	i = 1;
 	peak_high = peak_low = peak_index = 0;
-	while (i < this.fft_size*0.5) (
+	while (i < this.window_length*0.25) (
 		value = this.fft_buffer[2*i];
+
+		ratio = (i + 0.5)/this.window_length;
+		window = 0.5 + 0.5*cos(ratio*2*$pi);
+		1 ? (
+			value = this.fft_buffer[2*i] = this.fft_buffer[2*i]/window;
+			//this.fft_buffer[2*i] = window;
+			this.fft_buffer[2*i] = pow(this.fft_buffer[2*i], this.prob_power);
+		);
+
 		value < peak_low ? (
 			peak_high = peak_low = value;
 		) : value > peak_high ? (
@@ -83,17 +179,129 @@ function pitch_detection_recalc(dt) local(i, i2, real1, imag1, real2, imag2, mag
 	b = (r - l);
 	peak_index += -b/(2*a);
 
-	ratio = (peak_index + 0.5)/this.window_length;
-	window = 0.5 + 0.5*cos(ratio*$pi);
-
-	this.current_amp = this.fft_buffer[0];
-
-	this.current_snr = min(1, peak_high/(this.current_amp*window));
-	this.current_snr > this.noise_limit ? (
-		this.current_freq = srate/peak_index;
-	) : (
-		this.current_freq = 0;
+	freq = srate/peak_index;
+	amp = this.fft_buffer[0];
+	
+	i = 0;
+	while (i < this.options_N) (
+		freqs[i] = observations[i] = 0;
+		i += 1;
 	);
+	
+	observations[0] = this.score_noise_prob;
+	freqs[1] = freq;
+	observations[1] = peak_high/amp;
+	
+	i = 0;
+	while (i < this.options_N) (
+		observations[i] = pow(observations[i], this.prob_power);
+		i += 1;
+	);
+);
+
+function pitch_detection_step() local(i, freq_from, freq_to, current_history, current_matrices, current_freqs, current_B, prev_history, prev_index, prev_freqs, prev_matrices, observations, likelihoods, row, col, transition, log_ratio, step_back, prev_mat, new_mat, current_mat, best, best_index) (
+	// New entry we're writing
+	current_history = this.history + this.history_step*this.history_index;
+	current_matrices = current_history + this.options_N;
+	current_freqs = current_history;
+
+	working_vector = this.working_vector;
+	observations = this.working_vector_2;
+	likelihoods = this.working_vector_3;
+	this.pitch_detection_recalc(current_freqs, observations);
+	
+	// Go back (history_delay_steps), and progress the likelihood
+	prev_index = (this.history_index + this.history_length - this.history_delay_steps)%this.history_length;
+	prev_history = this.history + this.history_step*prev_index;
+	prev_matrices = prev_history + this.options_N;
+	prev_mat = prev_matrices;
+	// Get new likelihoods using the old progression matrix applied to the previously decided option
+	i = 0;
+	while (i < this.options_N) (
+		likelihoods[i] = prev_mat[i*this.options_N + this.history_current_index];
+		//likelihoods[i] = 1;
+		i += 1;
+	);
+	
+	// Get previous frequencies
+	prev_index = (this.history_index + this.history_length - 1)%this.history_length;
+	prev_history = this.history + this.history_step*prev_index;
+	prev_freqs = prev_history;
+
+	new_mat = current_matrices;
+	// Assemble transition matrix B
+	row = 0;
+	while (row < this.options_N) (
+		col = 0;
+		freq_to = current_freqs[row];
+		while (col < this.options_N) (
+			freq_from = prev_freqs[col];
+			freq_to == freq_from ? (
+				transition = 1;
+			) : (freq_to == 0 || freq_from == 0) ? (
+				transition = this.score_onoff;
+			) : (
+				log_ratio = abs(log(freq_to/freq_from));
+				transition = exp(this.score_sweep_log*log_ratio);
+			);
+			new_mat[row*this.options_N + col] = transition*observations[row];
+			col += 1;
+		);
+		row += 1;
+	);
+	
+	i = 1;
+	step_back = 1;
+	while (i < this.matrix_scales) (
+		prev_index = (this.history_index + this.history_length - step_back)%this.history_length;
+		prev_history = this.history + this.history_step*prev_index;
+		prev_matrices = prev_history + this.options_N;
+
+		prev_mat = prev_matrices + (i - 1)*this.matrix_size;
+		current_mat = current_matrices + (i - 1)*this.matrix_size;
+		new_mat = current_matrices + i*this.matrix_size;
+		
+		matrix_mult(prev_mat, current_mat, new_mat, this.options_N, this.options_N, this.options_N);
+		matrix_sane(new_mat, this.options_N, this.options_N);
+		
+		i += 1;
+		step_back *= 2;
+	);
+	
+	// The matrix that will take us back all the way to history_delay_steps ago
+	current_mat = current_matrices + (this.matrix_scales - 1)*this.matrix_size;
+	// The matrix includes the observations now, so we reset the observations to be all 1s
+	i = 0;
+	while (i < this.options_N) (
+		observations[i] = 1;
+		i += 1;
+	);
+	matrix_mult(observations, current_mat, working_vector, 1, this.options_N, this.options_N);
+	i = 0;
+	while (i < this.options_N) (
+		likelihoods[i] *= working_vector[i];
+		i += 1;
+	);
+	
+	// choose the most likely
+	best = likelihoods[0];
+	best_index = 0;
+	i = 1;
+	while (i < this.options_N) (
+		likelihoods[i] > best ? (
+			best = likelihoods[i];
+			best_index = i;
+		);
+		i += 1;
+	);
+	this.history_current_index = best_index;
+
+	prev_index = (this.history_index + this.history_length - this.history_delay_steps)%this.history_length;
+	prev_history = this.history + this.history_step*prev_index;
+	prev_freqs = prev_history;
+	this.current_freq = prev_freqs[best_index];
+	
+	this.history_index = (this.history_index + 1)%this.history_length;
 );
 
 function pitch_detection_sample(left, right) (
@@ -105,7 +313,7 @@ function pitch_detection_sample(left, right) (
 	this.sdft_remaining -= 1;
 	this.sdft_remaining <= 0 ? (
 		this.sdft_remaining += this.sdft_step;
-		this.pitch_detection_recalc(this.sdft_step/srate);
+		this.pitch_detection_step();
 	);
 	this.current_freq;
 );
@@ -116,8 +324,4 @@ function pitch_detection_freq() (
 
 function pitch_detection_note() (
 	12*log(this.current_freq/440)/log(2) + 69;
-);
-
-function pitch_detection_amp_tonal() (
-	this.current_amp*this.current_snr;
 );
