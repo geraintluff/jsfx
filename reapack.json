@@ -110,6 +110,9 @@
 				},
 				"pitch-detection.jsfx-inc": {
 					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
 				}
 			}
 		}

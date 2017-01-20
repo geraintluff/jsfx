@@ -1,0 +1,123 @@
+@init
+
+function pitch_detection_init(freemem) local(buffer_length) (
+	this.window_length = ceil(0.05*srate);
+	this.fft_size = pow(2, ceil(log(this.window_length)/log(2)));
+	this.fft_buffer = freemem;
+	freemem += this.fft_size*2;
+	this.sdft_step = ceil(this.window_length*0.5);
+	this.sdft_remaining = this.window_length;
+	this.noise_limit = 0;
+	
+	buffer_length = this.buffer_length = ceil(this.window_length);
+	this.buffer_left = freemem;
+	this.buffer_right = freemem + buffer_length;
+	this.buffer_index = 0;
+	
+	this.current_freq = 0;
+	this.current_amp = 0;
+	this.current_snr = 0;
+	
+	freemem += buffer_length*2;
+	freemem;
+);
+
+function pitch_detection_delay() (
+	floor(this.window_length*0.5);
+);
+
+function pitch_detection_recalc(dt) local(i, i2, real1, imag1, real2, imag2, mag2, index, ratio, window, value, peak_high, peak_low, peak_index, l, r, a, b, ratio, window) (
+	i = 0;
+	while (i < this.window_length) (
+		index = this.buffer_index - i - 1;
+		index < 0 ? index += this.buffer_length;
+		ratio = (i + 0.5)/this.window_length;
+		window = 0.5 - 0.5*cos(ratio*2*$pi);
+		window /= this.fft_size;
+		this.fft_buffer[2*i] = this.buffer_left[index]*window;
+		this.fft_buffer[2*i + 1] = this.buffer_right[index]*window;
+		i += 1;
+	);
+	while (i < this.fft_size) (
+		this.fft_buffer[2*i] = this.fft_buffer[2*i + 1] = 0;
+		i += 1;
+	);
+	
+	fft(this.fft_buffer, this.fft_size);
+	fft_permute(this.fft_buffer, this.fft_size);
+
+	i = 1;
+	while (i < this.fft_size*0.5) (
+		i2 = this.fft_size - i;
+		real1 = this.fft_buffer[2*i];
+		imag1 = this.fft_buffer[2*i + 1];
+		real2 = this.fft_buffer[2*i2];
+		imag2 = this.fft_buffer[2*i2 + 1];
+		
+		mag2 = (real1*real1 + imag1*imag1 + real2*real2 + imag2*imag2);
+		this.fft_buffer[2*i] = this.fft_buffer[2*i2] = sqrt(mag2)/2;
+		this.fft_buffer[2*1 + 1] = this.fft_buffer[2*i2 + 1] = 0;
+		i += 1;
+	);
+	
+	fft_ipermute(this.fft_buffer, this.fft_size);
+	ifft(this.fft_buffer, this.fft_size);
+	
+	// Find the highest peak after the lowest peak
+	i = 1;
+	peak_high = peak_low = peak_index = 0;
+	while (i < this.fft_size*0.5) (
+		value = this.fft_buffer[2*i];
+		value < peak_low ? (
+			peak_high = peak_low = value;
+		) : value > peak_high ? (
+			peak_high = value;
+			peak_index = i;
+		);
+		i += 1;
+	);
+	// Quadratic interpolation of peak
+	l = this.fft_buffer[2*(peak_index - 1)];
+	r = this.fft_buffer[2*(peak_index + 1)];
+	a = (l + r - 2*peak_high);
+	b = (r - l);
+	peak_index += -b/(2*a);
+
+	ratio = (peak_index + 0.5)/this.window_length;
+	window = 0.5 + 0.5*cos(ratio*$pi);
+
+	this.current_amp = this.fft_buffer[0];
+
+	this.current_snr = min(1, peak_high/(this.current_amp*window));
+	this.current_snr > this.noise_limit ? (
+		this.current_freq = srate/peak_index;
+	) : (
+		this.current_freq = 0;
+	);
+);
+
+function pitch_detection_sample(left, right) (
+	this.buffer_left[this.buffer_index] = left;
+	this.buffer_right[this.buffer_index] = right;
+	this.buffer_index += 1;
+	this.buffer_index >= this.buffer_length ? this.buffer_index = 0;
+	
+	this.sdft_remaining -= 1;
+	this.sdft_remaining <= 0 ? (
+		this.sdft_remaining += this.sdft_step;
+		this.pitch_detection_recalc(this.sdft_step/srate);
+	);
+	this.current_freq;
+);
+
+function pitch_detection_freq() (
+	this.current_freq;
+);
+
+function pitch_detection_note() (
+	12*log(this.current_freq/440)/log(2) + 69;
+);
+
+function pitch_detection_amp_tonal() (
+	this.current_amp*this.current_snr;
+);
