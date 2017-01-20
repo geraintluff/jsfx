@@ -60,11 +60,11 @@ function pitch_detection_init(freemem) local(buffer_length, min_delay, mem_start
 	this.fft_size = pow(2, ceil(log(this.window_length*2)/log(2)));
 	this.fft_buffer = freemem;
 	freemem += this.fft_size*2;
-	this.sdft_step = ceil(this.window_length*0.5);
+	this.sdft_step = ceil(this.window_length*0.15);
 	this.sdft_remaining = this.window_length;
 	
 	min_delay = 0.5*srate;
-	this.options_N = 2;
+	this.options_N = 5;
 	this.matrix_size = this.options_N*this.options_N;
 	this.matrix_scales = ceil(log(min_delay/this.sdft_step + 1)/log(2)) + 1;
 	// Each history entry is (freqs, matrix1, matrix2, matrix4, ...)
@@ -79,7 +79,8 @@ function pitch_detection_init(freemem) local(buffer_length, min_delay, mem_start
 	// TODO: the scores below are independent of the step period, but the peak-probs are not
 	//this.prob_power = this.sdft_step/srate; // seconds per step, therefore power to use for probs
 	this.prob_power = this.sdft_step/this.window_length; // take window length as useful period?
-	this.prob_power = this.sdft_step/(0.1*srate);
+	//this.prob_power = this.sdft_step/(0.01*srate);
+	debug.prob_power_possible = this.prob_power;
 	this.prob_power = 1;
 
 	this.score_sweep_log2 = -1; // Penalty for sweeping up/down by an octave
@@ -113,7 +114,7 @@ function pitch_detection_delay() (
 	floor(this.sdft_step*this.history_delay_steps);
 );
 
-function pitch_detection_recalc(freqs, observations) local(i, i2, real1, imag1, real2, imag2, mag2, index, ratio, window, value, peak_high, peak_low, peak_index, l, r, a, b, ratio, window, freq, amp) (
+function pitch_detection_recalc(freqs, observations) local(i, i2, real1, imag1, real2, imag2, mag2, index, ratio, window, value, peak_index, l, r, a, b, ratio, window, freq, amp, crossed_zero, replace_index, replace_peak) (
 	i = 0;
 	while (i < this.window_length) (
 		index = this.buffer_index - i - 1;
@@ -149,54 +150,76 @@ function pitch_detection_recalc(freqs, observations) local(i, i2, real1, imag1, 
 	
 	fft_ipermute(this.fft_buffer, this.fft_size);
 	ifft(this.fft_buffer, this.fft_size);
-	
-	// Find the highest peak after the lowest peak
-	i = 1;
-	peak_high = peak_low = peak_index = 0;
-	while (i < this.window_length*0.25) (
-		value = this.fft_buffer[2*i];
 
-		ratio = (i + 0.5)/this.window_length;
-		window = 0.5 + 0.5*cos(ratio*2*$pi);
-		1 ? (
-			value = this.fft_buffer[2*i] = this.fft_buffer[2*i]/window;
-			//this.fft_buffer[2*i] = window;
-			this.fft_buffer[2*i] = pow(this.fft_buffer[2*i], this.prob_power);
-		);
-
-		value < peak_low ? (
-			peak_high = peak_low = value;
-		) : value > peak_high ? (
-			peak_high = value;
-			peak_index = i;
-		);
-		i += 1;
-	);
-	// Quadratic interpolation of peak
-	l = this.fft_buffer[2*(peak_index - 1)];
-	r = this.fft_buffer[2*(peak_index + 1)];
-	a = (l + r - 2*peak_high);
-	b = (r - l);
-	peak_index += -b/(2*a);
-
-	freq = srate/peak_index;
-	amp = this.fft_buffer[0];
-	
 	i = 0;
 	while (i < this.options_N) (
 		freqs[i] = observations[i] = 0;
 		i += 1;
 	);
-	
+	freqs[0] = 0;
 	observations[0] = this.score_noise_prob;
-	freqs[1] = freq;
-	observations[1] = peak_high/amp;
+
+	amp = this.fft_buffer[0];
+	
+	i = 1;
+	crossed_zero = 0;
+	debug.peak_count = 0;
+	while (i < this.window_length*0.3) (
+		value = this.fft_buffer[2*i];
+		l = this.fft_buffer[2*(i - 1)];
+		r = this.fft_buffer[2*(i + 1)];
+		
+		value <= 0 ? crossed_zero = 1;
+		
+		// Local peak
+		crossed_zero && l < value && r <= value ? (
+			debug.peak_count += 1;
+			// Quadratic interpolation of peak
+			a = (l + r - 2*value);
+			b = (r - l);
+			peak_index = i - b/(2*a);
+
+			0 ? (
+				ratio = (i + 0.5)/this.window_length;
+				window = 0.5 + 0.5*cos(ratio*2*$pi);
+				value = this.fft_buffer[2*i] = this.fft_buffer[2*i]/window;
+				//this.fft_buffer[2*i] = window;
+			);
+
+			// relative to total volume
+			value /= amp;
+
+			// Find smallest existing observation
+			replace_index = 0;
+			replace_peak = value;
+			i2 = 1;
+			while (i2 < this.options_N) (
+				observations[i2] < replace_peak ? (
+					replace_peak = observations[i2];
+					replace_index = i2;
+				);
+				i2 += 1;
+			);
+			replace_index ? (
+				observations[replace_index] = value;
+				freqs[replace_index] = srate/peak_index;
+			);
+		);
+		i += 1;
+	);
 	
 	i = 0;
 	while (i < this.options_N) (
 		observations[i] = pow(observations[i], this.prob_power);
+		i ? (
+			index = floor(srate/freqs[i] + 0.5);
+			this.fft_buffer[2*index] = -1;
+		);
 		i += 1;
 	);
+
+	debug.peaks_observations.debug_vector(observations);
+	debug.peaks_freqs.debug_vector(freqs);
 );
 
 function pitch_detection_step() local(i, freq_from, freq_to, current_history, current_matrices, current_freqs, current_B, prev_history, prev_index, prev_freqs, prev_matrices, observations, likelihoods, row, col, transition, log_ratio, step_back, prev_mat, new_mat, current_mat, best, best_index) (
