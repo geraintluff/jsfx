@@ -154,7 +154,7 @@ function ui_screen_close_to(id) (
 	);
 );
 
-function ui_screen_get(index) local(screen) (
+function ui_screen_get(index) local(screen, offset) (
 	screen = (uix_screenstack + uix_screenstack_step*uix_screenstack_currentlayer);
 	offset = index + 1/*UI_SCREEN: ID*/;
 	offset < uix_screenstack_step ? (
@@ -477,40 +477,44 @@ function ui_text_height(text) local(text_h, text_w) (
 );
 
 function ui_text(text) local (text_h, text_w, boxwidth, boxheight, valign, halign, fontscale, fontsize) (
-	uix_setgfxcolor();
-	uix_setgfxfont();
-	valign = uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
-	halign = uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
-	
-	gfx_measurestr(text, text_w, text_h);
-	
-	boxwidth = ui_width();
-	boxheight = ui_height();
-	
-	fontscale = 1;
-	text_w > boxwidth ? (
-		fontscale = boxwidth/text_w;
-	);
-	text_h > boxheight ? (
-		fontscale = min(boxheight/text_h, fontscale);
-	);
-	fontscale != 1 ? (
-		fontsize = max(8, floor(fontscale*uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/]));
-		fontscale = fontsize/uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/];
-		gfx_setfont(
-			16,
-			uix_drawconfig_current[7/*uix_DRAWCONFIG:FONTFACE*/],
-			fontsize,
-			uix_fontflags()
+	textw = texth = 0;
+	text >= 0 ? (
+		uix_setgfxcolor();
+		uix_setgfxfont();
+		valign = uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
+		halign = uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
+		
+		gfx_measurestr(text, text_w, text_h);
+		
+		boxwidth = ui_width();
+		boxheight = ui_height();
+		
+		fontscale = 1;
+		text_w > boxwidth ? (
+			fontscale = boxwidth/text_w;
 		);
+		text_h > boxheight ? (
+			fontscale = min(boxheight/text_h, fontscale);
+		);
+		fontscale != 1 ? (
+			fontsize = max(8, floor(fontscale*uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/]));
+			fontscale = fontsize/uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/];
+			gfx_setfont(
+				16,
+				uix_drawconfig_current[7/*uix_DRAWCONFIG:FONTFACE*/],
+				fontsize,
+				uix_fontflags()
+			);
+			gfx_measurestr(text, text_w, text_h);
+		);
+		
+		valign = uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
+		halign = uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
+		gfx_x = ui_left() + (boxwidth - text_w)*halign;
+		gfx_y = ui_top() + (boxheight - text_h)*valign;
+		
+		gfx_drawstr(text);
 	);
-	
-	valign = uix_drawconfig_current[14/*uix_DRAWCONFIG:VALIGN*/];
-	halign = uix_drawconfig_current[13/*uix_DRAWCONFIG:HALIGN*/];
-	gfx_x = ui_left() + (boxwidth - text_w*fontscale)*halign;
-	gfx_y = ui_top() + (boxheight - text_h*fontscale)*valign;
-	
-	gfx_drawstr(text);
 	text_w;
 );
 
@@ -1030,9 +1034,47 @@ function ui_key_next() (
 	uix_latestchar;
 );
 
+//////// Fancy graphics ////////
+
+function ui_graph_step(buffer, length, step, low, high) local(i, v, x, y, mid, top, bottom) (
+	low == high ? (
+		i = 0;
+		mid = low;
+		while (i < length) (
+			v = buffer[i*step];
+			low = min(low, v);
+			high = max(high, v);
+			i += 1;
+		);
+		// Keep it symmetrical
+		low = min(low, 2*mid - high);
+		high = max(high, 2*mid - low);
+	);
+	
+	top = ui_top() + 0.5;
+	bottom = ui_bottom() - 0.5;
+	i = 0;
+	while (i < length) (
+		v = buffer[i*step];
+		x = ui_left() + i/(length - 1)*(ui_width() - 1);
+		y = top + max(0, min(1, (v - high)/(low - high)))*(ui_height() - 1);
+		i == 0 ? (
+			gfx_x = x;
+			gfx_y = y;
+		) : (
+			gfx_lineto(x, y);
+		);
+		i += 1;
+	);
+);
+
+function ui_graph(buffer, length, low, high) (
+	ui_graph_step(buffer, length, 1, low, high);
+);
+
 /////////////// DEBUG/TUTORIAL ///////////////
 
-function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner, config, top, left, bottom, right, textX, textY, textW, textH) (
+function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner, config, top, left, bottom, right, textX, textY, textW, textH, hue) (
 	oldR = gfx_r;
 	oldG = gfx_g;
 	oldB = gfx_b;
@@ -1099,11 +1141,14 @@ function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner
 
 /////////////// LEVEL 2 ///////////////
 
-// Total number of themes: 2/*uix_THEME: */
+// Total number of themes: 3/*uix_THEME: TRON*/
 uix_control_theme = 0/*uix_THEME:DEFAULT*/;
+uix_control_theme_prev = -1;
 
-function control_start(defaultPage, theme) (
+function control_start(defaultPage, theme) local(reset) (
 	ui_start(defaultPage);
+	reset = (uix_control_theme_prev != theme);
+	uix_control_theme_prev = theme;
 	
 	theme == "black" ? (
 		uix_control_theme = 1/*uix_THEME:BLACK_AND_WHITE*/;
@@ -1111,16 +1156,23 @@ function control_start(defaultPage, theme) (
 		ui_color(255, 255, 255);
 		ui_fontface("Trebuchet MS");
 		ui_fontsize(22);
+		ui_padding(10, 10);
+	) : theme == "tron" ? (
+		uix_control_theme = 2/*uix_THEME:TRON*/;
+		gfx_clear = $x454545;
+		ui_color(245, 255, 255);
+		ui_fontface("Verdana");
 	) : (
 		uix_control_theme = 0/*uix_THEME:DEFAULT*/;
+		//ui_color(242, 242, 242);
 	);
 );
 
 function control_state() (
-	shade = ui_press() ? "press" : ui_hover() ? "hover" : ui_drag() ? "drag" : "none";
+	ui_press() ? "press" : ui_hover() ? "hover" : ui_drag() ? "drag" : "none";
 );
 
-function uix_gloss(strength) local(height, topalpha, bottomalpha) (
+function uix_gloss(strength) local(width, height, topalpha, bottomalpha) (
 	// White fade
 	height = ui_height()*0.5;
 	topalpha = strength*0.3;
@@ -1151,21 +1203,50 @@ function uix_gloss(strength) local(height, topalpha, bottomalpha) (
 		0, 0, 0, 0,
 		0, 0, 0, (bottomalpha - topalpha)/height
 	);
+	
+	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		// Left fade
+		width = min(ui_width()*0.3, 5);
+		topalpha = strength*0.05;
+		bottomalpha = 0;
+		gfx_gradrect(
+			ui_left(), ui_top(), width, ui_height(),
+			1, 1, 1, topalpha,
+			0, 0, 0, (bottomalpha - topalpha)/width,
+			0, 0, 0, 0
+		);
+		// Right fade
+		topalpha = strength*0.05;
+		bottomalpha = 0;
+		gfx_gradrect(
+			ui_right() - width, ui_top(), width, ui_height(),
+			1, 1, 1, 0,
+			0, 0, 0, -(bottomalpha - topalpha)/width,
+			0, 0, 0, 0
+		);
+	);
 
 	ui_colora(0, 0, 0, 0.1);
 	ui_border();
 );
 
-function control_finish_enabled(state) (
+function uix_circle_shade(x, y, r, angle, shadowstrength) (
 	ui_push();
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(255, 255, 255);
-//			ui_border();
-		) : (
-			uix_gloss(1);
-			ui_colora(102, 102, 102, 0.25);
-			ui_border();
-		);
+		ui_colora(255, 255, 255, 0.3);
+		gfx_arc(x, y + 1, r, -1.5 + angle, 1.5 + angle, 1);
+		gfx_arc(x, y + 1, r - 0.3, -1 + angle, 1 + angle, 1);
+		gfx_a = 0.15;
+		//gfx_arc(x, y + 2, r, -0.5 + angle, 0.5 + angle, 1);
+
+		angle += $pi;
+		ui_colora(0, 0, 0, 0.2*shadowstrength);
+		gfx_arc(x, y - 1, r, -1.2 + angle, 1.2 + angle, 1);
+		gfx_arc(x, y - 1, r, -0.8 + angle, 0.8 + angle, 1);
+		gfx_a = 0.15;
+		//gfx_arc(x, y - 2, r, -0.5 + angle, 0.5 + angle, 1);
+		
+		ui_colora(0, 0, 0, 0.1);
+		gfx_circle(x, y, r, 0, 1);
 	ui_pop();
 );
 
@@ -1188,6 +1269,101 @@ function uix_dotted_line(x1, y1, x2, y2, drawlength, skiplength) local(distance,
 	);
 );
 
+function control_background_enabled(state) local(shade) (
+	state = state ? state : control_state();
+	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_push();
+			ui_color(255*shade, 255*shade, 255*shade);
+			ui_pad1(2);
+			ui_fill();
+		ui_pop();
+		ui_color(0, 0, 0);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		shade = 1.5 - shade;
+		ui_push();
+			ui_color(203*shade, 213*shade, 215*shade);
+			ui_pad1(2);
+			ui_fill();
+		ui_pop();
+		ui_color(0, 0, 0);
+		state == "press" || state == "hover" ? (
+			ui_color(200, 240, 255);
+		) : (
+			ui_color(162, 228, 255);
+		);
+	) : (
+		ui_color(64*shade, 102*shade, 140*shade);
+		ui_fill();
+		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+	);
+);
+
+function control_background_enabled_circle(x, y, r, state) local(shade) (
+	state = state ? state : control_state();
+	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
+	
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(255*shade, 255*shade, 255*shade);
+		gfx_circle(x, y, r, 1, 1);
+		ui_color(0, 0, 0);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		shade = 1.5 - shade;
+		ui_color(231*shade, 246*shade, 255*shade);
+		gfx_circle(x, y, r, 1, 1);
+		//ui_color(162, 228, 255);
+		ui_color(255, 255, 255);
+	) : (
+		ui_color(64*shade, 102*shade, 140*shade);
+		gfx_circle(x, y, r, 1, 1);
+		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
+		ui_color(255, 255, 255);
+	);
+);
+
+function control_finish_enabled(state) (
+	ui_push();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(255, 255, 255);
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			uix_gloss(1.8);
+			ui_color(0, 0, 0);
+		) : (
+			uix_gloss(1);
+			ui_colora(102, 102, 102, 0.25);
+			ui_border();
+		);
+	ui_pop();
+);
+
+function control_finish_enabled_circle(x, y, r, state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		0
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		uix_circle_shade(x, y, r, 0, 2);
+	) : (
+		uix_circle_shade(x, y, r, 0, 1);
+	);
+);
+
+function control_background_passive(state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(0, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_color(48, 48, 48);
+		ui_fill();
+		//ui_color(0, 0, 0);
+		//ui_color(140, 198, 221);
+		ui_color(255, 255, 255);
+	) : (
+		ui_color(255, 255, 255);
+		ui_fill();
+		ui_color(0, 0, 0);
+	);
+);
+
 function control_finish_passive(state) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
@@ -1196,6 +1372,8 @@ function control_finish_passive(state) (
 			uix_dotted_line(ui_right() - 1, ui_top(), ui_right() - 1, ui_bottom(), 2, 2);
 			uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 2, 2);
 			uix_dotted_line(ui_left(), ui_bottom(), ui_left(), ui_top(), 2, 2);
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			uix_gloss(1);
 		) : (
 			uix_gloss(0.5);
 			ui_colora(102, 102, 102, 0.5);
@@ -1204,7 +1382,33 @@ function control_finish_passive(state) (
 	ui_pop();
 );
 
-function control_finish_disabled(strength) (
+//function control_finish_passive_circle(x, y, r, state) (
+//	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+//		0
+//	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+//		uix_circle_shade(x, y, r, 0, 0.5);
+//	) : (
+//		uix_circle_shade(x, y, r, 0, 0.5);
+//	);
+//);
+
+function control_background_disabled(state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(64, 64, 64);
+		ui_fill();
+		ui_color(0, 0, 0);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_color(96, 96, 96);
+		ui_fill();
+		ui_color(48, 48, 48);
+	) : (
+		ui_color(180, 180, 180);
+		ui_fill();
+		ui_color(255, 255, 255);
+	);
+);
+
+function control_finish_disabled(state) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 			ui_color(127, 127, 127);
@@ -1216,11 +1420,43 @@ function control_finish_disabled(strength) (
 	ui_pop();
 );
 
+//function control_finish_disabled_circle(x, y, r, state) (
+//	ui_push();
+//		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+//			0
+//		) : (
+//			ui_colora(0, 0, 0, 0.1);
+//			gfx_circle(x, y, r, 0, 1);
+//		);
+//	ui_pop();
+//);
+
+function control_background_inset(state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(0, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_color(32, 32, 32);
+		ui_fill();
+		ui_color(205, 167, 119);
+	) : (
+		ui_color(255, 255, 255);
+		ui_fill();
+		ui_color(0, 0, 0);
+	);
+);
+
 function control_finish_inset(strength) local(height, topalpha, bottomalpha) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 			ui_color(255, 255, 255);
 			ui_border();
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			uix_gloss(-0.2);
+			ui_colora(0, 0, 0, 0.1);
+			ui_border();
+			ui_color(32, 32, 32);
 		) : (
 			// Black fade
 			height = min(5, ui_height()/2);
@@ -1248,42 +1484,6 @@ function control_finish_inset(strength) local(height, topalpha, bottomalpha) (
 	ui_pop();
 );
 
-function uix_circle_shade(x, y, r, angle, shadowstrength) (
-	ui_push();
-		ui_colora(255, 255, 255, 0.3);
-		gfx_arc(x, y + 1, r, -1.5 + angle, 1.5 + angle, 1);
-		gfx_arc(x, y + 1, r - 0.3, -1 + angle, 1 + angle, 1);
-		gfx_a = 0.15;
-		//gfx_arc(x, y + 2, r, -0.5 + angle, 0.5 + angle, 1);
-
-		angle += $pi;
-		ui_colora(0, 0, 0, 0.2*shadowstrength);
-		gfx_arc(x, y - 1, r, -1.2 + angle, 1.2 + angle, 1);
-		gfx_arc(x, y - 1, r, -0.8 + angle, 0.8 + angle, 1);
-		gfx_a = 0.15;
-		//gfx_arc(x, y - 2, r, -0.5 + angle, 0.5 + angle, 1);
-		
-		ui_colora(0, 0, 0, 0.1);
-		gfx_circle(x, y, r, 0, 1);
-	ui_pop();
-);
-
-function control_finish_enabled_circle(x, y, r, state) (
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		0
-	) : (
-		uix_circle_shade(x, y, r, 0, 1);
-	);
-);
-
-function control_finish_passive_circle(x, y, r, state) (
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		0
-	) : (
-		uix_circle_shade(x, y, r, 0, 0.5);
-	);
-);
-
 function control_finish_inset_circle(x, y, r, state) (
 	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 		0
@@ -1292,130 +1492,134 @@ function control_finish_inset_circle(x, y, r, state) (
 	);
 );
 
-function control_finish_disabled_circle(x, y, r, state) (
+function control_background_technical(state) (
+	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+		ui_color(0, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_color(32, 32, 32);
+		ui_fill();
+		ui_color(205, 147, 74);
+	) : (
+		ui_color(32, 32, 32);
+		ui_fill();
+		ui_color(192, 128, 64);
+	);
+);
+
+function control_finish_technical(state) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			0
+			ui_color(255, 255, 255);
+			uix_dotted_line(ui_left(), ui_top(), ui_right() - 1, ui_top(), 2, 2);
+			uix_dotted_line(ui_right() - 1, ui_top(), ui_right() - 1, ui_bottom(), 2, 2);
+			uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 2, 2);
+			uix_dotted_line(ui_left(), ui_bottom(), ui_left(), ui_top(), 2, 2);
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			uix_gloss(1.5);
+			ui_colora(0, 0, 0, 0.2);
+			ui_border();
+			ui_color(205, 147, 74);
 		) : (
-			ui_colora(0, 0, 0, 0.1);
-			gfx_circle(x, y, r, 0, 1);
+			ui_color(0, 0, 0);
+			uix_gloss(1);
+			ui_border();
 		);
 	ui_pop();
-);
-
-function control_background_enabled(state) (
-	state = state ? state : control_state();
-	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_push();
-			ui_color(255*shade, 255*shade, 255*shade);
-			ui_pad1(2);
-			ui_fill();
-		ui_pop();
-		ui_color(0, 0, 0);
-	) : (
-		ui_color(64*shade, 102*shade, 140*shade);
-		ui_fill();
-		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
-	);
-);
-
-function control_background_enabled_circle(x, y, r, state) (
-	state = state ? state : control_state();
-	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
-	
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_color(255*shade, 255*shade, 255*shade);
-		gfx_circle(x, y, r, 1, 1);
-		ui_color(0, 0, 0);
-	) : (
-		ui_color(64*shade, 102*shade, 140*shade);
-		gfx_circle(x, y, r, 1, 1);
-		(state == "press") ? ui_color(230, 230, 230) : ui_color(255, 255, 255);
-	);
-);
-
-function control_background_disabled() (
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_color(127, 127, 127);
-		ui_fill();
-		ui_color(0, 0, 0);
-	) : (
-		ui_color(180, 180, 180);
-		ui_fill();
-		ui_color(255, 255, 255);
-	);
-);
-
-function control_background_inset() (
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_color(0, 0, 0);
-		ui_fill();
-		ui_color(255, 255, 255);
-	) : (
-		ui_color(255, 255, 255);
-		ui_fill();
-		ui_color(0, 0, 0);
-	);
-);
-
-function control_background_passive() (
-	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_color(0, 0, 0);
-		ui_fill();
-		ui_color(255, 255, 255);
-	) : (
-		ui_color(255, 255, 255);
-		ui_fill();
-		ui_color(0, 0, 0);
-	);
 );
 
 function control_group(text) local(texth, textw, textl, textr, textv) (
-	texth = textw = 0;
-	uix_setgfxfont();
-	gfx_measurestr(text, textw, texth);
+	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_fontsize(16);
 
-	ui_push();
-		ui_pad2(ui_hpadding()/2, 0);
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(255, 255, 255); // Border color
-		) : (
-			ui_colora(102, 102, 102, 0.5); // Border color
-		);
-	
-		ui_split_top(texth);
-			ui_padleft();
-			ui_split_left(textw + ui_hpadding());
-				textl = ui_left();
-				textr = ui_right();
-				textv = ui_top() + ui_height()/2;
+		ui_pad2(ui_hpadding()/2, ui_vpadding()/2);
+
+		ui_push();
+			ui_color(128, 128, 128);
+			gfx_roundrect(ui_left(), ui_top() + 1, ui_width(), ui_height() - 1, 10, 1);
+		ui_pop();
+
+		strlen(text) > 0 ? (
+			ui_split_bottom(ui_texth() + ui_vpadding()/2);
+				ui_color(128, 128, 128);
+				ui_border_top();
+
+				ui_color(255, 255, 255);
 				ui_align(0.5, 0.5);
 				ui_text(text);
 			ui_pop();
-		ui_pop();
-		ui_padbottom();
+		);
+		ui_pad();
+	) : (
 		ui_push();
-			gfx_x = textr;
-			gfx_y = textv;
 			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-				uix_dotted_line(textr, textv, ui_right() - 1, textv, 1, 1);
-				uix_dotted_line(ui_right() - 1, textv, ui_right() - 1, ui_bottom(), 1, 1);
-				uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 1, 1);
-				uix_dotted_line(ui_left(), ui_bottom(), ui_left(), textv, 1, 1);
-				uix_dotted_line(ui_left(), textv, textl, textv, 1, 1);
+				ui_fontsize(18);
 			) : (
-				gfx_lineto(ui_right() - 1, gfx_y);
-				gfx_lineto(gfx_x, ui_bottom());
-				gfx_lineto(ui_left(), gfx_y);
-				gfx_lineto(gfx_x, textv);
-				gfx_lineto(textl, gfx_y);
+				ui_fontsize(16);
 			);
+			
+			texth = textw = 0;
+			uix_setgfxfont();
+			textw = texth = 0;
+			text >= 0 ? gfx_measurestr(text, textw, texth);
+			!texth ? texth = gfx_texth;
+
+			// Border color
+			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+				ui_color(255, 255, 255);
+			) : (
+				ui_colora(102, 102, 102, 0.5);
+			);
+			
+			ui_pad2(ui_hpadding()/2, 0);
+			ui_split_top(texth);
+				ui_padleft();
+				ui_padright();
+				uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+					ui_align(0.5, 0.5);
+				) : (
+					ui_align(0, 0.5);
+				);
+				
+				ui_push_width(textw + ui_hpadding());
+					textl = ui_left();
+					textr = ui_right();
+					textv = ui_top() + ui_height()/2;
+					textw > 0 ? (
+						ui_align(0.5, 0.5);
+						ui_text(text);
+					);
+				ui_pop();
+			ui_pop();
+			ui_padbottom();
+
+			!textw ? textl = textr = ui_left();
+			ui_push();
+				gfx_x = textr;
+				gfx_y = textv;
+				uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+					uix_dotted_line(textr, textv, ui_right() - 1, textv, 1, 1);
+					uix_dotted_line(ui_right() - 1, textv, ui_right() - 1, ui_bottom(), 1, 1);
+					uix_dotted_line(ui_right() - 1, ui_bottom(), ui_left(), ui_bottom(), 1, 1);
+					uix_dotted_line(ui_left(), ui_bottom(), ui_left(), textv, 1, 1);
+					uix_dotted_line(ui_left(), textv, textl, textv, 1, 1);
+				) : (
+					gfx_lineto(ui_right() - 1, gfx_y);
+					gfx_lineto(gfx_x, ui_bottom());
+					gfx_lineto(ui_left(), gfx_y);
+					gfx_lineto(gfx_x, textv);
+					gfx_lineto(textl, gfx_y);
+				);
+			ui_pop();
 		ui_pop();
-	ui_pop();
-	ui_pad();
-	ui_padtop();
-	ui_padbottom();
+		ui_pad();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_pad4(0, -1, 0, -1);
+		) : (
+			ui_pad2(0, -1);
+		);
+	);
 );
 
 function control_readout(text) local() (
@@ -1495,14 +1699,14 @@ function control_selector(value, text, next_value, prev_value) local(buttonwidth
 		ui_halign() <= 0.5 ? ui_split_left(buttonwidth) : ui_split_right(buttonwidth);
 			ui_colora(255, 255, 255, 0.8);
 			ui_split_topratio(0.5);
-				control_background_enabled();
+				next_value != value ? control_background_enabled() : control_background_disabled();
 				control_arrow(1);
-				control_finish_enabled();
+				next_value != value ? control_finish_enabled() : control_finish_disabled();
 				ui_click() ? value = next_value;
 			ui_split_next();
-				control_background_enabled();
+				prev_value != value ? control_background_enabled() : control_background_disabled();
 				control_arrow(3);
-				control_finish_enabled();
+				prev_value != value ? control_finish_enabled() : control_finish_disabled();
 				ui_click() ? value = prev_value;
 			ui_pop();
 		ui_pop();
@@ -1560,25 +1764,39 @@ function uix_slider_ratio_to_value(ratio, range_low, range_high, curve_bias) loc
 	valueratio = curve_bias ? (
 		(exp(ratio*curve_bias) - 1)/(exp(curve_bias) - 1)
 	) : ratio;
-	value = range_low + (range_high - range_low)*valueratio;
+	range_low + (range_high - range_low)*valueratio;
 );
 
-function control_hslider(value, range_low, range_high, curve_bias) local(valueratio, screenratio, state) (
+function control_hslider(value, range_low, range_high, curve_bias) local(valueratio, screenratio, state, barwidth) (
 	// We calculate screenratio first (before updating value) because then any rounding/limiting applied to the value is reflected in the UI
 	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 
 	ui_push();
-		control_background_inset();
-		control_finish_inset();
+		uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			control_background_technical();
+		) : (
+			control_background_inset();
+			control_finish_inset();
+		);
 		state = control_state();
 
 		ui_push();
 			barwidth = floor((ui_width() - 1)*screenratio + 1.5);
 			ui_split_left(barwidth);
-				control_background_enabled(state);
-				control_finish_enabled(state);
+				uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+					ui_color(121, 173, 185);
+					ui_fill();
+				) : (
+					control_background_enabled(state);
+					control_finish_enabled(state);
+				);
 			ui_pop();
 		ui_pop();
+		uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			control_finish_technical();
+		) : (
+			0;
+		);
 	ui_pop();
 
 	ui_mouse_down() || ui_drag() ? (
@@ -1592,22 +1810,36 @@ function control_hslider(value, range_low, range_high, curve_bias) local(valuera
 	value;
 );
 
-function control_vslider(value, range_low, range_high, curve_bias) local(valueratio, screenratio, state) (
+function control_vslider(value, range_low, range_high, curve_bias) local(valueratio, screenratio, state, barheight) (
 	// We calculate screenratio first (before updating value) because then any rounding/limiting applied to the value is reflected in the UI
 	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 
 	ui_push();
-		control_background_inset();
-		control_finish_inset();
+		uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			control_background_technical();
+		) : (
+			control_background_inset();
+			control_finish_inset();
+		);
 		state = control_state();
 
 		ui_push();
 			barheight = floor((ui_height() - 1)*screenratio + 1.5);
 			ui_split_bottom(barheight);
-				control_background_enabled(state);
-				control_finish_enabled(state);
+				uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+					ui_color(121, 173, 185);
+					ui_fill();
+				) : (
+					control_background_enabled(state);
+					control_finish_enabled(state);
+				);
 			ui_pop();
 		ui_pop();
+		uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			control_finish_technical();
+		) : (
+			0;
+		);
 	ui_pop();
 
 	ui_mouse_down() || ui_drag() ? (
@@ -1630,26 +1862,51 @@ function uix_control_dragvalue(value, range_low, range_high, curve_bias) local(v
 	value;
 );
 
-function control_dial(value, range_low, range_high, curve_bias)  local(valueratio, screenratio, centrex, centrey, radius, inner_radius, highangle, lowangle, angle) (
-	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
-
-	radius = min(ui_width(), ui_height())/2 - 1;
-	centrex = (ui_left() + radius) + (ui_width() - radius*2 - 1)*ui_halign();
-	centrey = (ui_top() + radius) + (ui_height() - radius*2 - 1)*ui_valign();
-	inner_radius = radius - 3;
-	control_background_enabled_circle(centrex, centrey, radius, 0);
-
-	// Draw arc
-	lowangle = -2.3;
-	highangle = 2.3;
-	angle = lowangle + (highangle - lowangle)*(screenratio*0.98 + 0.01);
-
+function uix_thick_arc(centrex, centrey, inner_radius, lowangle, angle) (
 	gfx_arc(centrex, centrey, inner_radius, lowangle, angle, 1);
 	gfx_arc(centrex + 1, centrey, inner_radius, lowangle, angle, 1);
 	gfx_arc(centrex, centrey + 1, inner_radius, lowangle, angle, 1);
 	gfx_arc(centrex - 1, centrey, inner_radius, lowangle, angle, 1);
 	gfx_arc(centrex, centrey - 1, inner_radius, lowangle, angle, 1);
+);
 
+function uix_thick_line(x1, y1, x2, y2) (
+	gfx_line(x1, y1, x2, y2, 1);
+	gfx_line(x1 + 1, y1, x2 + 1, y2, 1);
+	gfx_line(x1, y1 + 1, x2, y2 + 1, 1);
+	gfx_line(x1 - 1, y1, x2 - 1, y2, 1);
+	gfx_line(x1, y1 - 1, x2, y2 - 1, 1);
+);
+
+function control_dial(value, range_low, range_high, curve_bias)  local(valueratio, screenratio, centrex, centrey, radius, inner_radius, highangle, lowangle, angle, x1, x2, y1, y2) (
+	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
+
+	radius = min(ui_width(), ui_height())/2 - 1;
+	centrex = (ui_left() + radius) + (ui_width() - radius*2 - 1)*ui_halign();
+	centrey = (ui_top() + radius) + (ui_height() - radius*2 - 1)*ui_valign();
+	inner_radius = radius - 4;
+	control_background_enabled_circle(centrex, centrey, radius, "none");
+
+	// Draw arc
+	lowangle = -2.3;
+	highangle = 2.3;
+	angle = lowangle + (highangle - lowangle)*(screenratio*0.98 + 0.01);
+	
+	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+		ui_color(162, 228, 255);
+		ui_color(131, 184, 206);
+		uix_thick_arc(centrex, centrey, inner_radius, lowangle, highangle);
+
+		x1 = centrex + sin(angle)*inner_radius*0.5;
+		y1 = centrey - cos(angle)*inner_radius*0.5;
+		x2 = centrex + sin(angle)*inner_radius;
+		y2 = centrey - cos(angle)*inner_radius;
+		ui_color(255, 255, 255);
+		uix_thick_line(x1, y1, x2, y2);
+	) : (
+		gfx_a = 1;
+		uix_thick_arc(centrex, centrey, inner_radius, lowangle, angle);
+	);
 	ui_pad1(5);
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
@@ -1657,16 +1914,19 @@ function control_dial(value, range_low, range_high, curve_bias)  local(valuerati
 	uix_control_dragvalue(value, range_low, range_high, curve_bias);
 );
 
-function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius) (
+function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius, x1, x2, y1, y2) (
 	radius = min(ui_width(), ui_height())/2 - 1;
 	centrex = (ui_left() + radius) + (ui_width() - radius*2 - 1)*ui_halign();
 	centrey = (ui_top() + radius) + (ui_height() - radius*2 - 1)*ui_valign();
-	inner_radius = radius - 3;
-	control_background_enabled_circle(centrex, centrey, radius, 0);
+	inner_radius = radius - 4;
+	control_background_enabled_circle(centrex, centrey, radius, "none");
 
-	// Draw knob
-	gfx_circle(centrex + sin(angle)*inner_radius, centrey - cos(angle)*inner_radius, 1.5, 1, 1);
-
+	x1 = centrex + sin(angle)*inner_radius*0.5;
+	y1 = centrey - cos(angle)*inner_radius*0.5;
+	x2 = centrex + sin(angle)*inner_radius;
+	y2 = centrey - cos(angle)*inner_radius;
+	uix_thick_line(x1, y1, x2, y2);
+	
 	ui_pad1(5);
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
@@ -1679,10 +1939,18 @@ function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius)
 
 function control_dialog(title, width, height, doneText, cancelText) local(accepted) (
 	accepted = 0;
-
+	
 	ui_push();
-		ui_colora(0, 0, 0, 0.2);
-		ui_fill();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(0, 0, 0);
+			ui_fill();
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			ui_colora(0, 0, 0, 0.5);
+			ui_fill();
+		) : (
+			ui_colora(0, 0, 0, 0.2);
+			ui_fill();
+		);
 	ui_pop();
 
 	!width ? width = ui_width()*0.8;
@@ -1694,10 +1962,22 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 	height = min(height + ui_vpadding()*2, ui_height());
 	ui_pad2((ui_width() - width)/2, (ui_height() - height)/2);
 	ui_push();
-		ui_color(242, 242, 242);
-		ui_fill();
-		ui_colora(102, 102, 102, 0.5);
-		ui_border();
+		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+			ui_color(0, 0, 0);
+			ui_fill();
+			ui_color(255, 255, 255);
+			ui_border();
+		) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+			ui_color($x45, $x45, $x45);
+			ui_fill();
+			ui_colora(255, 255, 255, 0.1);
+			ui_border();
+		) : (
+			ui_color(242, 242, 242);
+			ui_fill();
+			ui_colora(102, 102, 102, 0.5);
+			ui_border();
+		);
 	ui_pop();
 
 	doneText >= 0 || cancelText >= 0 ? (
@@ -1789,7 +2069,7 @@ function control_textinput_unfocus(prompt_selectpacked) (
 	prompt_selectpacked;
 );
 
-function control_textinput(text, prompt_selectpacked) local(text_length, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, keyinterested, char_index) (
+function control_textinput(text, prompt_selectpacked) local(text_length, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, keyinterested, char_index, select_padding) (
 	text_length = strlen(text);
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
@@ -1858,8 +2138,16 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 			prompt_selecthigh > prompt_selectlow ? (
 				strcpy_substr(#control_tmp1, text, prompt_selectlow, prompt_selecthigh - prompt_selectlow);
 				selectw = ui_text_width(#control_tmp1);
+				
+				uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
+					select_padding = 1;
+				) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
+					select_padding = 2;
+				) : (
+					select_padding = 0;
+				);
 				ui_push();
-					ui_set_rect(gfx_x, gfx_y, selectw, gfx_texth);
+					ui_set_rect(gfx_x - select_padding, gfx_y - select_padding, selectw + select_padding*2, gfx_texth + select_padding*2);
 					control_background_enabled();
 					gfx_drawstr(#control_tmp1);
 				ui_pop();
@@ -1959,42 +2247,6 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 
 	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
 	prompt_selectpacked;
-);
-
-function control_graph_step(buffer, length, step, low, high) local(i, v, x, y, mid, top, bottom) (
-	low == high ? (
-		i = 0;
-		mid = low;
-		while (i < length) (
-			v = buffer[i*step];
-			low = min(low, v);
-			high = max(high, v);
-			i += 1;
-		);
-		// Keep it symmetrical
-		low = min(low, 2*mid - high);
-		high = max(high, 2*mid - low);
-	);
-	
-	top = ui_top();
-	bottom = ui_bottom() - 1;
-	i = 0;
-	while (i < length) (
-		v = buffer[i*step];
-		x = ui_left() + i/(length - 1)*(ui_width() - 1);
-		y = ui_top() + max(0, min(1, (v - high)/(low - high)))*(ui_height() - 1);
-		i == 0 ? (
-			gfx_x = x;
-			gfx_y = y;
-		) : (
-			gfx_lineto(x, y);
-		);
-		i += 1;
-	);
-);
-
-function control_graph(buffer, length, low, high) (
-	control_graph_step(buffer, length, 1, low, high);
 );
 
 function control_system() local(prompt_title, prompt_text, prompt_init, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, OK) (

@@ -49,14 +49,18 @@ pd.pitch_detection_freq() ? (
 	freq += (pd.pitch_detection_freq() - freq)/(srate*0.003);
 	phase += (freq/srate);
 	phase -= floor(phase);
-	amp = 0.1;
+	amp = 0.3;
 	spl0 = sin(phase*2*$pi)*amp;
 ) : (
 	spl0 = spl_delayed;
 );
 
 @gfx
-ui_start();
+control_start("main", "tron");
 
-control_graph_step(pd.fft_buffer, pd.fft_size/2, 2, -1, 1);
-control_graph(pitchBuffer, pitchBufferLength, 32, 64);
+ui_color(0, 0, 0);
+ui_fill();
+ui_color(64, 128, 192);
+ui_graph_step(pd.fft_buffer, pd.fft_size/2, 2, -1, 1);
+ui_color(192, 128, 64);
+ui_graph(pitchBuffer, pitchBufferLength, 0, 127);
