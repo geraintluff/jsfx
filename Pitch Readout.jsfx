@@ -20,6 +20,8 @@ pdc_top_ch = 1;
 pitchBufferLength = srate;
 pitchBuffer = freemem;
 freemem += pitchBufferLength;
+tonalityBuffer = freemem;
+freemem += pitchBufferLength;
 pitchBufferIndex = 0;
 
 delaybuffer = freemem;
@@ -37,30 +39,35 @@ buffer_index = (buffer_index + 1)%delaysamples;
 
 pd.pitch_detection_sample(spl0, spl1);
 
-pitchBuffer[pitchBufferIndex] = pd.pitch_detection_note();
-//pitchBuffer[pitchBufferIndex] = pd.current_snr;
+pitchBuffer[pitchBufferIndex] = pd.pitch_detection_tonality() > 0 ? pd.pitch_detection_note() : -1;
+tonalityBuffer[pitchBufferIndex] = pd.pitch_detection_tonality();
 
 pitchBufferIndex += 1;
 pitchBufferIndex >= pitchBufferLength ? pitchBufferIndex = 0;
 
 // Resynthesize
 
+tonality = pd.pitch_detection_tonality();
 pd.pitch_detection_freq() ? (
-	freq += (pd.pitch_detection_freq() - freq)/(srate*0.003);
+	freq += (pd.pitch_detection_freq() - freq)/1;
 	phase += (freq/srate);
 	phase -= floor(phase);
-	amp = 0.3;
-	spl0 = sin(phase*2*$pi)*amp;
+	amp = pd.pitch_detection_amp();
+	wave = sin(phase*2*$pi);
+	wave = wave + abs(wave)*1;
+	spl0 = wave*amp*min(1, sqrt(200/freq));
 ) : (
 	spl0 = spl_delayed;
 );
 
 @gfx
-control_start("main", "tron");
+control_start("main", "default");
 
 ui_color(0, 0, 0);
 ui_fill();
 ui_color(64, 128, 192);
 ui_graph_step(pd.fft_buffer, pd.fft_size/2, 2, -1, 1);
+ui_color(64, 192, 64);
+ui_graph(tonalityBuffer, pitchBufferLength, 0, 1);
 ui_color(192, 128, 64);
 ui_graph(pitchBuffer, pitchBufferLength, 0, 127);

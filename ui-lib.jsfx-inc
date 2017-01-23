@@ -210,6 +210,7 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 		);
 		
 		gfx_dest = -1; // Draw to main screen
+		gfx_mode = 0;
 		gfx_a = 1;
 		// Default colours
 		gfx_clear = uix_clearcolor(242, 242, 242);
@@ -1144,11 +1145,17 @@ function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner
 // Total number of themes: 3/*uix_THEME: TRON*/
 uix_control_theme = 0/*uix_THEME:DEFAULT*/;
 uix_control_theme_prev = -1;
+uix_control_width_prev = -1;
+uix_control_height_prev = -1;
 
-function control_start(defaultPage, theme) local(reset) (
+uix_control_reserved_screen = 127;
+
+function control_start(defaultPage, theme) local(reset, i) (
 	ui_start(defaultPage);
-	reset = (uix_control_theme_prev != theme);
+	reset = (uix_control_theme_prev != theme || uix_control_width_prev != gfx_w || uix_control_height_prev != gfx_h);
 	uix_control_theme_prev = theme;
+	uix_control_width_prev = gfx_w;
+	uix_control_height_prev = gfx_h;
 	
 	theme == "black" ? (
 		uix_control_theme = 1/*uix_THEME:BLACK_AND_WHITE*/;
@@ -1160,6 +1167,21 @@ function control_start(defaultPage, theme) local(reset) (
 	) : theme == "tron" ? (
 		uix_control_theme = 2/*uix_THEME:TRON*/;
 		gfx_clear = $x454545;
+		reset ? (
+			gfx_setimgdim(uix_control_reserved_screen, gfx_w, gfx_h);
+			gfx_dest = uix_control_reserved_screen;
+			ui_color(70, 70, 70);
+			ui_fill();
+			ui_color(65, 65, 65);
+			gfx_y = 0;
+			while (gfx_y < gfx_h) (
+				gfx_line(0, gfx_y, gfx_w, gfx_y);
+				gfx_y += 2;
+			);
+			gfx_dest = -1;
+		);
+		gfx_x = gfx_y = 0;
+		gfx_blit(uix_control_reserved_screen, 1, 0);
 		ui_color(245, 255, 255);
 		ui_fontface("Verdana");
 	) : (
@@ -1395,8 +1417,10 @@ function control_finish_passive(state) (
 function control_background_disabled(state) (
 	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 		ui_color(64, 64, 64);
+		ui_color(0, 0, 0);
 		ui_fill();
 		ui_color(0, 0, 0);
+		ui_color(255, 255, 255);
 	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
 		ui_color(96, 96, 96);
 		ui_fill();
@@ -1411,8 +1435,13 @@ function control_background_disabled(state) (
 function control_finish_disabled(state) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(127, 127, 127);
-			ui_border();
+			//ui_color(127, 127, 127);
+			//ui_border();
+			ui_color(255, 255, 255);
+			uix_dotted_line(ui_left(), ui_top(), ui_right(), ui_top(), 1, 3);
+			uix_dotted_line(ui_right(), ui_top(), ui_right(), ui_bottom(), 1, 3);
+			uix_dotted_line(ui_right(), ui_bottom(), ui_left(), ui_bottom(), 1, 3);
+			uix_dotted_line(ui_left(), ui_bottom(), ui_left(), ui_top(), 1, 3);
 		) : (
 			ui_colora(0, 0, 0, 0.1);
 			ui_border();
@@ -1498,7 +1527,7 @@ function control_background_technical(state) (
 		ui_fill();
 		ui_color(255, 255, 255);
 	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
-		ui_color(32, 32, 32);
+		ui_color(16, 16, 16);
 		ui_fill();
 		ui_color(205, 147, 74);
 	) : (
