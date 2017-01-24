@@ -51,10 +51,12 @@ freq = pd.pitch_detection_freq();
 phase += (freq/srate);
 phase -= floor(phase);
 amp = pd.pitch_detection_amp()*pd.pitch_detection_tonality();
-wave = sin(phase*2*$pi);
-//wave = wave + abs(wave)*1;
-amp ? spl0 = wave*amp*min(1, sqrt(200/freq));
-
+wave = phase - 0.5;
+amp ? (
+	spl0 = wave*amp*min(1, sqrt(200/freq));
+) : (
+	spl0 = spl_delayed;
+);
 @gfx
 control_start("main", "default");
 

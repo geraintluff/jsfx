@@ -113,6 +113,9 @@
 				},
 				"ui-lib.jsfx-inc": {
 					"main": false
+				},
+				"Pitch Shifter.jsfx": {
+					"main": false
 				}
 			}
 		}

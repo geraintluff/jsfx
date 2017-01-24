@@ -1172,7 +1172,7 @@ function control_start(defaultPage, theme) local(reset, i) (
 			gfx_dest = uix_control_reserved_screen;
 			ui_color(70, 70, 70);
 			ui_fill();
-			ui_color(65, 65, 65);
+			ui_color(67, 67, 67);
 			gfx_y = 0;
 			while (gfx_y < gfx_h) (
 				gfx_line(0, gfx_y, gfx_w, gfx_y);

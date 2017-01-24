@@ -57,9 +57,10 @@ function matrix_mult(A, B, C, rowsA, midN, colsB) local(sum, row, col, i) (
 function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 	mem_start = freemem;
 	this.window_length = ceil(0.05*srate);
-	this.window_oversample = 2;
-	this.fft_size = pow(2, ceil(log(this.window_length*1*this.window_oversample)/log(2)));
+	this.oversample = 2;
+	this.fft_size = min(32768, pow(2, ceil(log(this.window_length*1*this.oversample)/log(2))));
 	this.fft_buffer = freemem;
+	this.max_freq_index = 5000/srate*(this.fft_size/this.oversample);
 	freemem += this.fft_size*2;
 	this.sdft_step = ceil(this.window_length*0.25);
 	this.sdft_remaining = this.window_length;
@@ -96,7 +97,7 @@ function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 );
 
 function pitch_detection_delay() (
-	this.window_length*0.5;
+	this.window_length;
 );
 
 // Window goes 0-1-0
@@ -106,11 +107,11 @@ function pitch_detection_window(i) (
 
 // Compensate for window's effect on autocorrelation
 function pitch_detection_window_corrected(i) (
-	this.pitch_detection_window(this.window_length*0.5 + i/this.window_oversample);
+	this.pitch_detection_window(this.window_length*0.5 + i*0.6/this.oversample);
 );
 
-function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2b, i3, real1, imag1, real2, imag2, mag2, index, window, value, peak_index, l, r, a, b, amp, crossed_zero, replace_index, replace_peak, total) (
-	short_size = this.fft_size/this.window_oversample;
+function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2b, i3, real1, imag1, real2, imag2, mag2, index, window, value, peak_index, l, r, a, b, x, amp, freq, crossed_zero, replace_index, replace_peak, total) (
+	short_size = this.fft_size/this.oversample;
 	i = 0;
 	while (i < this.window_length) (
 		index = this.buffer_index - i - 1;
@@ -131,7 +132,7 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 
 	this.fft_buffer[0] = this.fft_buffer[1] = 0;
 	i = 1;
-	while (i < short_size*0.5) (
+	while (i < this.max_freq_index) (
 		i2 = short_size - i;
 		i2b = this.fft_size - i;
 		real1 = this.fft_buffer[2*i];
@@ -140,6 +141,7 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 		imag2 = this.fft_buffer[2*i2 + 1];
 		
 		mag2 = (real1*real1 + imag1*imag1 + real2*real2 + imag2*imag2);
+		mag2 /= i;
 		this.fft_buffer[2*i] = this.fft_buffer[2*i2b] = sqrt(mag2);
 		this.fft_buffer[2*i + 1] = this.fft_buffer[2*i2b + 1] = 0;
 		i += 1;
@@ -159,7 +161,8 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 	freqs[0] = 0;
 	observations[0] = this.noise_limit;
 
-	i = this.window_length*0.5*this.window_oversample;
+	// Zero the result past what we expect the end of the autocorrelation to be
+	i = this.window_length*0.5*this.oversample;
 	while (i < this.fft_size) (
 		this.fft_buffer[2*i] = 0;
 		i += 1;
@@ -178,10 +181,19 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 		i += 1;
 	);
 	this.fft_buffer[0] = 1;
+
+	i = this.window_length*0.5*this.oversample;
+	while (i > 0) (
+		i2 = floor(i*0.5 + 0.5);
+		i3 = floor(i/3 + 0.5);
+		//this.fft_buffer[2*i] -= this.fft_buffer[2*i2]*0.25 + this.fft_buffer[2*i3]*0.25;
+		//this.fft_buffer[2*i] /= pow(i, 0.1);
+		i -= 1;
+	);
 	
 	i = 1;
 	crossed_zero = 0;
-	while (i < this.window_length*0.5*this.window_oversample) (
+	while (i < this.window_length*0.5*this.oversample) (
 		value = this.fft_buffer[2*i];
 		l = this.fft_buffer[2*(i - 1)];
 		r = this.fft_buffer[2*(i + 1)];
@@ -193,11 +205,17 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 			// Quadratic interpolation of peak
 			a = (l + r - 2*value);
 			b = (r - l);
-			peak_index = i - b/(2*a);
+			x = -b/(2*a);
+			peak_index = i + x;
+			value += a*x*x + b*x;
 
+			freq = srate/peak_index*this.oversample;
+			//value_tilted = value;
+			value_tilted = value*pow(freq, 0.5);
+			
 			// Find smallest existing observation
 			replace_index = 0;
-			replace_peak = value;
+			replace_peak = value_tilted;
 			i2 = 1;
 			while (i2 < this.options_N) (
 				observations[i2] < replace_peak ? (
@@ -207,10 +225,17 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 				i2 += 1;
 			);
 			replace_index ? (
-				observations[replace_index] = value;
-				freqs[replace_index] = srate/peak_index*this.window_oversample;
+				observations[replace_index] = value_tilted;
+				freqs[replace_index] = freq;
 			);
 		);
+		i += 1;
+	);
+	
+	i = 1;
+	while (i < this.options_N) (
+		freq = freqs[i];
+		observations[i] /= pow(freq, 0.5);
 		i += 1;
 	);
 	amp;
@@ -221,14 +246,15 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 	this.prev_freq = this.current_freq;
 	this.prev_tonality = this.current_tonality;
 	
-	current_freqs = this.working_vector;
+	freqs = this.working_vector;
 	likelihoods = this.working_vector_3;
-	this.current_amp = this.pitch_detection_recalc(current_freqs, likelihoods);
+	this.current_amp = this.pitch_detection_recalc(freqs, likelihoods);
 	
 	// choose the most likely
 	total = 0;
 	i = 0;
 	while (i < this.options_N) (
+		likelihoods[i] *= pow(freqs[i], 0.5);
 		total += likelihoods[i];
 		i += 1;
 	);
@@ -244,11 +270,11 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 			random -= likelihoods[i];
 			i += 1;
 		);
-		this.current_freq = current_freqs[selected_index];
+		this.current_freq = freqs[selected_index];
 		this.current_tonality = likelihoods[selected_index];
 	) : (
 		selected_index = 0;
-		best = current_freqs[0];
+		best = freqs[0];
 		i = 0;
 		while (i < this.options_N) (
 			best < likelihoods[i] ? (
@@ -257,7 +283,7 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 			);
 			i += 1;
 		);
-		this.current_freq = current_freqs[selected_index];
+		this.current_freq = freqs[selected_index];
 		this.current_tonality = likelihoods[selected_index];
 	);
 	!this.current_freq ? this.current_tonality = 0;
