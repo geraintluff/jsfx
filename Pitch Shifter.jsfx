@@ -5,7 +5,7 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:correction_semitones_global=0<-12,12,1>:-transpose (semitones)
+slider1:correction_semitones_global=0<-12,12,1>-transpose (semitones)
 slider2:tonality_limit=0.2<0,1,0.01>-tonality limit
 
 import ui-lib.jsfx-inc
@@ -112,7 +112,7 @@ analysis_index_ratio -= analysis_index;
 (play_state&1) ? block_index += 1;
 analysis_index_prev = analysis_index;
 
-@gfx
+@gfx 900 600
 
 !display_right_time ? (
 	display_left_time = 0;
@@ -337,8 +337,6 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 				display_tool_mode == 1/*TOOL:ERASE*/ ? (
 					entry[3/*ANALYSIS:SHIFT_SEMITONES*/] *= exp(-abs(y1*ui_mouse_dy()/100));
 				) : (
-					debug.correction = correction;
-					debug.y1 = y1;
 					entry[3/*ANALYSIS:SHIFT_SEMITONES*/] += correction*y1;
 				);
 				
@@ -442,8 +440,8 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 	
-	ui_split_rightratio(0.25);
-		control_group("Editor");
+	ui_split_right(240);
+		control_group("");
 		ui_split_topratio(1/5);
 			ui_push_height(50);
 				display_tool_mode = control_selector(
@@ -476,7 +474,15 @@ ui_screen() == "main" ? (
 				ui_text("Click + Drag");
 			ui_split_next();
 				ui_align(0, 0.5);
-				ui_text("Move the correction amount up or down");
+				ui_text("Use the editing tool (fixed time)");
+			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Right-Click + Drag");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Use the editing tool (free time)");
 			ui_pop();
 		ui_split_next();
 			ui_split_leftratio(0.5);
@@ -502,21 +508,24 @@ ui_screen() == "main" ? (
 				ui_align(0, 0.5);
 				ui_text("Alter tool width");
 			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Tab");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Switch tool");
+			ui_pop();
 		ui_pop();
 	ui_pop();
 ) : control_system();
 
-@serialize
+ui_key() == 9 ? (
+	display_tool_mode = (display_tool_mode + 1)%2/*TOOL: ADD, ERASE*/;
+	ui_key_next();
+);
 
-serialize.srate8 = serialize.srate7;
-serialize.srate7 = serialize.srate6;
-serialize.srate6 = serialize.srate5;
-serialize.srate5 = serialize.srate4;
-serialize.srate4 = serialize.srate3;
-serialize.srate3 = serialize.srate2;
-serialize.srate2 = serialize.srate1;
-serialize.srate1 = serialize.srate0;
-serialize.srate0 = srate;
+@serialize
 
 var_count = max(var_count, 5/*VAR: */);
 analysis_var_count = analysis_step;

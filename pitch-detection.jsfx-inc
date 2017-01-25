@@ -48,7 +48,7 @@ function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 );
 
 function pitch_detection_delay() (
-	this.window_length*0.5 + sdft_step;
+	ceil(this.window_length*0.5 + sdft_step);
 );
 
 // Window goes 0-1-0

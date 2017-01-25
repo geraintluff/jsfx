@@ -1148,6 +1148,7 @@ function ui_graph_step(buffer, length, step, low, high) local(i, v, x, y, mid, t
 		);
 		i += 1;
 	);
+	(high - low)/2;
 );
 
 function ui_graph(buffer, length, low, high) (
