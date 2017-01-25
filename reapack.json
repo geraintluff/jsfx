@@ -116,6 +116,9 @@
 				},
 				"Pitch Shifter.jsfx": {
 					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
 				}
 			}
 		}

@@ -1,0 +1,30 @@
+@init
+
+function delay_init(freemem, max_delay_samples) (
+	this.buffer = freemem;
+	this.buffer_length = ceil(max_delay_samples + 5);
+	freemem += this.buffer_length;
+	freemem;
+);
+
+function delay_input(spl) (
+	this.index += 1;
+	this.index >= this.buffer_length ? (
+		this.index = 0;
+	);
+	this.buffer[this.index] = spl;
+	spl;
+);
+
+function delay_output_linear(samples) local(index1, index2, ratio) (
+	index1 = floor(this.index - samples);
+	ratio = samples - floor(samples);
+	index2 = index1 - 1;
+	while (index1 < 0) (
+		index1 += this.buffer_length;
+	);
+	while (index2 < 0) (
+		index2 += this.buffer_length;
+	);
+	this.buffer[index1] + (this.buffer[index2] - this.buffer[index1])*ratio;
+);

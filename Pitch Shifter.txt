@@ -1,0 +1,568 @@
+desc:Pitch Shifter (by Geraint Luff)
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:correction_semitones_global=0<-12,12,1>:-transpose (semitones)
+slider2:tonality_limit=0.2<0,1,0.01>-tonality limit
+
+import ui-lib.jsfx-inc
+import pitch-detection.jsfx-inc
+import delay-utils.jsfx-inc
+
+@init
+
+safe_allocation = 65536*2;
+
+//recording = 0;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = pitch_detection.pitch_detection_init(freemem);
+pitch_detection.pitch_detection_config_tonality_limit(0);
+latencysamples = pitch_detection.pitch_detection_delay();
+min_freq = 10;
+max_delay = srate/min_freq;
+freemem = delay0.delay_init(freemem, latencysamples + max_delay);
+freemem = delay1.delay_init(freemem, latencysamples + max_delay);
+
+analysis = safe_allocation;
+analysis_step = ANALYSIS##;
+!analysis_interval ? analysis_interval = 0.01; // 10ms
+//analysis_count = 0;
+
+freemem > analysis ? (
+	ui_error("Overflow! Increase \"safe_allocation\" in the code, and email Geraint: luffgd@gmail.com");
+);
+
+pdc_delay = latencysamples;
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+
+@block
+
+block_index = 0;
+
+@sample
+
+seconds = play_position + block_index/srate;
+
+// Pitch-detection for shifting and analysis
+pitch_detection.pitch_detection_input(spl0, spl1);
+
+// Shifting
+index_float = seconds/analysis_interval;
+index_int = floor(index_float);
+index_ratio = index_float - index_int;
+entry = analysis + index_int*analysis_step;
+entrynext = entry + analysis_step;
+correction_semitones = entry[ANALYSIS#SHIFT_SEMITONES]*(1 - index_ratio) + entrynext[ANALYSIS#SHIFT_SEMITONES]*index_ratio + correction_semitones_global;
+
+freq = pitch_detection.pitch_detection_freq();
+tonality = pitch_detection.pitch_detection_tonality();
+tonality < tonality_limit ? (
+	correction_semitones *= tonality/tonality_limit;
+);
+
+wavelength = srate/max(min_freq, freq);
+correction_freq = freq*(pow(2, correction_semitones/12) - 1);
+freq > min_freq && abs(correction_freq) > 1 ? (
+	phase += correction_freq/srate;
+) : phase > 0.001 ? (
+	// Slew towards 1
+	phase += (1 - phase)*correction_freq/srate;
+);
+while (phase >= 1) (
+	phase -= 1;
+);
+while (phase < 0) (
+	phase += 1;
+);
+
+// Implement cross-fading delay
+delay0.delay_input(spl0);
+delay1.delay_input(spl1);
+delayA = latencysamples - phase*wavelength;
+delayB = delayA + wavelength;
+
+spl0 = delay0.delay_output_linear(delayA)*(1 - phase) + delay0.delay_output_linear(delayB)*phase;
+spl1 = delay1.delay_output_linear(delayA)*(1 - phase) + delay1.delay_output_linear(delayB)*phase;
+
+analysis_index_ratio = floor(seconds/analysis_interval);
+analysis_index = floor(analysis_index_ratio);
+analysis_index_ratio -= analysis_index;
+(analysis_index == analysis_index_prev + 1)? (
+	recording ? (
+		analysis_count = max(analysis_count, analysis_index + 1);
+		analysis_entry = analysis + analysis_step*analysis_index;
+		analysis_entry[ANALYSIS#INPUT_FREQ] = pitch_detection.pitch_detection_freq();
+		analysis_entry[ANALYSIS#INPUT_AMP] = pitch_detection.pitch_detection_amp();
+		analysis_entry[ANALYSIS#INPUT_TONALITY] = pitch_detection.pitch_detection_tonality();
+		analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
+		
+		display_left_time = min(display_left_time, seconds);
+		display_right_time = max(display_right_time, seconds);
+	);
+) : (analysis_index != analysis_index_prev) ? (
+	recording = 0;
+);
+
+(play_state&1) ? block_index += 1;
+analysis_index_prev = analysis_index;
+
+@gfx
+
+!display_right_time ? (
+	display_left_time = 0;
+	display_right_time = analysis_count*analysis_interval;
+);
+!display_top_note ? (
+	display_top_note = 127;
+	display_bottom_note = 0;
+);
+
+!display_amp_scale ? (
+	display_amp_scale = 100;
+);
+display_amp_limit_db = -60;
+display_amp_limit = pow(10, display_amp_limit_db/20);
+
+!display_tool_width ? (
+	display_tool_mode = TOOL#ADD;
+	display_tool_sharpness = 0.5;
+	display_tool_width = 0.1;
+);
+
+//display_change_trange = 0.1;
+//display_change_time = 0;
+//display_change_note = 0;
+
+function freq_to_note(freq) (
+	12*log(freq/440)/log(2) + 69;
+);
+
+function note_to_y(note) (
+	ui_top() + ui_height()*(note - display_top_note)/(display_bottom_note - display_top_note);
+);
+
+function time_to_x(t) (
+	ui_left() + ui_width()*(t - display_left_time)/(display_right_time - display_left_time);
+);
+
+function x_to_time(x) (
+	display_left_time + (display_right_time - display_left_time)*(x - ui_left())/ui_width();
+);
+function y_to_note(y) (
+	display_top_note + (display_bottom_note - display_top_note)*(y - ui_top())/ui_height();
+);
+
+function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, trange, index, index1, index2, entry, freq, lowfreq, highfreq, lowfreq_corrected, highfreq_corrected, correction, note, tool_active) (
+	// Draw the thing
+	ui_push_clip();
+		control_background_technical();
+		
+		ui_colora(255, 255, 255, 0.2*pow(min(1, ui_height()/(display_top_note - display_bottom_note)/20), 2));
+		i = 0;
+		while (i <= 127) (
+			y1 = note_to_y(i);
+			gfx_line(ui_left(), y1, ui_right() - 1, y1);
+			i += 1;
+		);
+		
+		width = ui_width();
+		height = ui_height();
+		trange = display_right_time - display_left_time;
+		i = 0;
+		while (i < width) (
+			x = ui_left() + i;
+			t1 = display_left_time + i/width*trange;
+			t2 = display_left_time + (i + 1)/width*trange;
+			index1 = floor(t1/analysis_interval);
+			index2 = ceil(t2/analysis_interval);
+
+			index = index1;
+			lowfreq = highfreq = 0;
+			lowfreq_corrected = highfreq_corrected = 0;
+			amp = 0;
+			tonal_amp = 0;
+			while (
+				entry = analysis + index*analysis_step;
+				tonality = entry[ANALYSIS#INPUT_TONALITY];
+				freq = entry[ANALYSIS#INPUT_FREQ];
+
+				amp = max(amp, entry[ANALYSIS#INPUT_AMP]);
+				tonality > tonality_limit ? (
+					freq ? (
+						lowfreq = lowfreq ? min(lowfreq, freq) : freq;
+						highfreq = highfreq ? max(highfreq, freq) : freq;
+						correction = pow(2, entry[ANALYSIS#SHIFT_SEMITONES]/12);
+						lowfreq_corrected = lowfreq_corrected ? min(lowfreq_corrected, freq*correction) : freq*correction;
+						highfreq_corrected = highfreq_corrected ? max(highfreq_corrected, freq*correction) : freq*correction;
+					);
+					tonal_amp = max(tonal_amp, entry[ANALYSIS#INPUT_AMP]*entry[ANALYSIS#INPUT_TONALITY]);
+				);
+				index += 1;
+				index < index2;
+			);
+			
+			lowfreq && amp >= display_amp_limit ? (
+				y1 = note_to_y(freq_to_note(lowfreq_corrected));
+				y2 = note_to_y(freq_to_note(highfreq_corrected));
+				y1b = note_to_y(freq_to_note(lowfreq));
+				y2b = note_to_y(freq_to_note(highfreq));
+				ui_color(80, 80, 80);
+				gfx_line(x, y1 - amp*display_amp_scale, x, y2 + amp*display_amp_scale);
+				ui_color(80, 140, 200);
+				gfx_line(x, y1 - tonal_amp*display_amp_scale, x, y2 + tonal_amp*display_amp_scale);
+				ui_colora(255, 255, 255, 0.7);
+				gfx_line(x, y1, x, y2);
+				ui_colora(255, 0, 0, 0.35*min(1, abs(y1b - y1)));
+				gfx_line(x, max(y1b, y1) - 1, x, min(y2b, y2) + 1);
+			);
+			i += 1;
+		);
+		
+		x = time_to_x(play_position - latencysamples/srate);
+		ui_colora(255, 255, 255, 0.5);
+		gfx_line(x, ui_top(), x, ui_bottom() - 1);
+		
+
+		// Keep the current section in view
+		display_follow_playback && (play_state&1) ? (
+			x = display_right_time - display_left_time;
+			while (play_position > display_right_time) (
+				display_left_time += x;
+				display_right_time += x;
+			);
+			while (play_position < display_left_time) (
+				display_left_time -= x;
+				display_right_time -= x;
+			);
+		);
+		
+		// Pan and zoom
+		ui_scroll_y() ? (
+			zoom_factor = exp(-ui_scroll_y()/1000);
+			mouse_cap&8 ? (
+				display_tool_width /= zoom_factor;
+			) : mouse_cap&4 ? (
+				y1 = y_to_note(mouse_y);
+				display_top_note = y1 + (display_top_note - y1)*zoom_factor;
+				display_bottom_note = y1 + (display_bottom_note - y1)*zoom_factor;
+			) : (
+				x = x_to_time(mouse_x);
+				display_left_time = x + (display_left_time - x)*zoom_factor;
+				display_right_time = x + (display_right_time - x)*zoom_factor;
+			);
+		);
+		mouse_cap&64 ? (
+			x = x_to_time(mouse_x) - x_to_time(mouse_x - ui_mouse_dx());
+			display_left_time -= x;
+			display_right_time -= x;
+			y1 = y_to_note(mouse_y) - y_to_note(mouse_y - ui_mouse_dy());
+			display_top_note -= y1;
+			display_bottom_note -= y1;
+		);
+		display_top_note > 127 ? (
+			display_bottom_note += 127 - display_top_note;
+			display_top_note = 127;
+		);
+		display_bottom_note < 0 ? (
+			display_top_note -= display_bottom_note;
+			display_bottom_note = 0;
+		);
+		display_top_note = min(127, display_top_note);
+
+		display_right_time > analysis_count*analysis_interval ? (
+			display_left_time += analysis_count*analysis_interval - display_right_time;
+			display_right_time = analysis_count*analysis_interval;
+		);
+		display_left_time < 0 ? (
+			display_right_time -= display_left_time;
+			display_left_time = 0;
+		);
+		display_right_time = min(analysis_count*analysis_interval, display_right_time);
+		
+		display_tool_width = max(0.01, min(1, display_tool_width));
+		
+		tool_active = ui_press(1) || ui_press(2);
+
+		// Calculate tool parameters
+		ui_mouse_down() || !tool_active ? (
+			// Current position
+			display_change_time = t1 = x_to_time(mouse_x);
+			// Nearest interval
+			index = floor(display_change_time/analysis_interval + 0.5);
+			entry = analysis + index*analysis_step;
+			// Find the current pitch on the screen
+			display_change_note = freq_to_note(entry[ANALYSIS#INPUT_FREQ]) + entry[ANALYSIS#SHIFT_SEMITONES];
+			y1 = note_to_y(display_change_note);
+			// Measure the vertical distance, minimum 20 pixels
+			y2 = abs(y1 - mouse_y);
+			y2 = max(20 + y2*0.3, y2 - 20);
+			// Apply that distance horizontally to get the range
+			t2 = x_to_time(mouse_x + y2);
+			display_change_trange = max(analysis_interval*1.2, t2 - t1);
+			display_change_trange = display_tool_width;
+		);
+		ui_press(2) ? (
+			display_change_time = t1 = x_to_time(mouse_x);
+		);
+		// Draw the tool area
+		ui_hover() && (ui_press() || !(mouse_cap&1)) ? (
+			ui_colora(255, 64, 0, ui_press() ? 0.2 : 0.1);
+			y2 = time_to_x(mouse_x + display_change_trange) - time_to_x(mouse_x);
+			gfx_circle(time_to_x(display_change_time), note_to_y(display_change_note), y2, 1);
+		);
+		
+		tool_active ? (
+			// Current position
+			t1 = display_change_time;
+			// Change amount
+			correction = y_to_note(mouse_y) - y_to_note(mouse_y - ui_mouse_dy());
+
+			trange = display_change_trange;
+			index1 = floor((t1 - trange)/analysis_interval);
+			index2 = floor((t1 + trange)/analysis_interval);
+			index = index1;
+			while (
+				entry = analysis + index*analysis_step;
+				// Time difference;
+				t2 = min(1, max(-1, (index*analysis_interval - t1)/trange));
+				// Strength
+				y1 = 0.5 + 0.5*cos(t2*$pi);
+				y1 /= (1 + display_tool_sharpness*(y1 - 1));
+				display_tool_mode == TOOL#ERASE ? (
+					entry[ANALYSIS#SHIFT_SEMITONES] *= exp(-abs(y1*ui_mouse_dy()/100));
+				) : (
+					debug.correction = correction;
+					debug.y1 = y1;
+					entry[ANALYSIS#SHIFT_SEMITONES] += correction*y1;
+				);
+				
+				index += 1;
+				
+				index < index2;
+			);
+		);
+
+		control_finish_technical();
+	ui_pop();
+);
+
+control_start("main", "tron");
+
+function record_button() (
+	control_background_enabled();
+	recording ? (
+		ui_color(255, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+		ui_text("STOP");
+		ui_click() ? (
+			recording = 0;
+		);
+	) : (
+		ui_text("Record");
+		ui_click() ? (
+			recording = 1;
+		);
+	);
+	control_finish_enabled();
+);
+
+function labelled_dial_horizontal(value, low, high, bias, label, formatvalue, formatstring, default) (
+	ui_push_height(50);
+		ui_split_left(50);
+			value = control_dial(value, low, high, bias);
+			ui_click() && ui_clickcount() == 2 ? (
+				value = default;
+			);
+		ui_pop();
+		ui_padleft();
+		ui_align(0, 0.5);
+		ui_text(label);
+		ui_align(1, 0.5);
+		ui_textnumber(formatvalue, formatstring);
+	ui_pop();
+	value;
+);
+
+function labelled_switch_horizontal(value, label, truestring, falsestring) (
+	ui_push_heighttext(-1);
+		ui_split_left(50);
+			value = control_switch(value);
+		ui_pop();
+		ui_padleft();
+		ui_align(0, 0.5);
+		ui_text(label);
+		ui_align(1, 0.5);
+		ui_text(value ? truestring : falsestring);
+	ui_pop();
+	value;
+);
+
+function labelled_dial_vertical(value, low, high, bias, label, formatvalue, formatstring, default) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+		ui_click() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(formatvalue, formatstring);
+	ui_pop();
+	value;
+);
+
+ui_screen() == "main" ? (
+	ui_split_top(100);
+		control_group("");
+		ui_split_right(100);
+			ui_push_height(50);
+				ui_push_widthtext("???");
+					control_button("???") ? ui_screen_open("help");
+				ui_pop();
+			ui_pop();
+		ui_pop();
+		ui_split_leftratio(1/3);
+			ui_push_height(50);
+				record_button();
+			ui_pop();
+		ui_split_next();
+			tonality_limit = labelled_dial_vertical(tonality_limit, 0, 0.5, 2, "tonality limit", tonality_limit*100, "%i%%", 0.2);
+		ui_split_next();
+			correction_semitones_global = labelled_dial_vertical(correction_semitones_global, -12, 12, 0, "transpose", correction_semitones_global, correction_semitones_global > 0 ? "+%.1f" : "%.1f", 0);
+			correction_semitones_global = floor(correction_semitones_global*10 + 0.5)/10;
+		ui_pop();
+	ui_pop();
+	
+	ui_split_rightratio(0.25);
+		control_group("Editor");
+		ui_split_topratio(1/5);
+			ui_push_height(50);
+				display_tool_mode = control_selector(
+					display_tool_mode,
+					display_tool_mode == TOOL#ERASE ? "Erase" : "Add",
+					(display_tool_mode + TOOL# - 1)%TOOL#,
+					(display_tool_mode + 1)%TOOL#
+				);
+			ui_pop();
+		ui_split_next();
+			display_tool_sharpness = labelled_dial_horizontal(display_tool_sharpness, 0.05, 0.95, 0, "tool sharpness", floor(display_tool_sharpness*100 + 0.5), "%i%%", 0.5);
+		ui_split_next();
+			display_tool_width = labelled_dial_horizontal(display_tool_width, 0.01, 1, 4, "tool width", floor(display_tool_width*1000 + 0.5), "%ims", 0.1);
+		ui_split_next();
+			display_amp_scale = labelled_dial_horizontal(display_amp_scale, 0, 1000, 5, "amplitude", 0, "", 0.01);
+		ui_split_next();
+			display_follow_playback = labelled_switch_horizontal(display_follow_playback, "follow playback", "on", "off");
+		ui_pop();
+	ui_pop();
+
+	custom_main();
+) : ui_screen() == "help" ? (
+	control_dialog("About / Help", 0, 0, "OK", -1);
+	ui_split_topratio(0.5);
+		ui_wraptext("This is a (fairly basic) non-linear pitch-editing plugin.  It analyses incoming audio and stores the results for display, and the corrects by the appropriate amount during playback.");
+	ui_split_next();
+		ui_split_toptext(-1);
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Click + Drag");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Move the correction amount up or down");
+			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Scroll");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Zoom horizontally");
+			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Ctrl + Scroll");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Zoom vertically");
+			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(0.5);
+				ui_fontbold(1);
+				ui_text("Shift + Scroll");
+			ui_split_next();
+				ui_align(0, 0.5);
+				ui_text("Alter tool width");
+			ui_pop();
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+@serialize
+
+serialize.srate8 = serialize.srate7;
+serialize.srate7 = serialize.srate6;
+serialize.srate6 = serialize.srate5;
+serialize.srate5 = serialize.srate4;
+serialize.srate4 = serialize.srate3;
+serialize.srate3 = serialize.srate2;
+serialize.srate2 = serialize.srate1;
+serialize.srate1 = serialize.srate0;
+serialize.srate0 = srate;
+
+var_count = max(var_count, VAR##);
+analysis_var_count = analysis_step;
+file_var(0, var_count);
+si = 0;
+while (si < var_count) (
+	si == VAR#ANALYSIS_INTERVAL(0) ? (
+		file_var(0, analysis_interval);
+	) : si == VAR#ANALYSIS_COUNT(1) ? (
+		file_var(0, analysis_count);
+	) : si == VAR#ANALYSIS_VAR_COUNT(2) ? (
+		file_var(0, analysis_var_count);
+	) : si == VAR#DISPLAY_AMP_SCALE(3) ? (
+		file_var(0, display_amp_scale);
+	) : si == VAR#DISPLAY_FOLLOW_PLAYBACK(4) ? (
+		file_var(0, display_follow_playback);
+	);
+	si += 1;
+);
+
+si = 0;
+while (si < analysis_count) (
+	si2 = 0;
+	while (si2 < analysis_var_count) (
+		// Set it for writing
+		sv = analysis[si2 + si*analysis_step];
+		file_var(0, sv);
+		// Read it - but only if it's an index we know about
+		( // This also fixes the indices, which is essential
+			si2 == ANALYSIS#INPUT_FREQ(0)
+			|| si2 == ANALYSIS#INPUT_AMP(1)
+			|| si2 == ANALYSIS#INPUT_TONALITY(2)
+			|| si2 == ANALYSIS#SHIFT_SEMITONES(3)
+		) ? (
+			analysis[si2 + si*analysis_step] = sv;
+		);
+		si2 += 1;
+	);
+	// Reset any new params to default values
+	while (si2 < analysis_step) (
+		sv = 0;
+		// Default values
+		si2 == ANALYSIS#INPUT_TONALITY ? (
+			sv = 0.5;
+		);
+		analysis[si2 + si*analysis_step] = sv;
+		si2 += 1;
+	);
+	si += 1;
+);

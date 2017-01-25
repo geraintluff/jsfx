@@ -1,58 +1,8 @@
 @init
 
-function debug_vector(v) (
-	this.0 = v[0];
-	this.1 = v[1];
-	this.2 = v[2];
-	this.3 = v[3];
-	this.4 = v[4];
+function pitch_detection_config_tonality_limit(limit) (
+	this.tonality_limit = limit;
 );
-
-function matrix_sane(A, rows, cols) local(row, col, sum, factor) (
-	sum = 0;
-	row = 0;
-	while (row < rows) (
-		col = 0;
-		while (col < cols) (
-			sum += A[row*cols + col];
-			col += 1;
-		);
-		row += 1;
-	);
-	factor = 1/sum;
-	row = 0;
-	while (row < rows) (
-		col = 0;
-		while (col < cols) (
-			A[row*cols + col] *= factor;
-			col += 1;
-		);
-		row += 1;
-	);
-);
-
-// Row-first means (11 12 13 21 22 23 31 32 33)
-function matrix_mult(A, B, C, rowsA, midN, colsB) local(sum, row, col, i) (
-	row = 0;
-	while (row < rowsA) (
-		col = 0;
-		while (col < colsB) (
-			sum = 0;
-			i = 0;
-			while (i < midN) (
-				sum += A[row*midN + i]*B[i*colsB + col];
-				i += 1;
-			);
-			C[row*colsB + col] = sum;
-			col += 1;
-		);
-		row += 1;
-	);
-);
-// Col-first would be (11 21 31 12 22 32 13 23 33)
-// This is a transposition operation, so to multiply col-first matrices, swap the order
-// 	to get T(T(A)T(B)) = BA
-// Vectors are just 1xN matrices, so premultiplying a column vector is matrix_mult(A, v, v2, rowsA, colsA, 1)
 
 function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 	mem_start = freemem;
@@ -69,6 +19,7 @@ function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 	freemem += this.history_step*this.history_length;
 
 	this.noise_limit = 0.2;
+	this.tonality_limit = 0.2;
 	
 	this.working_vector = freemem;
 	freemem += this.options_N;
@@ -97,7 +48,7 @@ function pitch_detection_init(freemem) local(buffer_length, mem_start) (
 );
 
 function pitch_detection_delay() (
-	this.window_length;
+	this.window_length*0.5 + sdft_step;
 );
 
 // Window goes 0-1-0
@@ -105,8 +56,9 @@ function pitch_detection_window(i) (
 	0.5 - 0.5*cos((i + 0.5)/this.window_length*2*$pi);
 );
 
-// Compensate for window's effect on autocorrelation
+// Window once it's been autocorrelated/phase-locked
 function pitch_detection_window_corrected(i) (
+	// We use 0.6 because it's not going to be 100% limited, so we fudge it by making this window wider
 	this.pitch_detection_window(this.window_length*0.5 + i*0.6/this.oversample);
 );
 
@@ -174,7 +126,6 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 		i2 = min(this.fft_size, i*2);
 		i3 = min(this.fft_size, i*3);
 		total = this.fft_buffer[0]*(this.pitch_detection_window_corrected(i)*6 + this.pitch_detection_window_corrected(i2)*4 + this.pitch_detection_window_corrected(i3)*2);
-		debug.total = total;
 		// based on a 4-tap filter
 		value = (this.fft_buffer[2*i]*6 + this.fft_buffer[2*i2]*4 + this.fft_buffer[2*i3]*2)/total;
 		this.fft_buffer[2*i] = value;
@@ -247,38 +198,39 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 	this.prev_tonality = this.current_tonality;
 	
 	freqs = this.working_vector;
+	likelihoods_tilted = this.working_vector_2;
 	likelihoods = this.working_vector_3;
 	this.current_amp = this.pitch_detection_recalc(freqs, likelihoods);
 	
-	// choose the most likely
+	// Tilt (bias to higher freqs)
 	total = 0;
 	i = 0;
 	while (i < this.options_N) (
-		likelihoods[i] *= pow(freqs[i], 0.5);
-		total += likelihoods[i];
+		likelihoods_tilted[i] = likelihoods[i]*pow(freqs[i], 0.5);
+		total += likelihoods_tilted[i];
 		i += 1;
 	);
 
-	0 ? (
+	0 ? ( // Random
 		selected_index = 0;
 		random = rand()*total;
 		i = 0;
 		while (i < this.options_N && random >= 0) (
-			random < likelihoods[i] ? (
+			random < likelihoods_tilted[i] ? (
 				selected_index = i;
 			);
-			random -= likelihoods[i];
+			random -= likelihoods_tilted[i];
 			i += 1;
 		);
 		this.current_freq = freqs[selected_index];
 		this.current_tonality = likelihoods[selected_index];
-	) : (
+	) : ( // Always pick best
 		selected_index = 0;
-		best = freqs[0];
+		best = likelihoods[0];
 		i = 0;
 		while (i < this.options_N) (
-			best < likelihoods[i] ? (
-				best = likelihoods[i];
+			best < likelihoods_tilted[i] && likelihoods[i] >= this.tonality_limit ? (
+				best = likelihoods_tilted[i];
 				selected_index = i;
 			);
 			i += 1;
@@ -289,7 +241,7 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 	!this.current_freq ? this.current_tonality = 0;
 );
 
-function pitch_detection_sample(left, right) (
+function pitch_detection_input(left, right) (
 	this.buffer_left[this.buffer_index] = left;
 	this.buffer_right[this.buffer_index] = right;
 	this.buffer_index += 1;
@@ -311,9 +263,14 @@ function pitch_detection_amp() (
 	this.current_amp + (this.prev_amp - this.current_amp)*this.sdft_remaining/this.sdft_step;
 );
 
-function pitch_detection_freq() (
+function pitch_detection_freq() local(log_current, log_prev) (
 	this.current_freq ? (
 		this.prev_freq ? (
+			/*
+			log_current = log(this.current_freq);
+			log_prev = log(this.prev_freq);
+			exp(log_current + (log_prev - log_current)*this.sdft_remaining/this.sdft_step);
+			//*/
 			this.current_freq + (this.prev_freq - this.current_freq)*this.sdft_remaining/this.sdft_step;
 		) : this.current_freq;
 	) : this.prev_freq;
