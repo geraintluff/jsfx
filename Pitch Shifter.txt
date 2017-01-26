@@ -13,7 +13,8 @@ import delay-utils.jsfx-inc
 
 @init
 
-safe_allocation = 65536*2;
+// OVERFLOW PROTECTION - if you get an overflow, increase this value.
+safe_allocation = 65536*4;
 
 //recording = 0;
 
@@ -27,6 +28,26 @@ max_delay = srate/min_freq;
 freemem = delay0.delay_init(freemem, latencysamples + max_delay);
 freemem = delay1.delay_init(freemem, latencysamples + max_delay);
 
+formant_max_window_length = ceil(0.1*srate);
+formant_remaining = formant_max_window_length;
+formant_buffer_length = formant_max_window_length;
+formant_input_original = freemem;
+freemem += formant_buffer_length*2;
+formant_input_shifted = freemem;
+freemem += formant_buffer_length*2;
+formant_output = freemem;
+freemem += formant_buffer_length*2;
+formant_fftsize = pow(2, ceil(log(formant_max_window_length + 1)/log(2)));
+formant_fftbuffer = freemem = 65536*ceil(freemem/65536);
+freemem += formant_fftsize*2;
+formant_fftbuffer2 = freemem = 65536*ceil(freemem/65536);
+freemem += formant_fftsize*2;
+formant_spectrum_original = freemem;
+freemem += formant_fftsize*0.5;
+formant_spectrum_shifted = freemem;
+freemem += formant_fftsize*0.5;
+formant_index = 0;
+
 analysis = safe_allocation;
 analysis_step = ANALYSIS##;
 !analysis_interval ? analysis_interval = 0.01; // 10ms
@@ -36,7 +57,7 @@ freemem > analysis ? (
 	ui_error("Overflow! Increase \"safe_allocation\" in the code, and email Geraint: luffgd@gmail.com");
 );
 
-pdc_delay = latencysamples;
+pdc_delay = latencysamples + formant_max_window_length;
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
 
@@ -58,6 +79,9 @@ index_ratio = index_float - index_int;
 entry = analysis + index_int*analysis_step;
 entrynext = entry + analysis_step;
 correction_semitones = entry[ANALYSIS#SHIFT_SEMITONES]*(1 - index_ratio) + entrynext[ANALYSIS#SHIFT_SEMITONES]*index_ratio + correction_semitones_global;
+index_int >= analysis_count ? (
+	correction_semitones = correction_semitones_global;
+);
 
 freq = pitch_detection.pitch_detection_freq();
 tonality = pitch_detection.pitch_detection_tonality();
@@ -86,8 +110,14 @@ delay1.delay_input(spl1);
 delayA = latencysamples - phase*wavelength;
 delayB = delayA + wavelength;
 
+formant_input_original[2*formant_index] = delay0.delay_output_linear(latencysamples);
+formant_input_original[2*formant_index + 1] = delay1.delay_output_linear(latencysamples);
+
 spl0 = delay0.delay_output_linear(delayA)*(1 - phase) + delay0.delay_output_linear(delayB)*phase;
 spl1 = delay1.delay_output_linear(delayA)*(1 - phase) + delay1.delay_output_linear(delayB)*phase;
+
+formant_input_shifted[2*formant_index] = spl0;
+formant_input_shifted[2*formant_index + 1] = spl1;
 
 analysis_index_ratio = floor(seconds/analysis_interval);
 analysis_index = floor(analysis_index_ratio);
@@ -115,6 +145,147 @@ analysis_index_ratio -= analysis_index;
 
 (play_state&1) ? block_index += 1;
 analysis_index_prev = analysis_index;
+
+formant_index += 1;
+formant_index >= formant_buffer_length ? (
+	formant_index = 0;
+);
+
+function calculate_spectrum(buffer, fftsize, spectrum, resolution) local(i, i2, sum, blurspan, mag2) (
+	spectrum[0] = buffer[0]*buffer[0] + buffer[1]*buffer[1];
+	i = 1;
+	while (i < fftsize*0.5) (
+		i2 = fftsize - i;
+		mag2 = buffer[2*i]*buffer[2*i] + buffer[2*i + 1]*buffer[2*i + 1] + buffer[2*i2]*buffer[2*i2] + buffer[2*i2 + 1]*buffer[2*i2 + 1];
+		spectrum[i] = mag2;
+		i += 1;
+	);
+	
+	blurspan = floor(fftsize*resolution/srate + 0.75);
+	sum = 0;
+	i = 0;
+	while (i < fftsize*0.5) (
+		sum += spectrum[i];
+		spectrum[i] = sum;
+		i += 1;
+	);
+	i = fftsize*0.5 - 1;
+	while (i >= blurspan) (
+		spectrum[i] -= spectrum[i - blurspan];
+		i -= 1;
+	);
+
+	blurspan = floor(fftsize*resolution/srate + 0.25);
+	sum = 0;
+	i = 0;
+	while (i < fftsize*0.5) (
+		sum += spectrum[i];
+		spectrum[i] = sum;
+		i += 1;
+	);
+	i = 0;
+	while (i < fftsize*0.5 - blurspan) (
+		spectrum[i] = spectrum[i + blurspan] - spectrum[i];
+		i += 1;
+	);
+	i = 0;
+	while (i < fftsize*0.5) (
+		spectrum[i] = sqrt(spectrum[i]);
+		i += 1;
+	);
+);
+
+function move_from_input_to_buffer(fftsize, window_length, input, spectrum, resolution) (
+	i = 0;
+	centre_index = max(formant_max_window_length*0.5, formant_max_window_length - window_length*0.75);
+	while (i < fftsize) (
+		window_ratio = (i - centre_index)/window_length;
+		window_ratio < 0.5 ? (
+
+			i2 = formant_index + i;
+			i2 > formant_buffer_length ? (
+				i2 -= formant_buffer_length;
+			);
+			
+			window_value = (window_ratio < 0) ? 1 : 0.5 + 0.5*cos(window_ratio*2*$pi);
+			
+			// Move from input to fft buffer
+			formant_fftbuffer[2*i] = input[2*i2]*window_value;
+			formant_fftbuffer[2*i + 1] = input[2*i2 + 1]*window_value;
+			input[2*i2] *= (1 - window_value);
+			input[2*i2 + 1] *= (1 - window_value);
+		) : (
+			formant_fftbuffer[2*i] = formant_fftbuffer[2*i + 1] = 0;
+		);
+		i += 1;
+	);
+	
+	// TODO: maybe we don't always need an FFT this big - could pass in FFT size to this function
+	fft(formant_fftbuffer, fftsize);
+	fft_permute(formant_fftbuffer, fftsize);
+	calculate_spectrum(formant_fftbuffer, fftsize, spectrum, resolution);
+);
+
+formant_remaining -= 1;
+formant_remaining <= 0 ? (
+	window_length = max(ceil(0.01*srate), min(formant_max_window_length, wavelength*10));
+	fftsize = min(formant_fftsize, pow(2, ceil(log(window_length*2)/log(2))));
+	//fftsize = formant_fftsize;
+	formant_remaining += window_length*0.5;
+	
+	resolution = max(freq, freq + correction_freq);
+	resolution = freq;
+	move_from_input_to_buffer(fftsize, window_length, formant_input_original, formant_spectrum_original, resolution);
+	move_from_input_to_buffer(fftsize, window_length, formant_input_shifted, formant_spectrum_shifted, resolution);
+	
+	factor = (formant_spectrum_original[0]/formant_spectrum_shifted[0])/fftsize;
+	formant_fftbuffer[0] *= factor;
+	formant_fftbuffer[1] *= factor;
+	formant_spectrum_shifted[0] = factor;
+
+	formant_fftbuffer[fftsize] = 0;
+	formant_fftbuffer[fftsize + 1] = 0;
+	i = 1;
+	while (i < fftsize*0.5) (
+		i2 = fftsize - i;
+		factor = (formant_spectrum_original[i]/formant_spectrum_shifted[i])/fftsize;
+		formant_fftbuffer[2*i] *= factor;
+		formant_fftbuffer[2*i + 1] *= factor;
+		formant_fftbuffer[2*i2] *= factor;
+		formant_fftbuffer[2*i2 + 1] *= factor;
+		
+		formant_spectrum_shifted[i] = factor;
+		i += 1;
+	);
+	fft_ipermute(formant_fftbuffer, fftsize);
+	ifft(formant_fftbuffer, fftsize);
+
+	i = 0;
+	while (i < fftsize*2) (
+		formant_fftbuffer2[i] = formant_fftbuffer[i];
+		i += 1;
+	);
+	
+	// Copy to output
+	i = 0;
+	while (i < fftsize) (
+		i2 = formant_index + i;
+		i2 > formant_buffer_length ? (
+			i2 -= formant_buffer_length;
+		);
+		window_ratio = (i + 0.5)/fftsize;
+		window_value = 0.5 - 0.5*cos(window_ratio*2*$pi);
+		window_value /= (1 + 0.5*(window_value - 1));
+		
+		formant_output[2*i2] += formant_fftbuffer[2*i]*window_value;
+		formant_output[2*i2 + 1] += formant_fftbuffer[2*i + 1]*window_value;
+		i += 1;
+	);
+);
+
+spl0 = formant_output[formant_index*2];
+spl1 = formant_output[formant_index*2 + 1];
+formant_output[formant_index*2] = formant_output[formant_index*2 + 1] = 0;
 
 @gfx 900 600
 
@@ -423,6 +594,14 @@ function labelled_dial_vertical(value, low, high, bias, label, formatvalue, form
 );
 
 ui_screen() == "main" ? (
+	ui_split_leftratio(0.4);
+		debug.scale = ui_graph_step(formant_fftbuffer2, formant_fftsize, 2, 0, 0);
+		ui_color(255, 255, 0);
+		debug.scale2 = ui_graph_step(formant_spectrum_shifted, formant_fftsize, 2, 0, 1e6);
+		ui_color(0, 255, 0);
+		debug.scale2 = ui_graph_step(formant_spectrum_original, formant_fftsize, 2, 0, 1e6);
+	ui_pop();
+	
 	ui_split_top(100);
 		control_group("");
 		ui_split_right(100);
