@@ -16,10 +16,11 @@ function delay_input(spl) (
 	spl;
 );
 
-function delay_output_linear(samples) local(index1, index2, ratio) (
-	index1 = floor(this.index - samples);
-	ratio = samples - floor(samples);
-	index2 = index1 - 1;
+function delay_output_linear(samples) local(index, index1, index2, ratio) (
+	index = this.index - samples;
+	index1 = floor(index);
+	ratio = index - index1;
+	index2 = index1 + 1;
 	while (index1 < 0) (
 		index1 += this.buffer_length;
 	);
