@@ -228,6 +228,7 @@ a[href] code {
 <li>Spring-Box - an echo/chorus effect</li>
 <li>Bad Connection - flips between two volumes to simulate poor connection or dropouts</li>
 <li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input</li>
+<li>Warble - a fairly basic non-linear pitch-correction effect</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 <li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
 </ul>
@@ -251,6 +252,12 @@ a[href] code {
 <p>The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central while preserving the stereo feel of the sound.  Similarly, the &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.</p>
 <p>It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.</p>
 <p><img src="Sandwich Amp.png" alt="screenshot"></p>
+</div><h2 id="warble">Warble</h2><div class="section section2">
+<p>Warble is a fairly basic non-linear pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>)</p>
+<p>There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.</p>
+<p><img src="Warble.png" alt="screenshot"></p>
+<p>The formant-correction on the shifting algorithm isn&#39;t too great, so it can sound very synthetic if you push it too hard.</p>
+<p>It doesn&#39;t (currently) separate the frequencies into notes, or support automatic correction.  I haven&#39;t figured out how to make &quot;undo&quot; work properly, so that&#39;s something to look at in the future.</p>
 </div><h2 id="spectrum-matcher">Spectrum Matcher</h2><div class="section section2">
 <p>Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.</p>
 <p>The bottom half of the screen shows the short-term spectrum (green), the long-term spectrum (yellow), and the long-term reference spectrum (blue).</p>
