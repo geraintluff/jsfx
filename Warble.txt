@@ -262,7 +262,7 @@ correct_formants_ugly ? (
 		move_from_input_to_buffer(fftsize, window_length, formant_input_original, formant_spectrum_original, resolution);
 		move_from_input_to_buffer(fftsize, window_length, formant_input_shifted, formant_spectrum_shifted, resolution);
 		
-		factor = (formant_spectrum_original[0]/formant_spectrum_shifted[0])/fftsize;
+		factor = (formant_spectrum_original[0]/formant_spectrum_shifted[0])/fftsize/formant_shift_factor;
 		formant_fftbuffer[0] *= factor;
 		formant_fftbuffer[1] *= factor;
 
@@ -272,7 +272,7 @@ correct_formants_ugly ? (
 		while (i < fftsize*0.5) (
 			i2 = fftsize - i;
 			i_formant = min(fftsize*0.5 - 1, floor(i/formant_shift_factor + 0.5));
-			factor = (formant_spectrum_original[i_formant]/formant_spectrum_shifted[i])/fftsize;
+			factor = (formant_spectrum_original[i_formant]/formant_spectrum_shifted[i])/fftsize/formant_shift_factor;
 			formant_fftbuffer[2*i] *= factor;
 			formant_fftbuffer[2*i + 1] *= factor;
 			formant_fftbuffer[2*i2] *= factor;

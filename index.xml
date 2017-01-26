@@ -110,6 +110,12 @@
 				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/Warble.jsfx</source>
 				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="1.0.2" time="2017-01-26T17:02:05.312Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Delay">
