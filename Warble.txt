@@ -1,4 +1,4 @@
-desc:Pitch Shifter (by Geraint Luff)
+desc:Warble - Pitch Shifter (by Geraint Luff)
 in_pin:Left
 in_pin:Right
 out_pin:Left
