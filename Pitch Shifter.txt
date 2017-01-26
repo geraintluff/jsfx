@@ -224,7 +224,7 @@ function move_from_input_to_buffer(fftsize, window_length, input, spectrum, reso
 		window_ratio < 0.5 ? (
 
 			i2 = formant_index + i;
-			i2 > formant_buffer_length ? (
+			i2 >= formant_buffer_length ? (
 				i2 -= formant_buffer_length;
 			);
 			
@@ -310,7 +310,7 @@ correct_formants_ugly ? (
 		i = 0;
 		while (i < formant_buffer_length) (
 			i2 = formant_index + i;
-			i2 > formant_buffer_length ? (
+			i2 >= formant_buffer_length ? (
 				i2 -= formant_buffer_length;
 			);
 			window_ratio = (i + 0.5)/formant_buffer_length;
