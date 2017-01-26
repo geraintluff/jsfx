@@ -29,7 +29,7 @@ freemem = delay0.delay_init(freemem, latencysamples + max_delay);
 freemem = delay1.delay_init(freemem, latencysamples + max_delay);
 
 analysis = safe_allocation;
-analysis_step = 4/*ANALYSIS: */;
+analysis_step = 5/*ANALYSIS: SEMITONES*/;
 !analysis_interval ? analysis_interval = 0.01; // 10ms
 //analysis_count = 0;
 
@@ -95,7 +95,12 @@ analysis_index = floor(analysis_index_ratio);
 analysis_index_ratio -= analysis_index;
 (analysis_index == analysis_index_prev + 1)? (
 	recording ? (
-		analysis_count = max(analysis_count, analysis_index + 1);
+		// Add clean entries to the analysis table
+		while (analysis_count < analysis_index + 1) (
+			analysis_entry = analysis + analysis_step*analysis_count;
+			analysis_entry[0/*ANALYSIS:INPUT_FREQ*/] = analysis_entry[1/*ANALYSIS:INPUT_AMP*/] = analysis_entry[2/*ANALYSIS:INPUT_TONALITY*/] = analysis_entry[4/*ANALYSIS:SEMITONES*/] = 0;
+			analysis_count += 1;
+		);
 		analysis_entry = analysis + analysis_step*analysis_index;
 		analysis_entry[0/*ANALYSIS:INPUT_FREQ*/] = pitch_detection.pitch_detection_freq();
 		analysis_entry[1/*ANALYSIS:INPUT_AMP*/] = pitch_detection.pitch_detection_amp();

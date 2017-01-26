@@ -94,7 +94,12 @@ analysis_index = floor(analysis_index_ratio);
 analysis_index_ratio -= analysis_index;
 (analysis_index == analysis_index_prev + 1)? (
 	recording ? (
-		analysis_count = max(analysis_count, analysis_index + 1);
+		// Add clean entries to the analysis table
+		while (analysis_count < analysis_index + 1) (
+			analysis_entry = analysis + analysis_step*analysis_count;
+			analysis_entry[ANALYSIS#INPUT_FREQ] = analysis_entry[ANALYSIS#INPUT_AMP] = analysis_entry[ANALYSIS#INPUT_TONALITY] = analysis_entry[ANALYSIS#SEMITONES] = 0;
+			analysis_count += 1;
+		);
 		analysis_entry = analysis + analysis_step*analysis_index;
 		analysis_entry[ANALYSIS#INPUT_FREQ] = pitch_detection.pitch_detection_freq();
 		analysis_entry[ANALYSIS#INPUT_AMP] = pitch_detection.pitch_detection_amp();
