@@ -101,26 +101,24 @@
 			},
 			"version": "1.0.0"
 		},
-		"Pitch Readout": {
+		"Warble": {
 			"type": "effect",
 			"category": "Utility",
 			"files": {
-				"Pitch Readout.jsfx": {
-					"main": false
-				},
 				"pitch-detection.jsfx-inc": {
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
 					"main": false
 				},
-				"Pitch Shifter.jsfx": {
+				"Warble.jsfx": {
 					"main": false
 				},
 				"delay-utils.jsfx-inc": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
