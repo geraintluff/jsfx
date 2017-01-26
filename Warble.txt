@@ -6,6 +6,7 @@ out_pin:Right
 
 slider1:correction_semitones_global=0<-12,12,1>-transpose (semitones)
 slider2:tonality_limit=0.2<0,1,0.01>-tonality limit
+slider3:formant_shift_semitones=0<-12,12,0.1>-formant shift (semitones)
 
 import ui-lib.jsfx-inc
 import pitch-detection.jsfx-inc
@@ -814,8 +815,6 @@ while (si < var_count) (
 		file_var(0, display_follow_playback);
 	) : si == VAR#SHIFT_MODE(5) ? (
 		file_var(0, shift_mode);
-	) : si == VAR#FORMANT_SHIFT_SEMITONES(6) ? (
-		file_var(0, formant_shift_semitones);
 	);
 	si += 1;
 );
