@@ -1,0 +1,852 @@
+desc:Pitch Shifter (by Geraint Luff)
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:correction_semitones_global=0<-12,12,1>-transpose (semitones)
+slider2:tonality_limit=0.2<0,1,0.01>-tonality limit
+
+import ui-lib.jsfx-inc
+import pitch-detection.jsfx-inc
+import delay-utils.jsfx-inc
+
+@init
+
+// OVERFLOW PROTECTION - if you get an overflow, increase this value.
+safe_allocation = 65536*4;
+
+//recording = 0;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = pitch_detection.pitch_detection_init(freemem);
+pitch_detection.pitch_detection_config_tonality_limit(0);
+latencysamples = pitch_detection.pitch_detection_delay();
+min_freq = 10;
+max_delay = srate/min_freq;
+freemem = delay0.delay_init(freemem, latencysamples + max_delay);
+freemem = delay1.delay_init(freemem, latencysamples + max_delay);
+
+formant_max_window_length = ceil(0.1*srate);
+formant_remaining = formant_max_window_length;
+formant_buffer_length = formant_max_window_length;
+formant_input_original = freemem;
+freemem += formant_buffer_length*2;
+formant_input_shifted = freemem;
+freemem += formant_buffer_length*2;
+formant_output = freemem;
+freemem += formant_buffer_length*2;
+formant_fftsize = pow(2, ceil(log(formant_max_window_length + 1)/log(2)));
+formant_fftbuffer = freemem = 65536*ceil(freemem/65536);
+freemem += formant_fftsize*2;
+formant_spectrum_original = freemem;
+freemem += formant_fftsize*0.5;
+formant_spectrum_shifted = freemem;
+freemem += formant_fftsize*0.5;
+formant_index = 0;
+
+analysis = safe_allocation;
+analysis_step = ANALYSIS##;
+!analysis_interval ? analysis_interval = 0.01; // 10ms
+//analysis_count = 0;
+
+freemem > analysis ? (
+	ui_error("Overflow! Increase \"safe_allocation\" in the code, and email Geraint: luffgd@gmail.com");
+);
+
+@block
+
+block_index = 0;
+
+!shift_mode ? (
+	shift_mode = SHIFT_MODE#PLAIN;
+);
+
+correct_formants_ugly = 0;
+shift_mode == SHIFT_MODE#PLAIN_WITH_FORMANTS ? (
+	correct_formants_ugly = 1;
+);
+
+pdc_delay = latencysamples
+	+ (correct_formants_ugly ? formant_buffer_length : 0);
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+
+@sample
+
+seconds = play_position + block_index/srate;
+
+// Pitch-detection for shifting and analysis
+pitch_detection.pitch_detection_input(spl0, spl1);
+
+// Shifting
+index_float = seconds/analysis_interval;
+index_int = floor(index_float);
+index_ratio = index_float - index_int;
+entry = analysis + index_int*analysis_step;
+entrynext = entry + analysis_step;
+correction_semitones = entry[ANALYSIS#SHIFT_SEMITONES]*(1 - index_ratio) + entrynext[ANALYSIS#SHIFT_SEMITONES]*index_ratio + correction_semitones_global;
+index_int >= analysis_count || recording ? (
+	correction_semitones = correction_semitones_global;
+);
+
+//formant_shift_semitones = 0;
+formant_shift_factor = pow(2, formant_shift_semitones/12);
+
+freq = pitch_detection.pitch_detection_freq();
+tonality = pitch_detection.pitch_detection_tonality();
+tonality < tonality_limit ? (
+	correction_semitones *= tonality/tonality_limit;
+);
+
+wavelength = srate/max(min_freq, freq);
+correction_factor = pow(2, correction_semitones/12);
+correction_freq = freq*(correction_factor - 1);
+freq > min_freq && abs(correction_freq) > 1 ? (
+	phase += correction_freq/srate;
+) : phase > 0.001 ? (
+	// Slew towards 1
+	phase += (1 - phase)*max(correction_freq, 1)/srate;
+);
+while (phase > 1) (
+	phase -= 1;
+);
+while (phase < 0) (
+	phase += 1;
+);
+
+// Implement cross-fading delay
+delay0.delay_input(spl0);
+delay1.delay_input(spl1);
+delayA = latencysamples - phase*wavelength;
+delayB = delayA + wavelength;
+
+formant_input_original[2*formant_index] = delay0.delay_output_linear(latencysamples);
+formant_input_original[2*formant_index + 1] = delay1.delay_output_linear(latencysamples);
+
+spl0 = delay0.delay_output_linear(delayA)*(1 - phase) + delay0.delay_output_linear(delayB)*phase;
+spl1 = delay1.delay_output_linear(delayA)*(1 - phase) + delay1.delay_output_linear(delayB)*phase;
+
+formant_input_shifted[2*formant_index] = spl0;
+formant_input_shifted[2*formant_index + 1] = spl1;
+
+analysis_index_ratio = floor(seconds/analysis_interval);
+analysis_index = floor(analysis_index_ratio);
+analysis_index_ratio -= analysis_index;
+(analysis_index == analysis_index_prev + 1)? (
+	recording ? (
+		// Add clean entries to the analysis table
+		while (analysis_count < analysis_index + 1) (
+			analysis_entry = analysis + analysis_step*analysis_count;
+			analysis_entry[ANALYSIS#INPUT_FREQ] = analysis_entry[ANALYSIS#INPUT_AMP] = analysis_entry[ANALYSIS#INPUT_TONALITY] = analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
+			analysis_count += 1;
+		);
+		analysis_entry = analysis + analysis_step*analysis_index;
+		analysis_entry[ANALYSIS#INPUT_FREQ] = pitch_detection.pitch_detection_freq();
+		analysis_entry[ANALYSIS#INPUT_AMP] = pitch_detection.pitch_detection_amp();
+		analysis_entry[ANALYSIS#INPUT_TONALITY] = pitch_detection.pitch_detection_tonality();
+		analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
+		
+		display_left_time = min(display_left_time, seconds);
+		display_right_time = max(display_right_time, seconds);
+	);
+) : (analysis_index != analysis_index_prev) ? (
+	recording = 0;
+);
+
+(play_state&1) ? block_index += 1;
+analysis_index_prev = analysis_index;
+
+formant_index += 1;
+formant_index >= formant_buffer_length ? (
+	formant_index = 0;
+);
+
+function calculate_spectrum(buffer, fftsize, spectrum, resolution) local(i, i2, sum, blurspan, mag2) (
+	spectrum[0] = buffer[0]*buffer[0] + buffer[1]*buffer[1];
+	i = 1;
+	while (i < fftsize*0.5) (
+		i2 = fftsize - i;
+		mag2 = buffer[2*i]*buffer[2*i] + buffer[2*i + 1]*buffer[2*i + 1] + buffer[2*i2]*buffer[2*i2] + buffer[2*i2 + 1]*buffer[2*i2 + 1];
+		spectrum[i] = mag2;
+		i += 1;
+	);
+	
+	blurspan = floor(fftsize*resolution/srate + 0.75);
+	sum = 0;
+	i = 0;
+	while (i < fftsize*0.5) (
+		sum += spectrum[i];
+		spectrum[i] = sum;
+		i += 1;
+	);
+	i = fftsize*0.5 - 1;
+	while (i > blurspan) (
+		spectrum[i] = (spectrum[i] - spectrum[i - blurspan])/blurspan;
+		i -= 1;
+	);
+	while (i >= 0) (
+		spectrum[i] = spectrum[i]/(i + 1);
+		i -= 1;
+	);
+
+	blurspan = floor(fftsize*resolution/srate + 0.25);
+	sum = 0;
+	i = fftsize*0.5 - 1;
+	while (i >= 0) (
+		sum += spectrum[i];
+		spectrum[i] = sum;
+		i -= 1;
+	);
+	i = 0;
+	while (i < fftsize*0.5 - blurspan) (
+		spectrum[i] = (spectrum[i + blurspan] - spectrum[i])/blurspan;
+		i += 1;
+	);
+	while (i < fftsize*0.5) (
+		spectrum[i] = spectrum[i]/(fftsize*0.5 - i);
+		i += 1;
+	);
+	i = 0;
+	while (i < fftsize*0.5) (
+		spectrum[i] = sqrt(spectrum[i]);
+		i += 1;
+	);
+);
+
+function move_from_input_to_buffer(fftsize, window_length, input, spectrum, resolution) (
+	i = 0;
+	centre_index = max(formant_max_window_length*0.5, formant_max_window_length - window_length*0.75);
+	centre_index = formant_buffer_length*0.5;
+	while (i < fftsize) (
+		window_ratio = (i - centre_index)/window_length;
+		window_ratio < 0.5 ? (
+
+			i2 = formant_index + i;
+			i2 >= formant_buffer_length ? (
+				i2 -= formant_buffer_length;
+			);
+			
+			window_value = (window_ratio < 0) ? 1 : 0.5 + 0.5*cos(window_ratio*2*$pi);
+			
+			// Move from input to fft buffer
+			formant_fftbuffer[2*i] = input[2*i2]*window_value;
+			formant_fftbuffer[2*i + 1] = input[2*i2 + 1]*window_value;
+
+			input[2*i2] *= (1 - window_value);
+			input[2*i2 + 1] *= (1 - window_value);
+		) : (
+			formant_fftbuffer[2*i] = formant_fftbuffer[2*i + 1] = 0;
+		);
+		i += 1;
+	);
+	
+	// TODO: maybe we don't always need an FFT this big - could pass in FFT size to this function
+	fft(formant_fftbuffer, fftsize);
+	fft_permute(formant_fftbuffer, fftsize);
+	calculate_spectrum(formant_fftbuffer, fftsize, spectrum, resolution);
+);
+
+correct_formants_ugly ? (
+	formant_remaining -= 1;
+	formant_remaining <= 0 ? (
+		//window_length = max(ceil(0.01*srate), min(formant_max_window_length, wavelength*10));
+		window_length = formant_max_window_length*0.75;
+		//fftsize = min(formant_fftsize, pow(2, ceil(log(window_length*2)/log(2))));
+		fftsize = formant_fftsize;
+		formant_remaining += window_length*0.5;
+
+		resolution = max(freq, freq + correction_freq);
+		move_from_input_to_buffer(fftsize, window_length, formant_input_original, formant_spectrum_original, resolution);
+		move_from_input_to_buffer(fftsize, window_length, formant_input_shifted, formant_spectrum_shifted, resolution);
+		
+		factor = (formant_spectrum_original[0]/formant_spectrum_shifted[0])/fftsize;
+		formant_fftbuffer[0] *= factor;
+		formant_fftbuffer[1] *= factor;
+
+		formant_fftbuffer[fftsize] = 0;
+		formant_fftbuffer[fftsize + 1] = 0;
+		i = 1;
+		while (i < fftsize*0.5) (
+			i2 = fftsize - i;
+			i_formant = min(fftsize*0.5 - 1, floor(i/formant_shift_factor + 0.5));
+			factor = (formant_spectrum_original[i_formant]/formant_spectrum_shifted[i])/fftsize;
+			formant_fftbuffer[2*i] *= factor;
+			formant_fftbuffer[2*i + 1] *= factor;
+			formant_fftbuffer[2*i2] *= factor;
+			formant_fftbuffer[2*i2 + 1] *= factor;
+			
+			i += 1;
+		);
+		fft_ipermute(formant_fftbuffer, fftsize);
+		ifft(formant_fftbuffer, fftsize);
+		
+		// Copy to output
+		i = 0;
+		while (i < formant_buffer_length) (
+			i2 = formant_index + i;
+			i2 >= formant_buffer_length ? (
+				i2 -= formant_buffer_length;
+			);
+			window_ratio = (i + 0.5)/formant_buffer_length;
+			window_value = 0.5 - 0.5*cos(window_ratio*2*$pi);
+			window_value /= (1 + 0.999*(window_value - 1));
+			
+			formant_output[2*i2] += formant_fftbuffer[2*i]*window_value;
+			formant_output[2*i2 + 1] += formant_fftbuffer[2*i + 1]*window_value;
+			i += 1;
+		);
+	);
+
+	spl0 = formant_output[formant_index*2];
+	spl1 = formant_output[formant_index*2 + 1];
+	formant_output[formant_index*2] = formant_output[formant_index*2 + 1] = 0;
+);
+
+@gfx 900 600
+
+!display_right_time ? (
+	display_left_time = 0;
+	display_right_time = analysis_count*analysis_interval;
+);
+!display_top_note ? (
+	display_top_note = 127;
+	display_bottom_note = 0;
+);
+
+!display_amp_scale ? (
+	display_amp_scale = 100;
+);
+display_amp_limit_db = -60;
+display_amp_limit = pow(10, display_amp_limit_db/20);
+
+!display_tool_width ? (
+	display_tool_mode = TOOL#ADD;
+	display_tool_sharpness = 0.5;
+	display_tool_width = 0.1;
+);
+
+//display_change_trange = 0.1;
+//display_change_time = 0;
+//display_change_note = 0;
+
+function freq_to_note(freq) (
+	12*log(freq/440)/log(2) + 69;
+);
+
+function note_to_y(note) (
+	ui_top() + ui_height()*(note - display_top_note)/(display_bottom_note - display_top_note);
+);
+
+function time_to_x(t) (
+	ui_left() + ui_width()*(t - display_left_time)/(display_right_time - display_left_time);
+);
+
+function x_to_time(x) (
+	display_left_time + (display_right_time - display_left_time)*(x - ui_left())/ui_width();
+);
+function y_to_note(y) (
+	display_top_note + (display_bottom_note - display_top_note)*(y - ui_top())/ui_height();
+);
+
+function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, trange, index, index1, index2, entry, freq, lowfreq, highfreq, lowfreq_corrected, highfreq_corrected, correction, note, tool_active, sum) (
+	// Draw the thing
+	ui_push_clip();
+		control_background_technical();
+		
+		ui_colora(255, 255, 255, 0.2*pow(min(1, ui_height()/(display_top_note - display_bottom_note)/20), 2));
+		i = 0;
+		while (i <= 127) (
+			y1 = note_to_y(i);
+			gfx_line(ui_left(), y1, ui_right() - 1, y1);
+			i += 1;
+		);
+		
+		width = ui_width();
+		height = ui_height();
+		trange = display_right_time - display_left_time;
+		i = 0;
+		while (i < width) (
+			x = ui_left() + i;
+			t1 = display_left_time + i/width*trange;
+			t2 = display_left_time + (i + 1)/width*trange;
+			index1 = floor(t1/analysis_interval);
+			index2 = ceil(t2/analysis_interval);
+
+			index = index1;
+			lowfreq = highfreq = 0;
+			lowfreq_corrected = highfreq_corrected = 0;
+			amp = 0;
+			tonal_amp = 0;
+			while (
+				entry = analysis + index*analysis_step;
+				tonality = entry[ANALYSIS#INPUT_TONALITY];
+				freq = entry[ANALYSIS#INPUT_FREQ];
+
+				amp = max(amp, entry[ANALYSIS#INPUT_AMP]);
+				tonality > tonality_limit ? (
+					freq ? (
+						lowfreq = lowfreq ? min(lowfreq, freq) : freq;
+						highfreq = highfreq ? max(highfreq, freq) : freq;
+						correction = pow(2, entry[ANALYSIS#SHIFT_SEMITONES]/12);
+						lowfreq_corrected = lowfreq_corrected ? min(lowfreq_corrected, freq*correction) : freq*correction;
+						highfreq_corrected = highfreq_corrected ? max(highfreq_corrected, freq*correction) : freq*correction;
+					);
+					tonal_amp = max(tonal_amp, entry[ANALYSIS#INPUT_AMP]*entry[ANALYSIS#INPUT_TONALITY]);
+				);
+				index += 1;
+				index < index2;
+			);
+			
+			lowfreq && amp >= display_amp_limit ? (
+				y1 = note_to_y(freq_to_note(lowfreq_corrected));
+				y2 = note_to_y(freq_to_note(highfreq_corrected));
+				y1b = note_to_y(freq_to_note(lowfreq));
+				y2b = note_to_y(freq_to_note(highfreq));
+				ui_color(80, 80, 80);
+				gfx_line(x, y1 - amp*display_amp_scale, x, y2 + amp*display_amp_scale);
+				ui_color(80, 140, 200);
+				gfx_line(x, y1 - tonal_amp*display_amp_scale, x, y2 + tonal_amp*display_amp_scale);
+				ui_colora(255, 255, 255, 0.7);
+				gfx_line(x, y1, x, y2);
+				ui_colora(255, 0, 0, 0.35*min(1, abs(y1b - y1)));
+				gfx_line(x, max(y1b, y1) - 1, x, min(y2b, y2) + 1);
+			);
+			i += 1;
+		);
+		
+		x = time_to_x(play_position - latencysamples/srate);
+		ui_colora(255, 255, 255, 0.5);
+		gfx_line(x, ui_top(), x, ui_bottom() - 1);
+		
+
+		// Keep the current section in view
+		display_follow_playback && (play_state&1) ? (
+			x = display_right_time - display_left_time;
+			while (play_position > display_right_time) (
+				display_left_time += x;
+				display_right_time += x;
+			);
+			while (play_position < display_left_time) (
+				display_left_time -= x;
+				display_right_time -= x;
+			);
+		);
+		
+		// Pan and zoom
+		ui_scroll_y() ? (
+			zoom_factor = exp(-ui_scroll_y()/1000);
+			mouse_cap&8 ? (
+				display_tool_width /= zoom_factor;
+			) : mouse_cap&4 ? (
+				y1 = y_to_note(mouse_y);
+				display_top_note = y1 + (display_top_note - y1)*zoom_factor;
+				display_bottom_note = y1 + (display_bottom_note - y1)*zoom_factor;
+			) : (
+				x = x_to_time(mouse_x);
+				display_left_time = x + (display_left_time - x)*zoom_factor;
+				display_right_time = x + (display_right_time - x)*zoom_factor;
+			);
+		);
+		mouse_cap&64 ? (
+			x = x_to_time(mouse_x) - x_to_time(mouse_x - ui_mouse_dx());
+			display_left_time -= x;
+			display_right_time -= x;
+			y1 = y_to_note(mouse_y) - y_to_note(mouse_y - ui_mouse_dy());
+			display_top_note -= y1;
+			display_bottom_note -= y1;
+		);
+		display_top_note > 127 ? (
+			display_bottom_note += 127 - display_top_note;
+			display_top_note = 127;
+		);
+		display_bottom_note < 0 ? (
+			display_top_note -= display_bottom_note;
+			display_bottom_note = 0;
+		);
+		display_top_note = min(127, display_top_note);
+
+		display_right_time > analysis_count*analysis_interval ? (
+			display_left_time += analysis_count*analysis_interval - display_right_time;
+			display_right_time = analysis_count*analysis_interval;
+		);
+		display_left_time < 0 ? (
+			display_right_time -= display_left_time;
+			display_left_time = 0;
+		);
+		display_right_time = min(analysis_count*analysis_interval, display_right_time);
+		
+		display_tool_width = max(0.01, min(1, display_tool_width));
+		
+		tool_active = ui_press(1) || ui_press(2);
+
+		// Calculate tool parameters
+		ui_mouse_down() || !tool_active ? (
+			// Current position
+			display_change_time = t1 = x_to_time(mouse_x);
+			// Nearest interval
+			index = floor(display_change_time/analysis_interval + 0.5);
+			entry = analysis + index*analysis_step;
+			// Find the current pitch on the screen
+			display_change_note = entry[ANALYSIS#INPUT_FREQ] ? (
+				freq_to_note(entry[ANALYSIS#INPUT_FREQ]) + entry[ANALYSIS#SHIFT_SEMITONES]
+			) : (
+				y_to_note(mouse_y);
+			);
+			display_change_note < display_bottom_note || display_change_note > display_top_note ? (
+				display_change_note = y_to_note(mouse_y);
+			);
+			y1 = note_to_y(display_change_note);
+			// Measure the vertical distance, minimum 20 pixels
+			y2 = abs(y1 - mouse_y);
+			y2 = max(20 + y2*0.3, y2 - 20);
+			// Apply that distance horizontally to get the range
+			t2 = x_to_time(mouse_x + y2);
+			display_change_trange = max(analysis_interval*1.2, t2 - t1);
+			display_change_trange = display_tool_width;
+		);
+		ui_press(2) ? (
+			display_change_time = t1 = x_to_time(mouse_x);
+		);
+		// Draw the tool area
+		ui_hover() && (ui_press() || !(mouse_cap&1)) ? (
+			y2 = time_to_x(mouse_x + display_change_trange) - time_to_x(mouse_x);
+			ui_colora(255, 64, 0, (ui_press() ? 0.2 : 0.1)*max(1, 5 - y2/10));
+			gfx_circle(time_to_x(display_change_time), note_to_y(display_change_note), y2, 1);
+		);
+		
+		tool_active ? (
+			// Current position
+			t1 = display_change_time;
+
+			trange = display_change_trange;
+			index1 = floor((t1 - trange)/analysis_interval);
+			index2 = floor((t1 + trange)/analysis_interval);
+
+			// Change amount
+			display_tool_mode == TOOL#ADD ? (
+				correction = y_to_note(mouse_y) - y_to_note(mouse_y - ui_mouse_dy());
+			) : display_tool_mode == TOOL#SMOOTH ? (
+				sum = correction = 0;
+				index = index1;
+				while (index <= index2) (
+					entry = analysis + index*analysis_step;
+					sum += entry[ANALYSIS#INPUT_AMP];
+					correction += entry[ANALYSIS#SHIFT_SEMITONES]*entry[ANALYSIS#INPUT_AMP];
+					index += 1;
+				);
+				correction = sum ? correction/sum : 0;
+			);
+			index = index1;
+			while (
+				entry = analysis + index*analysis_step;
+				// Time difference;
+				t2 = min(1, max(-1, (index*analysis_interval - t1)/trange));
+				// Strength
+				y1 = 0.5 + 0.5*cos(t2*$pi);
+				y1 /= (1 + display_tool_sharpness*(y1 - 1));
+				ui_press(2) ? (
+					y2 = y1*sqrt(ui_mouse_dy()*ui_mouse_dy() + ui_mouse_dx()*ui_mouse_dx())/100;
+				) : (
+					y2 = y1*abs(ui_mouse_dy()/100);
+				);
+				display_tool_mode == TOOL#ERASE ? (
+					entry[ANALYSIS#SHIFT_SEMITONES] *= exp(-y2);
+				) : display_tool_mode == TOOL#SMOOTH ?(
+					entry[ANALYSIS#SHIFT_SEMITONES] = correction + (entry[ANALYSIS#SHIFT_SEMITONES] - correction)*exp(-y2);
+				) : (
+					entry[ANALYSIS#SHIFT_SEMITONES] += correction*y1;
+				);
+				
+				index += 1;
+				
+				index < index2;
+			);
+		);
+
+		control_finish_technical();
+	ui_pop();
+);
+
+control_start("main", "tron");
+
+function record_button() (
+	control_background_enabled();
+	recording ? (
+		ui_color(255, 0, 0);
+		ui_fill();
+		ui_color(255, 255, 255);
+		ui_text("STOP");
+		ui_click() ? (
+			recording = 0;
+		);
+	) : (
+		ui_text("Record");
+		ui_click() ? (
+			recording = 1;
+		);
+	);
+	control_finish_enabled();
+);
+
+function labelled_dial_horizontal(value, low, high, bias, label, formatvalue, formatstring, default) (
+	ui_push_height(50);
+		ui_split_left(50);
+			value = control_dial(value, low, high, bias);
+			ui_click() && ui_clickcount() == 2 ? (
+				value = default;
+			);
+		ui_pop();
+		ui_padleft();
+		ui_align(0, 0.5);
+		ui_text(label);
+		ui_align(1, 0.5);
+		ui_textnumber(formatvalue, formatstring);
+	ui_pop();
+	value;
+);
+
+function labelled_switch_horizontal(value, label, truestring, falsestring) (
+	ui_push_heighttext(-1);
+		ui_split_left(50);
+			value = control_switch(value);
+		ui_pop();
+		ui_padleft();
+		ui_align(0, 0.5);
+		ui_text(label);
+		ui_align(1, 0.5);
+		ui_text(value ? truestring : falsestring);
+	ui_pop();
+	value;
+);
+
+function labelled_dial_vertical(value, low, high, bias, label, formatvalue, formatstring, default) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+		ui_click() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(formatvalue, formatstring);
+	ui_pop();
+	value;
+);
+
+ui_screen() == "main" ? (
+	ui_split_top(100);
+		control_group("");
+		ui_split_right(100);
+			ui_push_height(50);
+				ui_push_widthtext("help");
+					control_button("help") ? ui_screen_open("help");
+				ui_pop();
+			ui_pop();
+		ui_pop();
+		ui_split_leftratio(1/5);
+			ui_push_height(50);
+				record_button();
+			ui_pop();
+		ui_split_next();
+			tonality_limit = labelled_dial_vertical(tonality_limit, 0, 0.5, 2, "tonality limit", tonality_limit*100, "%i%%", 0.2);
+		ui_split_next();
+			correction_semitones_global = labelled_dial_vertical(correction_semitones_global, -12, 12, 0, "transpose", correction_semitones_global, correction_semitones_global > 0 ? "+%.1f" : "%.1f", 0);
+			correction_semitones_global = floor(correction_semitones_global*10 + 0.5)/10;
+		ui_split_next();
+			ui_push_height(50);
+				#display_shift_name = "Legacy";
+				display_shift_mode_next = display_shift_mode_prev = SHIFT_MODE#PLAIN;
+				shift_mode == SHIFT_MODE#PLAIN ? (
+					#display_shift_name = "Plain";
+					display_shift_mode_prev = SHIFT_MODE#PLAIN_WITH_FORMANTS;
+					display_shift_mode_next = SHIFT_MODE#PLAIN_WITH_FORMANTS;
+				) : shift_mode == SHIFT_MODE#PLAIN_WITH_FORMANTS ? (
+					#display_shift_name = "Formants (rough)";
+					display_shift_mode_prev = SHIFT_MODE#PLAIN;
+					display_shift_mode_next = SHIFT_MODE#PLAIN;
+				);
+				
+				shift_mode = control_selector(shift_mode, #display_shift_name, display_shift_mode_prev, display_shift_mode_next);
+			ui_pop();
+		ui_split_next();
+			shift_mode == SHIFT_MODE#PLAIN_WITH_FORMANTS ? (
+				formant_shift_semitones = labelled_dial_vertical(formant_shift_semitones, -12, 12, 0, "formant shift", formant_shift_semitones, formant_shift_semitones > 0 ? "+%.1f" : "%.1f", 0);
+				formant_shift_semitones = floor(formant_shift_semitones*10 + 0.5)/10;
+			);
+		ui_pop();
+	ui_pop();
+	
+	ui_split_right(240);
+		control_group("tool");
+		ui_split_topratio(1/5);
+			ui_push_height(50);
+				display_tool_mode = control_selector(
+					display_tool_mode,
+					display_tool_mode == TOOL#ERASE ? "Erase" : display_tool_mode == TOOL#SMOOTH ? "Smooth" : "Nudge",
+					(display_tool_mode + TOOL# - 1)%TOOL#,
+					(display_tool_mode + 1)%TOOL#
+				);
+			ui_pop();
+		ui_split_next();
+			display_tool_sharpness = labelled_dial_horizontal(display_tool_sharpness, 0.05, 0.95, 0, "tool sharpness", floor(display_tool_sharpness*100 + 0.5), "%i%%", 0.5);
+		ui_split_next();
+			display_tool_width = labelled_dial_horizontal(display_tool_width, 0.01, 1, 4, "tool width", floor(display_tool_width*1000 + 0.5), "%ims", 0.1);
+		ui_split_next();
+			display_amp_scale = labelled_dial_horizontal(display_amp_scale, 0, 1000, 5, "amplitude", 0, "", 0.01);
+		ui_split_next();
+			display_follow_playback = labelled_switch_horizontal(display_follow_playback, "follow playback", "on", "off");
+		ui_pop();
+	ui_pop();
+
+	custom_main();
+) : ui_screen() == "help" ? (
+	control_dialog("About / Help", 0, 0, "OK", -1);
+	ui_split_topratio(0.35);
+		ui_wraptext("This is a (fairly basic) non-linear pitch-editing plugin.  It analyses incoming audio and stores the results for display, and the corrects by the appropriate amount during playback.");
+	ui_pop();
+
+	ui_split_topratio(1/9);
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Click + Drag");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Use the editing tool (fixed time)");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Right-Click + Drag");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Use the editing tool (free time)");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("1");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Select the \"nudge\" tool");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("2");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Select the \"erase\" tool");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("3");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Select the \"smooth\" tool");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Scroll (mouse wheel)");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Zoom horizontally");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Ctrl + Scroll");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Zoom vertically");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Shift + Scroll");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Alter tool width");
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			ui_fontbold(1);
+			ui_text("Tab");
+		ui_split_next();
+			ui_align(0, 0.5);
+			ui_text("Switch tool");
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+ui_key() == 49 ? (
+	display_tool_mode = TOOL#ADD;
+) : ui_key() == 50 ? (
+	display_tool_mode = TOOL#ERASE;
+) : ui_key() == 51 ? (
+	display_tool_mode = TOOL#SMOOTH;
+) : ui_key() == 9 ? (
+	display_tool_mode = (display_tool_mode + 1)%TOOL#;
+	ui_key_next();
+);
+
+@serialize
+
+var_count = max(var_count, VAR##);
+analysis_var_count = analysis_step;
+file_var(0, var_count);
+si = 0;
+while (si < var_count) (
+	si == VAR#ANALYSIS_INTERVAL(0) ? (
+		file_var(0, analysis_interval);
+	) : si == VAR#ANALYSIS_COUNT(1) ? (
+		file_var(0, analysis_count);
+	) : si == VAR#ANALYSIS_VAR_COUNT(2) ? (
+		file_var(0, analysis_var_count);
+	) : si == VAR#DISPLAY_AMP_SCALE(3) ? (
+		file_var(0, display_amp_scale);
+	) : si == VAR#DISPLAY_FOLLOW_PLAYBACK(4) ? (
+		file_var(0, display_follow_playback);
+	) : si == VAR#SHIFT_MODE(5) ? (
+		file_var(0, shift_mode);
+	) : si == VAR#FORMANT_SHIFT_SEMITONES(6) ? (
+		file_var(0, formant_shift_semitones);
+	);
+	si += 1;
+);
+
+si = 0;
+while (si < analysis_count) (
+	si2 = 0;
+	while (si2 < analysis_var_count) (
+		// Set it for writing
+		sv = analysis[si2 + si*analysis_step];
+		file_var(0, sv);
+		// Read it - but only if it's an index we know about
+		( // This also fixes the indices, which is essential
+			si2 == ANALYSIS#INPUT_FREQ(0)
+			|| si2 == ANALYSIS#INPUT_AMP(1)
+			|| si2 == ANALYSIS#INPUT_TONALITY(2)
+			|| si2 == ANALYSIS#SHIFT_SEMITONES(3)
+		) ? (
+			analysis[si2 + si*analysis_step] = sv;
+		);
+		si2 += 1;
+	);
+	// Reset any new params to default values
+	while (si2 < analysis_step) (
+		sv = 0;
+		// Default values
+		si2 == ANALYSIS#INPUT_TONALITY ? (
+			sv = 0.5;
+		);
+		analysis[si2 + si*analysis_step] = sv;
+		si2 += 1;
+	);
+	si += 1;
+);

@@ -100,6 +100,25 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Warble": {
+			"type": "effect",
+			"category": "Utility",
+			"files": {
+				"pitch-detection.jsfx-inc": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Warble.jsfx": {
+					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
+				}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

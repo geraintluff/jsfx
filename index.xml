@@ -95,6 +95,16 @@
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.0/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 			</version>
 		</reapack>
+		<reapack name="Warble" type="effect">
+			<metadata>
+			</metadata>
+			<version name="1.0.0" time="2017-01-26T15:58:50.285Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/delay-utils.jsfx-inc</source>
+			</version>
+		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">

@@ -8,6 +8,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Spring-Box - an echo/chorus effect
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
+* Warble - a fairly basic non-linear pitch-correction effect
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 
@@ -50,6 +51,18 @@ The "width" parameter widens the sound before distortion and narrows it afterwar
 It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.
 
 ![screenshot](Sandwich Amp.png)
+
+## Warble
+
+Warble is a fairly basic non-linear pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: [original](audio-demos/warble-original.mp3), [minor correction](audio-demos/warble-subtle.mp3), [major alterations](audio-demos/warble-shifted.mp3))
+
+There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.
+
+![screenshot](Warble.png)
+
+The formant-correction on the shifting algorithm isn't too great, so it can sound very synthetic if you push it too hard.
+
+It doesn't (currently) separate the frequencies into notes, or support automatic correction.  I haven't figured out how to make "undo" work properly, so that's something to look at in the future.
 
 ## Spectrum Matcher
 
