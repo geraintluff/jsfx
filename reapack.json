@@ -119,6 +119,18 @@
 				}
 			},
 			"version": "1.0.3"
+		},
+		"Panalysis": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Panalysis.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

@@ -166,4 +166,10 @@
 			</version>
 		</reapack>
 	</category>
+	<category name="Misc">
+		<reapack name="Panalysis" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
+	</category>
 </index>
