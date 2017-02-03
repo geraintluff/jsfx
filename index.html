@@ -228,9 +228,10 @@ a[href] code {
 <li>Spring-Box - an echo/chorus effect</li>
 <li>Bad Connection - flips between two volumes to simulate poor connection or dropouts</li>
 <li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input</li>
-<li>Warble - a fairly basic non-linear pitch-correction effect</li>
+<li>Warble - a basic pitch-editing effect</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 <li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
+<li>Panalysis - visualise and manipulate the stereo field of the audio</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -253,7 +254,7 @@ a[href] code {
 <p>It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.</p>
 <p><img src="Sandwich Amp.png" alt="screenshot"></p>
 </div><h2 id="warble">Warble</h2><div class="section section2">
-<p>Warble is a fairly basic non-linear pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>
+<p>Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>
 <p>There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.</p>
 <p><img src="Warble.png" alt="screenshot"></p>
 <p>The formant-correction on the shifting algorithm isn&#39;t too great, so it can sound very synthetic if you push it too hard.</p>
@@ -272,4 +273,14 @@ a[href] code {
 <p>It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal segment (<code>1 + cos(x)</code>), with the goal of reducing cross-modulation.</p>
 <p><img src="Smooth Limiter.png" alt="screenshot"></p>
 <p>The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.</p>
+</div><h2 id="panalysis">Panalysis</h2><div class="section section2">
+<p>This effect draws the incoming audio on a 2D plot, so you can visualise the stereo field.  You can also alter the width/pan using the controls.</p>
+<ul>
+<li>Centre-panned (mono) sounds will draw vertically</li>
+<li>Left-panned sounds will draw angled to the left, right-panned will draw to the right</li>
+<li>If the L+R channels are independent, the graph will have no defined clear direction (may appear round)</li>
+</ul>
+<p><img src="Panalysis.png" alt="screenshot"></p>
+<p>It&#39;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:</p>
+<p><img src="Panalysis 2.png" alt="screenshot"></p>
 </div></div></div><script></script></body></html>

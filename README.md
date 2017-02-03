@@ -8,9 +8,10 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Spring-Box - an echo/chorus effect
 * Bad Connection - flips between two volumes to simulate poor connection or dropouts
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
-* Warble - a fairly basic non-linear pitch-correction effect
+* Warble - a basic pitch-editing effect
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
+* Panalysis - visualise and manipulate the stereo field of the audio
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -54,7 +55,7 @@ It is also possible to supply a secondary input to the effect (channels 3 and 4)
 
 ## Warble
 
-Warble is a fairly basic non-linear pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: [original](audio-demos/warble-original.mp3), [minor correction](audio-demos/warble-subtle.mp3), [major alterations](audio-demos/warble-shifted.mp3), [formant LFO](audio-demos/warble-formant-mod.mp3))
+Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: [original](audio-demos/warble-original.mp3), [minor correction](audio-demos/warble-subtle.mp3), [major alterations](audio-demos/warble-shifted.mp3), [formant LFO](audio-demos/warble-formant-mod.mp3))
 
 There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.
 
@@ -91,3 +92,17 @@ It will recover completely from any peak in a fixed amount of time.  Both the at
 ![screenshot](Smooth Limiter.png)
 
 The "distortion" parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.
+
+## Panalysis
+
+This effect draws the incoming audio on a 2D plot, so you can visualise the stereo field.  You can also alter the width/pan using the controls.
+
+* Centre-panned (mono) sounds will draw vertically
+* Left-panned sounds will draw angled to the left, right-panned will draw to the right
+* If the L+R channels are independent, the graph will have no defined clear direction (may appear round)
+
+![screenshot](Panalysis.png)
+
+It's possible to rotate the field such that hard-left or hard-right inputs will output "inside out" (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum "safe" width:
+
+![screenshot](Panalysis 2.png)
