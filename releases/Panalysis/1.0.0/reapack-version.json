@@ -1,0 +1,15 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Panalysis/Panalysis.jsfx": {
+			"main": false
+		},
+		"Panalysis/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Panalysis",
+	"time": "2017-02-03T11:07:40.513Z"
+}
