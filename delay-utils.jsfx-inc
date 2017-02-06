@@ -21,7 +21,7 @@ function delay_init(freemem, max_delay_samples) local(i, t, wr, w) (
 		wr = (i + 0.5)/(this.interp_samples*this.interp_scale);
 		w = 0.5 - 0.5*cos(wr*$pi*2);
 		t = i/this.interp_scale - this.interp_offset;
-		this.interp_buffer[i] = sinc(t*2*$pi)*w; // Windowed sinc
+		this.interp_buffer[i] = sinc(t*$pi)*w; // Windowed sinc
 		i += 1;
 	);
 	freemem;
@@ -37,7 +37,7 @@ function delay_input(spl) (
 );
 
 function delay_output_linear(samples) local(index, index1, index2, ratio, i, interp_index, sum) (
-	index = this.index - samples - this.interp_offset;
+	index = this.index - max(this.interp_samples, samples + this.interp_offset);
 	index1 = floor(index);
 	ratio = index - index1;
 	while (index1 < 0) (
@@ -46,7 +46,7 @@ function delay_output_linear(samples) local(index, index1, index2, ratio, i, int
 
 	sum = 0;
 	index = index1;
-	interp_index = floor(ratio*this.interp_scale);
+	interp_index = floor((1 - ratio)*this.interp_scale);
 	i = 0;
 	while (i < this.interp_samples) (
 		sum += this.interp_buffer[interp_index]*this.buffer[index];
@@ -57,6 +57,5 @@ function delay_output_linear(samples) local(index, index1, index2, ratio, i, int
 		);
 		i += 1;
 	);
-	
 	sum;
 );
