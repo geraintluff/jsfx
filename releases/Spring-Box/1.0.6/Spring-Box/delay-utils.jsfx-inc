@@ -1,0 +1,61 @@
+@init
+
+function sinc(x) (
+	abs(x) < 0.000001 ? 1 : sin(x)/x;
+);
+
+function delay_init(freemem, max_delay_samples) local(i, t, wr, w) (
+	this.buffer_length = ceil(max_delay_samples + 5);
+	freemem = (this.buffer = freemem) + this.buffer_length;
+	i = 0;
+	while (i < this.buffer_length) (
+		this.buffer[i] = 0;
+		i += 1;
+	);
+	this.interp_samples = 4;
+	this.interp_scale = 64;
+	this.interp_offset = this.interp_samples/2;
+	freemem = (this.interp_buffer = freemem) + this.interp_samples*this.interp_scale;
+	i = 0;
+	while (i < this.interp_samples*this.interp_scale) (
+		wr = (i + 0.5)/(this.interp_samples*this.interp_scale);
+		w = 0.5 - 0.5*cos(wr*$pi*2);
+		t = i/this.interp_scale - this.interp_offset;
+		this.interp_buffer[i] = sinc(t*$pi)*w; // Windowed sinc
+		i += 1;
+	);
+	freemem;
+);
+
+function delay_input(spl) (
+	this.index += 1;
+	this.index >= this.buffer_length ? (
+		this.index = 0;
+	);
+	this.buffer[this.index] = spl;
+	spl;
+);
+
+function delay_output_linear(samples) local(index, index1, index2, ratio, i, interp_index, sum) (
+	index = this.index - max(this.interp_samples, samples + this.interp_offset);
+	index1 = floor(index);
+	ratio = index - index1;
+	while (index1 < 0) (
+		index1 += this.buffer_length;
+	);
+
+	sum = 0;
+	index = index1;
+	interp_index = floor((1 - ratio)*this.interp_scale);
+	i = 0;
+	while (i < this.interp_samples) (
+		sum += this.interp_buffer[interp_index]*this.buffer[index];
+		interp_index += this.interp_scale;
+		index += 1;
+		index >= this.buffer_length ? (
+			index = 0;
+		);
+		i += 1;
+	);
+	sum;
+);

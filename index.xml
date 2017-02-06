@@ -122,6 +122,12 @@
 				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/Warble.jsfx</source>
 				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="1.0.4" time="2017-02-06T10:08:40.600Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Delay">
@@ -144,6 +150,11 @@
 			<version name="1.0.5" time="2017-01-17T21:06:27.164Z">
 				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.5/Spring-Box/Spring-Box.jsfx</source>
 				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.5/Spring-Box/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.6" time="2017-02-06T10:08:33.163Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.6/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.6/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.6/Spring-Box/delay-utils.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>

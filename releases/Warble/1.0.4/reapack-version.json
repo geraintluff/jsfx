@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"files": {
+		"Warble/pitch-detection.jsfx-inc": {
+			"main": false
+		},
+		"Warble/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Warble/Warble.jsfx": {
+			"main": false
+		},
+		"Warble/delay-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.4",
+	"package": "Warble",
+	"time": "2017-02-06T10:08:40.600Z"
+}
