@@ -61,9 +61,9 @@ There are three tools: nudge, erase and smooth.  You use these tools with the mo
 
 ![screenshot](Warble.png)
 
-The formant-correction on the shifting algorithm isn't too great, so it can sound very synthetic if you push it too hard.
+The formant-correction on the shifting algorithm isn't perfect, so major corrections (e.g. 5 semitones or more) won't sound completely natural.
 
-It doesn't (currently) separate the frequencies into notes, or support automatic correction.  I haven't figured out how to make "undo" work properly, so that's something to look at in the future.
+It doesn't (currently) separate notes from each other, or support automatic correction.  I haven't figured out how to make "undo" work properly, so that's something to look at in the future.
 
 ## Spectrum Matcher
 

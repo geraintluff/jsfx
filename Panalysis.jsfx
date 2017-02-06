@@ -7,7 +7,7 @@ out_pin:Right
 
 slider1:1<0,2,0.01>-Width
 slider2:0<-1,1,0.01>-Rotation
-slider3:0<0,1,1{no,yes}>Invert width
+slider3:0<0,1,1{no,yes}>-Invert width
 
 import ui-lib.jsfx-inc
 
@@ -51,7 +51,7 @@ buffer_index >= buffer_length ? (
 
 @gfx 510 660
 
-function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, mag) (
+function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, mag, alpha) (
 	control_background_technical();
 	ui_push_clip();
 		dest = gfx_dest;
@@ -72,6 +72,7 @@ function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, ma
 		// Fade     
 		alpha = 1 - exp(-dt/fade_time);
 		gfx_gradrect(0, 0, imgW, imgH, 0, 0, 0, alpha);
+		gfx_a = sqrt(alpha);
 	
 		mag = pow(10, reference_db/20);
 		cx = imgW*0.5;

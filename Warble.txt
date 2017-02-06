@@ -17,7 +17,11 @@ import delay-utils.jsfx-inc
 // OVERFLOW PROTECTION - if you get an overflow, increase this value.
 safe_allocation = 65536*4;
 
-//recording = 0;
+!not_first_init ? (
+	reset_shift = 0;
+	display_follow_playback = 1;
+	not_first_init = 1;
+);
 
 freemem = 0;
 freemem = ui_setup(freemem);
@@ -88,7 +92,7 @@ index_ratio = index_float - index_int;
 entry = analysis + index_int*analysis_step;
 entrynext = entry + analysis_step;
 correction_semitones = entry[ANALYSIS#SHIFT_SEMITONES]*(1 - index_ratio) + entrynext[ANALYSIS#SHIFT_SEMITONES]*index_ratio + correction_semitones_global;
-index_int >= analysis_count || recording ? (
+index_int >= analysis_count || reset_shift ? (
 	correction_semitones = correction_semitones_global;
 );
 
@@ -136,24 +140,26 @@ analysis_index_ratio = floor(seconds/analysis_interval);
 analysis_index = floor(analysis_index_ratio);
 analysis_index_ratio -= analysis_index;
 (analysis_index == analysis_index_prev + 1)? (
-	recording ? (
-		// Add clean entries to the analysis table
-		while (analysis_count < analysis_index + 1) (
-			analysis_entry = analysis + analysis_step*analysis_count;
-			analysis_entry[ANALYSIS#INPUT_FREQ] = analysis_entry[ANALYSIS#INPUT_AMP] = analysis_entry[ANALYSIS#INPUT_TONALITY] = analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
-			analysis_count += 1;
-		);
-		analysis_entry = analysis + analysis_step*analysis_index;
-		analysis_entry[ANALYSIS#INPUT_FREQ] = pitch_detection.pitch_detection_freq();
-		analysis_entry[ANALYSIS#INPUT_AMP] = pitch_detection.pitch_detection_amp();
-		analysis_entry[ANALYSIS#INPUT_TONALITY] = pitch_detection.pitch_detection_tonality();
-		analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
-		
+	// Add clean entries to the analysis table
+	while (analysis_count < analysis_index + 1) (
+		analysis_entry = analysis + analysis_step*analysis_count;
+		analysis_entry[ANALYSIS#INPUT_FREQ] = analysis_entry[ANALYSIS#INPUT_AMP] = analysis_entry[ANALYSIS#INPUT_TONALITY] = analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
+		analysis_count += 1;
+
+		// Stretch view if we're adding more
 		display_left_time = min(display_left_time, seconds);
 		display_right_time = max(display_right_time, seconds);
 	);
+	analysis_entry = analysis + analysis_step*analysis_index;
+	analysis_entry[ANALYSIS#INPUT_FREQ] = pitch_detection.pitch_detection_freq();
+	analysis_entry[ANALYSIS#INPUT_AMP] = pitch_detection.pitch_detection_amp();
+	analysis_entry[ANALYSIS#INPUT_TONALITY] = pitch_detection.pitch_detection_tonality();
+
+	reset_shift ? (
+		analysis_entry[ANALYSIS#SHIFT_SEMITONES] = 0;
+	);
 ) : (analysis_index != analysis_index_prev) ? (
-	recording = 0;
+	reset_shift = 0;
 );
 
 (play_state&1) ? block_index += 1;
@@ -574,18 +580,18 @@ control_start("main", "tron");
 
 function record_button() (
 	control_background_enabled();
-	recording ? (
+	reset_shift ? (
 		ui_color(255, 0, 0);
 		ui_fill();
 		ui_color(255, 255, 255);
 		ui_text("STOP");
 		ui_click() ? (
-			recording = 0;
+			reset_shift = 0;
 		);
 	) : (
-		ui_text("Record");
+		ui_text("Reset");
 		ui_click() ? (
-			recording = 1;
+			reset_shift = 1;
 		);
 	);
 	control_finish_enabled();
@@ -687,7 +693,7 @@ ui_screen() == "main" ? (
 			ui_push_height(50);
 				display_tool_mode = control_selector(
 					display_tool_mode,
-					display_tool_mode == TOOL#ERASE ? "Erase" : display_tool_mode == TOOL#SMOOTH ? "Smooth" : "Nudge",
+					display_tool_mode == TOOL#ERASE ? "2 - Erase" : display_tool_mode == TOOL#SMOOTH ? "3 - Smooth" : "1 - Nudge",
 					(display_tool_mode + TOOL# - 1)%TOOL#,
 					(display_tool_mode + 1)%TOOL#
 				);
