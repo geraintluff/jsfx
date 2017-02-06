@@ -16,31 +16,24 @@ slider8:0<0,100,1>-detuning (cents)
 slider9:2<0.1,10,0.1>-chorus speed (Hz)
 
 import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
 
 @init
 
 freemem = ui_setup(0);
-function alloc(N) local(result, i) (
-	result = freemem;
-	i = 0;
-	while (i < N) (
-		result[i] = 0;
-	);
-	freemem += N;
-	result;
-);
 
 maxdetunefactor = pow(2, 110/1200)*exp(0.15); // 110 cents plus variation
 mindetunefreq = 0.1;
-buffersize = ceil(srate*exp(0.3) + maxdetunefactor/mindetunefreq/(2*$pi)*srate + 1); // Longest possible delay, plus 100 samples
-buffer1a = alloc(buffersize);
-buffer1b = alloc(buffersize);
-buffer2a = alloc(buffersize);
-buffer2b = alloc(buffersize);
-buffer3a = alloc(buffersize);
-buffer3b = alloc(buffersize);
-buffer4a = alloc(buffersize);
-buffer4b = alloc(buffersize);
+max_delay_samples = ceil(srate*exp(0.3) + maxdetunefactor/mindetunefreq/(2*$pi)*srate + 1); // Longest possible delay, plus 100 samples
+
+freemem = delay1a.delay_init(freemem, max_delay_samples);
+freemem = delay1b.delay_init(freemem, max_delay_samples);
+freemem = delay2a.delay_init(freemem, max_delay_samples);
+freemem = delay2b.delay_init(freemem, max_delay_samples);
+freemem = delay3a.delay_init(freemem, max_delay_samples);
+freemem = delay3b.delay_init(freemem, max_delay_samples);
+freemem = delay4a.delay_init(freemem, max_delay_samples);
+freemem = delay4b.delay_init(freemem, max_delay_samples);
 
 filterLx1 = filterLx2 = 0;
 filterRx1 = filterRx2 = 0;
@@ -68,10 +61,10 @@ function update() local(delay, chorus, chorusfactor) (
 	);
 
 	delay = slider1*srate/1000;
-	delaysamples1 = min(buffersize - 1, delay*delayfactor1);
-	delaysamples2 = min(buffersize - 1, delay*delayfactor2);
-	delaysamples3 = min(buffersize - 1, delay*delayfactor3);
-	delaysamples4 = min(buffersize - 1, delay*delayfactor4);
+	delaysamples1 = min(max_delay_samples - 1, delay*delayfactor1);
+	delaysamples2 = min(max_delay_samples - 1, delay*delayfactor2);
+	delaysamples3 = min(max_delay_samples - 1, delay*delayfactor3);
+	delaysamples4 = min(max_delay_samples - 1, delay*delayfactor4);
 	delaysamples1i = ceil(delaysamples1);
 	delaysamples2i = ceil(delaysamples2);
 	delaysamples3i = ceil(delaysamples3);
@@ -156,72 +149,21 @@ chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
 chorusphase4 += chorusphasespeed4;
 chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
 
-1 ? (
-	// Linearly interpolated delay
-	d = delaysamples1 + (1 + sin(chorusphase1))*0.5*chorussamples;
-	di = floor(d);
-	dr = d - di;
-	dr *= dr*(0.5 - dr*0.3333);
-	readpos1 = writepos - di;
-	readpos1 < 0 ? readpos1 += buffersize;
-	readpos2 = writepos - di - 1;
-	readpos2 < 0 ? readpos2 += buffersize;
-	echo1a = buffer1a[readpos1] + (buffer1a[readpos2] - buffer1a[readpos1])*dr;
-	echo1b = buffer1b[readpos1] + (buffer1b[readpos2] - buffer1b[readpos1])*dr;
+d = delaysamples1 + (1 + sin(chorusphase1))*0.5*chorussamples;
+echo1a = delay1a.delay_output_linear(d - 1);
+echo1b = delay1b.delay_output_linear(d - 1);
 
-	d = delaysamples2 + (1 + sin(chorusphase2))*0.5*chorussamples;
-	di = floor(d);
-	dr = d - di;
-	dr *= dr*(0.5 - dr*0.3333);
-	readpos1 = writepos - di;
-	readpos1 < 0 ? readpos1 += buffersize;
-	readpos2 = writepos - di - 1;
-	readpos2 < 0 ? readpos2 += buffersize;
-	echo2a = buffer2a[readpos1] + (buffer2a[readpos2] - buffer2a[readpos1])*dr;
-	echo2b = buffer2b[readpos1] + (buffer2b[readpos2] - buffer2b[readpos1])*dr;
+d = delaysamples2 + (1 + sin(chorusphase2))*0.5*chorussamples;
+echo2a = delay2a.delay_output_linear(d - 1);
+echo2b = delay2b.delay_output_linear(d - 1);
 
-	d = delaysamples3 + (1 + sin(chorusphase3))*0.5*chorussamples;
-	di = floor(d);
-	dr = d - di;
-	dr *= dr*(0.5 - dr*0.3333);
-	readpos1 = writepos - di;
-	readpos1 < 0 ? readpos1 += buffersize;
-	readpos2 = writepos - di - 1;
-	readpos2 < 0 ? readpos2 += buffersize;
-	echo3a = buffer3a[readpos1] + (buffer3a[readpos2] - buffer3a[readpos1])*dr;
-	echo3b = buffer3b[readpos1] + (buffer3b[readpos2] - buffer3b[readpos1])*dr;
+d = delaysamples3 + (1 + sin(chorusphase3))*0.5*chorussamples;
+echo3a = delay3a.delay_output_linear(d - 1);
+echo3b = delay3b.delay_output_linear(d - 1);
 
-	d = delaysamples4 + (1 + sin(chorusphase4))*0.5*chorussamples;
-	di = floor(d);
-	dr = d - di;
-	dr *= dr*(0.5 - dr*0.3333);
-	readpos1 = writepos - di;
-	readpos1 < 0 ? readpos1 += buffersize;
-	readpos2 = writepos - di - 1;
-	readpos2 < 0 ? readpos2 += buffersize;
-	echo4a = buffer4a[readpos1] + (buffer4a[readpos2] - buffer4a[readpos1])*dr;
-	echo4b = buffer4b[readpos1] + (buffer4b[readpos2] - buffer4b[readpos1])*dr;
-) : (
-	readpos = writepos - delaysamples1i;
-	readpos < 0 ? readpos += buffersize;
-	echo1a = buffer1a[readpos];
-	echo1b = buffer1b[readpos];
-
-	readpos = writepos - delaysamples2i;
-	readpos < 0 ? readpos += buffersize;
-	echo2a = buffer2a[readpos];
-	echo2b = buffer2b[readpos];
-
-	readpos = writepos - delaysamples3i;
-	readpos < 0 ? readpos += buffersize;
-	echo3a = buffer3a[readpos];
-	echo3b = buffer3b[readpos];
-
-	readpos = writepos - delaysamples4i;
-	readpos < 0 ? readpos += buffersize;
-	echo4a = buffer4a[readpos];
-	echo4b = buffer4b[readpos];
-);
+d = delaysamples4 + (1 + sin(chorusphase4))*0.5*chorussamples;
+echo4a = delay4a.delay_output_linear(d - 1);
+echo4b = delay4b.delay_output_linear(d - 1);
 
 y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
 y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
@@ -235,14 +177,14 @@ y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
 left = spl0;
 right = spl1;
 
-buffer1a[writepos] = y1a*feedbackA + left*amp;
-buffer1b[writepos] = y1b*feedbackB + left*ampB;
-buffer2a[writepos] = y2a*feedbackA + right*amp;
-buffer2b[writepos] = y2b*feedbackB + right*ampB;
-buffer3a[writepos] = y3a*feedbackA + left*amp;
-buffer3b[writepos] = y3b*feedbackB + left*ampB;
-buffer4a[writepos] = y4a*feedbackA + right*amp;
-buffer4b[writepos] = y4b*feedbackB + right*ampB;
+delay1a.delay_input(y1a*feedbackA + left*amp);
+delay1b.delay_input(y1b*feedbackB + left*ampB);
+delay2a.delay_input(y2a*feedbackA + right*amp);
+delay2b.delay_input(y2b*feedbackB + right*ampB);
+delay3a.delay_input(y3a*feedbackA + left*amp);
+delay3b.delay_input(y3b*feedbackB + left*ampB);
+delay4a.delay_input(y4a*feedbackA + right*amp);
+delay4b.delay_input(y4b*feedbackB + right*ampB);
 
 left = (y1a - y1b + y3a - y3b)*0.71;
 right = (y2a - y2b + y4a - y4b)*0.71;
