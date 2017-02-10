@@ -62,7 +62,8 @@ function pitch_detection_window_corrected(i) (
 	this.pitch_detection_window(this.window_length*0.5 + i*0.6/this.oversample);
 );
 
-function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2b, i3, real1, imag1, real2, imag2, mag2, index, window, value, peak_index, l, r, a, b, x, amp, freq, crossed_zero, replace_index, replace_peak, total) (
+function pitch_detection_recalc(freqs, tonality, likelihoods) local(short_size, i, i2, i2b, i3, real1, imag1, real2, imag2, mag2, index, window, value, peak_index, l, r, a, b, x, amp, freq, crossed_zero, replace_index, replace_peak, total, tilt_factor) (
+	tilt_factor = 0.2;
 	short_size = this.fft_size/this.oversample;
 	i = 0;
 	while (i < this.window_length) (
@@ -107,11 +108,12 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 
 	i = 0;
 	while (i < this.options_N) (
-		freqs[i] = observations[i] = 0;
+		freqs[i] = likelihoods[i] = tonality[i] = 0;
 		i += 1;
 	);
 	freqs[0] = 0;
-	observations[0] = this.noise_limit;
+	tonality[0] = 0;
+	likelihoods[0] = this.noise_limit;
 
 	// Zero the result past what we expect the end of the autocorrelation to be
 	i = this.window_length*0.5*this.oversample;
@@ -162,21 +164,22 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 
 			freq = srate/peak_index*this.oversample;
 			//value_tilted = value;
-			value_tilted = value*pow(freq, 0.5);
+			value_tilted = value*pow(freq, tilt_factor);
 			
 			// Find smallest existing observation
 			replace_index = 0;
 			replace_peak = value_tilted;
 			i2 = 1;
 			while (i2 < this.options_N) (
-				observations[i2] < replace_peak ? (
-					replace_peak = observations[i2];
+				likelihoods[i2] < replace_peak ? (
+					replace_peak = likelihoods[i2];
 					replace_index = i2;
 				);
 				i2 += 1;
 			);
 			replace_index ? (
-				observations[replace_index] = value_tilted;
+				likelihoods[replace_index] = value_tilted;
+				tonality[replace_index] = value;
 				freqs[replace_index] = freq;
 			);
 		);
@@ -186,7 +189,6 @@ function pitch_detection_recalc(freqs, observations) local(short_size, i, i2, i2
 	i = 1;
 	while (i < this.options_N) (
 		freq = freqs[i];
-		observations[i] /= pow(freq, 0.5);
 		i += 1;
 	);
 	amp;
@@ -198,28 +200,27 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 	this.prev_tonality = this.current_tonality;
 	
 	freqs = this.working_vector;
-	likelihoods_tilted = this.working_vector_2;
-	likelihoods = this.working_vector_3;
-	this.current_amp = this.pitch_detection_recalc(freqs, likelihoods);
-	
-	// Tilt (bias to higher freqs)
-	total = 0;
-	i = 0;
-	while (i < this.options_N) (
-		likelihoods_tilted[i] = likelihoods[i]*pow(freqs[i], 0.5);
-		total += likelihoods_tilted[i];
-		i += 1;
-	);
+	likelihoods = this.working_vector_2;
+	tonality = this.working_vector_3;
+	this.current_amp = this.pitch_detection_recalc(freqs, tonality, likelihoods);
 
 	0 ? ( // Random
+		// Total likelihood
+		total = 0;
+		i = 0;
+		while (i < this.options_N) (
+			total += likelihoods[i];
+			i += 1;
+		);
+
 		selected_index = 0;
 		random = rand()*total;
 		i = 0;
 		while (i < this.options_N && random >= 0) (
-			random < likelihoods_tilted[i] ? (
+			random < likelihoods[i] ? (
 				selected_index = i;
 			);
-			random -= likelihoods_tilted[i];
+			random -= likelihoods[i];
 			i += 1;
 		);
 		this.current_freq = freqs[selected_index];
@@ -229,14 +230,14 @@ function pitch_detection_step() local(i, freqs, amp, likelihoods, total, random,
 		best = likelihoods[0];
 		i = 0;
 		while (i < this.options_N) (
-			best < likelihoods_tilted[i] && likelihoods[i] >= this.tonality_limit ? (
-				best = likelihoods_tilted[i];
+			best < likelihoods[i] && likelihoods[i] >= this.tonality_limit ? (
+				best = likelihoods[i];
 				selected_index = i;
 			);
 			i += 1;
 		);
 		this.current_freq = freqs[selected_index];
-		this.current_tonality = likelihoods[selected_index];
+		this.current_tonality = tonality[selected_index];
 	);
 	!this.current_freq ? this.current_tonality = 0;
 );
