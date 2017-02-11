@@ -130,8 +130,11 @@ delayB = delayA + wavelength;
 formant_input_original[2*formant_index] = delay0.delay_output_linear(latencysamples);
 formant_input_original[2*formant_index + 1] = delay1.delay_output_linear(latencysamples);
 
-spl0 = delay0.delay_output_linear(delayA)*(1 - phase) + delay0.delay_output_linear(delayB)*phase;
-spl1 = delay1.delay_output_linear(delayA)*(1 - phase) + delay1.delay_output_linear(delayB)*phase;
+// Cubic fade between the two
+phase_factor = phase*phase*(3 - 2*phase);
+
+spl0 = delay0.delay_output_linear(delayA)*(1 - phase_factor) + delay0.delay_output_linear(delayB)*phase_factor;
+spl1 = delay1.delay_output_linear(delayA)*(1 - phase_factor) + delay1.delay_output_linear(delayB)*phase_factor;
 
 formant_input_shifted[2*formant_index] = spl0;
 formant_input_shifted[2*formant_index + 1] = spl1;
