@@ -102,7 +102,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Warble": {
 			"type": "effect",
@@ -121,7 +121,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.5"
+			"version": "1.0.6"
 		},
 		"Panalysis": {
 			"type": "effect",
