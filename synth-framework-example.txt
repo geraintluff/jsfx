@@ -1,0 +1,50 @@
+desc:Synth framework example (simple sine)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+import synth-framework.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = synth_setup(freemem, 1); // Request one slot to keep the phase in
+
+attack_samples = 0.01*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_block();
+
+@sample
+
+synth_sample();
+
+// Iterate over the active notes
+note = synth_note_first();
+while (note > 0) (
+	// We have 1 slot available to use
+	//   because that's what we asked for in synth_setup
+	note[0] += synth_freq(note)/srate;
+	phase = note[0]*2*$pi;
+
+	amp = 0.25;
+	amp *= synth_velocity(note)/127;
+	amp *= synth_controller(11)/127;
+	attack_samples && synth_attack(note) < attack_samples ? (
+		amp *= synth_attack(note)/attack_samples;
+	);
+	release_samples && synth_release(note) > 0 ? (
+		amp *= 1 - synth_release(note)/release_samples;
+	);
+	spl0 += sin(phase)*amp;
+	spl1 += sin(phase)*amp;
+
+	synth_release(note) >= release_samples ? (
+		synth_stop(note);
+	);
+
+	note = synth_note_next(note);
+);

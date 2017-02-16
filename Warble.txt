@@ -64,6 +64,7 @@ freemem > analysis ? (
 
 block_index = 0;
 
+// Stop the pre-processor complaining: SHIFT_MODE##
 !shift_mode ? (
 	shift_mode = SHIFT_MODE#PLAIN;
 );

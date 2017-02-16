@@ -202,5 +202,9 @@
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Dynamic Sampler" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>

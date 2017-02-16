@@ -135,6 +135,21 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Dynamic Sampler": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Dynamic Sampler.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"synth-framework.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
