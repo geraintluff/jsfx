@@ -236,5 +236,9 @@
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.5/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Hammer And String" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>

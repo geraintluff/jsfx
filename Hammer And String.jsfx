@@ -7,7 +7,9 @@ out_pin:Right
 
 slider1:decay_wavelengths_on=50<1,1000,1>Decay wavelengths
 slider2:decay_wavelengths_off=5<1,100,1>Off-Decay wavelengths
-slider3:portamento_time=0.005<0,0.1, 0.001>Portamento time
+slider3:portamento_ms=5<0,100,1>Portamento (ms)
+slider4:impulse_brightness=30<0.1,100,0.01>Impulse brightness
+slider5:anticipation_ms=0<0,100,1>Anticipation (ms) latency
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -39,19 +41,27 @@ freemem = delay_buffer1.delay_setup(freemem, max_delay_samples);
 delay_samples = max_delay_samples;
 delay_samples_target = max_delay_samples;
 
+latest_release = 0;
+
 invert_feedback = 0;
 
 @block
 
+anticipation_samples = ceil(anticipation_ms*srate/1000);
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+pdc_delay = anticipation_samples;
+
 synth_block();
 
+portamento_time = portamento_ms/1000;
 delay_samples_slew_factor = portamento_time ? (1 - exp(-1/srate/portamento_time)) : 1;
 decay_factor_on = exp(-1/decay_wavelengths_on);
 decay_factor_off = exp(-1/decay_wavelengths_off);
+decay_factor_release_samples = 0.002*srate;
 
 // Impulse timbre parameters
 impulse_length_samples = 0.01*srate;
-impulse_brightness = 100;
 
 @sample
 
@@ -63,19 +73,18 @@ excitation0 = 0;
 excitation1 = 0;
 
 function impulse(note) local(attack, phase, amp) (
-	attack = synth_attack(note);
-	attack < impulse_length_samples ? (
+	attack = synth_attack(note) - anticipation_samples;
+	attack >= 0 && attack < impulse_length_samples ? (
 		phase = attack/impulse_length_samples - 0.5;
 		phase2 = impulse_brightness*phase*pow(synth_velocity(note)/127, 1);
-		amp = 0.25*pow(synth_velocity(note)/127, 1.5);
+		amp = pow(synth_velocity(note)/127, 1.5)*(1 + 0.25*impulse_brightness)/(0.1 + impulse_brightness);
 		tanh(phase2*2*$pi)*(0.5 + 0.5*cos(phase*2*$pi))*amp;
 	) : 0;
 );
 
-note_count = 0;
 note = synth_note_first();
 while (note > 0) (
-	note_count += 1;
+	note_min_release = min(note_min_release, synth_release(note));
 	synth_release(note) > impulse_decay_samples ? (
 		synth_stop(note);
 	) : (
@@ -92,16 +101,24 @@ while (note > 0) (
 );
 
 latest_note >= 0 ? (
+	latest_release = 0;
 	invert_feedback ? (
 		delay_samples_target = min(max_delay_samples, srate/synth_freq(latest_note)*0.5);
 	) : (
 		delay_samples_target = min(max_delay_samples, srate/synth_freq(latest_note));
 	);
+) : (
+	latest_release += 1;
 );
-decay_factor = (note_count ? decay_factor_on : decay_factor_off);
+latest_release <= 0 ? (
+	decay_factor = decay_factor_on;
+) : latest_release < decay_factor_release_samples ? (
+	decay_factor = decay_factor_on + (decay_factor_off - decay_factor_on)*latest_release/decay_factor_release_samples;
+) : (
+	decay_factor = decay_factor_off;
+);
 invert_feedback ? decay_factor = -sqrt(decay_factor);
 delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
-
 
 delayed0 = delay_buffer0.delay_output_linear(delay_samples - 1);
 delayed1 = delay_buffer1.delay_output_linear(delay_samples - 1);

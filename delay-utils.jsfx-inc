@@ -4,27 +4,38 @@ function sinc(x) (
 	abs(x) < 0.000001 ? 1 : sin(x)/x;
 );
 
-function delay_init(freemem, max_delay_samples) local(i, t, wr, w) (
-	this.buffer_length = ceil(max_delay_samples + 5);
+function delay_config(key, value) (
+	key == "interpolation samples" ? (
+		this.config.interpolation_samples = min(32, max(4, ceil(value)));
+	);
+);
+
+function delay_setup(freemem, max_delay_samples) local(i, t, wr, w) (
+	this.interp_samples = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
+	this.buffer_length = ceil(max_delay_samples + this.interp_samples + 1);
 	freemem = (this.buffer = freemem) + this.buffer_length;
 	i = 0;
 	while (i < this.buffer_length) (
 		this.buffer[i] = 0;
 		i += 1;
 	);
-	this.interp_samples = 4;
 	this.interp_scale = 64;
 	this.interp_offset = this.interp_samples/2;
 	freemem = (this.interp_buffer = freemem) + this.interp_samples*this.interp_scale;
 	i = 0;
 	while (i < this.interp_samples*this.interp_scale) (
 		wr = (i + 0.5)/(this.interp_samples*this.interp_scale);
-		w = 0.5 - 0.5*cos(wr*$pi*2);
+		// Blackman window
+		w = 0.42 - 0.5*cos(wr*$pi*2) + 0.08*cos(wr*$pi*4);
 		t = i/this.interp_scale - this.interp_offset;
 		this.interp_buffer[i] = sinc(t*$pi)*w; // Windowed sinc
 		i += 1;
 	);
 	freemem;
+);
+
+function delay_init(freemem, max_delay_samples) (
+	this.delay_setup(freemem, max_delay_samples);
 );
 
 function delay_input(spl) (
