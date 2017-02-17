@@ -17,10 +17,10 @@ freemem = 0;
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, 1 /* we need one slot for the "learning" flag */);
 
-sampler_srate = srate;
 freemem = (sampler_starts = freemem) + 127;
 freemem = (sampler_durations = freemem) + 127;
 freemem = (sampler_ref_vel = freemem) + 127;
+freemem = (sampler_ref_srate = freemem) + 127;
 
 sampler_buffer = freemem;
 sampler_writepos = 0;
@@ -50,6 +50,7 @@ while (note > 0) (
 			sampler_starts[index] = sampler_writepos;
 			sampler_durations[index] = 0;
 			sampler_ref_vel[index] = synth_velocity(note);
+			sampler_ref_srate[index] = srate; // Rate at which this sample was recorded
 		);
 	);
 
@@ -75,6 +76,7 @@ while (note > 0) (
 			release_samples && synth_release(note) > 0 ? (
 				amp *= (1 - synth_release(note)/release_samples);
 			);
+			// TODO: pay attention to sampler_ref_srate[index], to vary playback speed
 			spl0 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2];
 			spl1 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2 + 1];
 		);
@@ -98,10 +100,10 @@ learning || learning_notes > 0 ? (
 
 @serialize
 
-file_var(0, sampler_srate);
-sampler_srate != srate ? (
-	0; // Do something sensible, like interpolating the samples on playback
-);
+// Support reading older versions
+serialize_version = 2;
+file_var(0, serialize_version);
+serialize_version > 16000 ? serialize_version = 1;
 
 s_max_buffer_index = 0;
 // Read/write the sampler reference points
@@ -110,6 +112,11 @@ while (i < 128) (
 	file_var(0, sampler_starts[i]);
 	file_var(0, sampler_durations[i]);
 	file_var(0, sampler_ref_vel[i]);
+	serialize_version > 1 ? (
+		file_var(0, sampler_ref_srate[i]);
+	) : (
+		sampler_ref_srate[i] = 0;
+	);
 	s_max_buffer_index = max(s_max_buffer_index, sampler_starts[i] + sampler_durations[i]);
 	i += 1;
 );
