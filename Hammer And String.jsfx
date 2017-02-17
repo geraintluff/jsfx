@@ -1,15 +1,18 @@
-desc:Hammer And String (by Geraint Luff)
+desc:Hammer And String (Synth/Resonator by Geraint Luff)
 
 in_pin:Left
 in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:decay_wavelengths_on=50<1,1000,1>Decay wavelengths
-slider2:decay_wavelengths_off=5<1,100,1>Off-Decay wavelengths
-slider3:portamento_ms=5<0,100,1>Portamento (ms)
-slider4:impulse_brightness=30<0.1,100,0.01>Impulse brightness
-slider5:anticipation_ms=0<0,100,1>Anticipation (ms) latency
+slider1:decay_wavelengths_on=50<1,1000,1>-Decay wavelengths
+slider2:decay_wavelengths_off=5<1,100,1>-Off-Decay wavelengths
+slider3:portamento_ms=5<0,100,1>-Portamento (ms)
+slider4:impulse_brightness=30<0.1,100,0.01>-Impulse brightness
+slider5:anticipation_ms=0<0,100,1>-Anticipation (ms) latency
+slider6:resonator_scaling=0<0,1,0.01>-Input scaling (sustain, impulse)
+slider7:invert_feedback=0<0,1,1{positive,negative}>-Feedback
+slider8:impulse_amp=1<0,1,0.01>-Impulse volume
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -43,8 +46,6 @@ delay_samples_target = max_delay_samples;
 
 latest_release = 0;
 
-invert_feedback = 0;
-
 @block
 
 anticipation_samples = ceil(anticipation_ms*srate/1000);
@@ -63,6 +64,8 @@ decay_factor_release_samples = 0.002*srate;
 // Impulse timbre parameters
 impulse_length_samples = 0.01*srate;
 
+resonator_gain = 0;
+
 @sample
 
 synth_sample();
@@ -77,7 +80,7 @@ function impulse(note) local(attack, phase, amp) (
 	attack >= 0 && attack < impulse_length_samples ? (
 		phase = attack/impulse_length_samples - 0.5;
 		phase2 = impulse_brightness*phase*pow(synth_velocity(note)/127, 1);
-		amp = pow(synth_velocity(note)/127, 1.5)*(1 + 0.25*impulse_brightness)/(0.1 + impulse_brightness);
+		amp = impulse_amp*pow(synth_velocity(note)/127, 1.5)*(1 + 0.25*impulse_brightness)/(0.1 + impulse_brightness);
 		tanh(phase2*2*$pi)*(0.5 + 0.5*cos(phase*2*$pi))*amp;
 	) : 0;
 );
@@ -110,12 +113,16 @@ latest_note >= 0 ? (
 ) : (
 	latest_release += 1;
 );
+resonator_gain = sqrt(1 - abs(decay_factor_on));
+resonator_gain += (1 - resonator_gain)*resonator_scaling;
 latest_release <= 0 ? (
 	decay_factor = decay_factor_on;
 ) : latest_release < decay_factor_release_samples ? (
 	decay_factor = decay_factor_on + (decay_factor_off - decay_factor_on)*latest_release/decay_factor_release_samples;
+	resonator_gain *= latest_release/decay_factor_release_samples;
 ) : (
 	decay_factor = decay_factor_off;
+	resonator_gain = 0;
 );
 invert_feedback ? decay_factor = -sqrt(decay_factor);
 delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
@@ -125,8 +132,87 @@ delayed1 = delay_buffer1.delay_output_linear(delay_samples - 1);
 excitation0 += delayed0*decay_factor;
 excitation1 += delayed1*decay_factor;
 
+excitation0 += spl0*resonator_gain;
+excitation1 += spl1*resonator_gain;
+
 delay_buffer0.delay_input(excitation0);
 delay_buffer1.delay_input(excitation1);
 
-spl0 += excitation0;
-spl1 += excitation1;
+spl0 = excitation0;
+spl1 = excitation1;
+
+@gfx 490 410
+
+function labelled_default_dial(value, low, high, bias, label, format_text, default) local(height) (
+	height = min(ui_height()/2, 50);
+	ui_push_height(height);
+		value = control_dial(value, low, high, bias);
+		ui_click() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop(height);
+	ui_push_above(height);
+		ui_text(label);
+	ui_pop(height);
+	ui_push_below(height);
+		ui_textnumber(value, format_text);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, format_text) local(height) (
+	height = min(ui_height()/2, 50);
+	ui_push_height(height);
+		ui_push_heighttext(-1);
+			ui_push_width(50);
+				value = control_switch(value);
+			ui_pop();
+		ui_pop();
+	ui_pop(height);
+	ui_push_above(height);
+		ui_text(label);
+	ui_pop(height);
+	ui_push_below(height);
+		ui_text(format_text);
+	ui_pop();
+	value;
+);
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	control_navbar("Hammer And String", -1, -1);
+	ui_split_topratio(0.5);
+		ui_split_leftratio(0.5);
+			control_group("Envelope");
+			ui_split_leftratio(0.5);
+				decay_wavelengths_on = labelled_default_dial(decay_wavelengths_on, 1, 1000, log(1000), "Decay", "", 50);
+			ui_split_next();
+				decay_wavelengths_off = labelled_default_dial(decay_wavelengths_off, 1, 100, log(100), "Release", "", 5);
+			ui_pop();
+		ui_split_next();
+			control_group("Portamento");
+			ui_split_leftratio(0.5);
+				portamento_ms = labelled_default_dial(portamento_ms, 1, 100, 3, "Portamento", "%ims", 5);
+			ui_split_next();
+				anticipation_ms = labelled_default_dial(anticipation_ms, 1, 100, log(100), "Anticipation", "%ims", 0);
+			ui_pop();
+		ui_pop();
+	ui_split_next();
+		ui_split_leftratio(0.5);
+			control_group("Impulse");
+			ui_split_leftratio(0.5);
+				impulse_brightness = labelled_default_dial(impulse_brightness, 0.1, 100, log(1000), "Brightness", "", 30);
+			ui_split_next();
+				impulse_amp = labelled_default_dial(impulse_amp, 0, 1, log(100), "Volume", "", 1);
+			ui_pop();
+		ui_split_next();
+			control_group("Resonator");
+			ui_split_leftratio(0.5);
+				invert_feedback = labelled_switch(invert_feedback, "Feedback", invert_feedback ? "negative" : "positive");
+			ui_split_next();
+				resonator_scaling = labelled_default_dial(resonator_scaling, 0, 1, 1, "Input type", resonator_scaling < 0.1 ? "continuous" : resonator_scaling < 0.7 ? "hybrid" : "impulse", 1);
+			ui_pop();
+		ui_pop();
+	ui_pop();
+) : ui_system();

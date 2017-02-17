@@ -48,7 +48,7 @@ function delay_input(spl) (
 );
 
 function delay_output_linear(samples) local(index, index1, index2, ratio, i, interp_index, sum) (
-	index = this.index - max(this.interp_samples, samples + this.interp_offset);
+	index = this.index - max(this.interp_samples, samples + this.interp_offset - 1);
 	index1 = floor(index);
 	ratio = index - index1;
 	while (index1 < 0) (
