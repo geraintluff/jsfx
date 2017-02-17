@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Learning-Sampler/Learning Sampler.jsfx": {
+			"main": false
+		},
+		"Learning-Sampler/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Learning-Sampler/synth-framework.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.2",
+	"package": "Learning Sampler",
+	"time": "2017-02-17T01:16:35.754Z"
+}
