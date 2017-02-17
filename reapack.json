@@ -151,6 +151,24 @@
 				}
 			},
 			"version": "1.0.5"
+		},
+		"Hammer And String": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Hammer And String.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
+				},
+				"synth-framework.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
