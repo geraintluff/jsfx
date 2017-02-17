@@ -13,6 +13,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 * Panalysis - visualise and manipulate the stereo field of the audio
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
+* Hammer And String - a monophonic string resonator/synth with portamento
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -119,3 +120,11 @@ To record the samples, set the appropriate controller to a value of 64 or above.
 Samples are scaled according to velocity - if you record at velocity 100 and then play back at velocity 110, the output will be louder than the original input.
 
 It currently does handle sample-rate changes.
+
+## Hammer And String
+
+This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ([audio demo](audio-demos/hammer-and-string.mp3))
+
+The portamento affects how quickly the resonator changes pitch.  The "Anticipation" control starts the portamento before the actual note (this adds latency), which can give more natural movement.
+
+![screenshot](Hammer And String.png)
