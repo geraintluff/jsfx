@@ -115,7 +115,7 @@ while (i < s_max_buffer_index) (
 	file_var(0, sampler_buffer[i*2]);
 );
 
-@gfx 560 470
+@gfx 560 440
 
 function draw_sampler() local(i, length, x, note, index) (
 	length = 1;
@@ -128,12 +128,14 @@ function draw_sampler() local(i, length, x, note, index) (
 	step = ceil(length*0.1/ui_width());
 	
 	control_background_technical();
-	ui_split_topratio(0.5);
-		ui_color(192, 128, 64);
-		ui_graph_step(sampler_buffer, length/step, 2*step, -1, 1);
-	ui_split_next();
-		ui_color(64, 128, 192);
-		ui_graph_step(sampler_buffer + 1, length/step, 2*step, -1, 1);
+	ui_push();
+		ui_split_topratio(0.5);
+			ui_color(192, 128, 64);
+			ui_graph_step(sampler_buffer, length/step, 2*step, -1, 1);
+		ui_split_next();
+			ui_color(64, 128, 192);
+			ui_graph_step(sampler_buffer + 1, length/step, 2*step, -1, 1);
+		ui_pop();
 	ui_pop();
 	
 	// Draw playback positions
@@ -142,20 +144,16 @@ function draw_sampler() local(i, length, x, note, index) (
 	while (note > 0) (
 		index = sampler_starts[synth_midinote(note)] + synth_attack(note);
 		x = ui_left() + ui_width()*index/length;
-		debug.index = index;
-		debug.x = x;
 		gfx_line(x, ui_top(), x, ui_bottom());
-		gfx_line(x, 0, x, 1000);
 		note = synth_note_next(note);
 	);
 	
 	control_finish_technical();
 );
 
-ui_start("main");
+control_start("main", "tron");
 
 ui_screen() == "main" ? (
-	control_navbar("Dynamic Sampler", -1, -1);
 	ui_split_top(50);
 		ui_pad();
 		ui_split_leftratio(0.5);
@@ -166,7 +164,7 @@ ui_screen() == "main" ? (
 			ui_text("Learn controller:");
 		ui_split_next();
 			ui_split_right(50);
-				slider1 = control_switch(slider1);
+				slider2 = control_switch(slider2);
 			ui_pop();
 			ui_text("Mute when learning:");
 		ui_pop();
