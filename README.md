@@ -12,6 +12,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 * Panalysis - visualise and manipulate the stereo field of the audio
+* Live Sampler - a basic sampler that records incoming audio and plays it back
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -106,3 +107,15 @@ This effect draws the incoming audio on a 2D plot, so you can visualise the ster
 It's possible to rotate the field such that hard-left or hard-right inputs will output "inside out" (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum "safe" width:
 
 ![screenshot](Panalysis 2.png)
+
+## Learning Sampler
+
+This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.
+
+To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.
+
+![screenshot](Learning Sampler.png)
+
+Samples are scaled according to velocity - if you record at velocity 100 and then play back at velocity 110, the output will be louder than the original input.
+
+It currently does handle sample-rate changes.

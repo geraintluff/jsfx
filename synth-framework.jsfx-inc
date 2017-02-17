@@ -83,7 +83,6 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 		) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
 			// Choose duplicate note if there is one
 			i = 0;
-			debug.stopcount = 0.5;
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
 				note[3/*NOTE:NOTE*/] == midi_msg2 ? (
@@ -161,7 +160,7 @@ function synth_note_first() (
 	synth_note_next(-1);
 );
 
-function synth_start(note) (
+function synth_needs_init(note) (
 	note -= synthx_custom_offset;
 	note[7/*NOTE:CUSTOM_INIT*/] ? (
 		0;

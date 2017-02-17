@@ -136,11 +136,11 @@
 			},
 			"version": "1.0.0"
 		},
-		"Dynamic Sampler": {
+		"Learning Sampler": {
 			"type": "effect",
 			"category": "Misc",
 			"files": {
-				"Dynamic Sampler.jsfx": {
+				"Learning Sampler.jsfx": {
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {

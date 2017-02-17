@@ -232,6 +232,7 @@ a[href] code {
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 <li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
 <li>Panalysis - visualise and manipulate the stereo field of the audio</li>
+<li>Live Sampler - a basic sampler that records incoming audio and plays it back</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -257,8 +258,8 @@ a[href] code {
 <p>Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>
 <p>There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.</p>
 <p><img src="Warble.png" alt="screenshot"></p>
-<p>The formant-correction on the shifting algorithm isn&#39;t too great, so it can sound very synthetic if you push it too hard.</p>
-<p>It doesn&#39;t (currently) separate the frequencies into notes, or support automatic correction.  I haven&#39;t figured out how to make &quot;undo&quot; work properly, so that&#39;s something to look at in the future.</p>
+<p>The formant-correction on the shifting algorithm isn&#39;t perfect, so major corrections (e.g. 5 semitones or more) won&#39;t sound completely natural.</p>
+<p>It doesn&#39;t (currently) separate notes from each other, or support automatic correction.  I haven&#39;t figured out how to make &quot;undo&quot; work properly, so that&#39;s something to look at in the future.</p>
 </div><h2 id="spectrum-matcher">Spectrum Matcher</h2><div class="section section2">
 <p>Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.</p>
 <p>The bottom half of the screen shows the short-term spectrum (green), the long-term spectrum (yellow), and the long-term reference spectrum (blue).</p>
@@ -283,4 +284,10 @@ a[href] code {
 <p><img src="Panalysis.png" alt="screenshot"></p>
 <p>It&#39;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:</p>
 <p><img src="Panalysis 2.png" alt="screenshot"></p>
+</div><h2 id="learning-sampler">Learning Sampler</h2><div class="section section2">
+<p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>
+<p>To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.</p>
+<p><img src="Learning Sampler.png" alt="screenshot"></p>
+<p>Samples are scaled according to velocity - if you record at velocity 100 and then play back at velocity 110, the output will be louder than the original input.</p>
+<p>It currently does handle sample-rate changes.</p>
 </div></div></div><script></script></body></html>
