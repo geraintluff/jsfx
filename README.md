@@ -12,7 +12,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 * Panalysis - visualise and manipulate the stereo field of the audio
-* Live Sampler - a basic sampler that records incoming audio and plays it back
+* Learning Sampler - a basic sampler that records incoming audio and plays it back
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
