@@ -1,0 +1,176 @@
+desc:Learning Sampler (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:64<0,127,1>-Learning switch controller
+slider2:1<0,1,1{passthrough,mute}>-Learning audio mode
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem, 1);
+
+sampler_srate = srate;
+freemem = (sampler_starts = freemem) + 127;
+freemem = (sampler_durations = freemem) + 127;
+freemem = (sampler_ref_vel = freemem) + 127;
+
+sampler_buffer = freemem;
+sampler_writepos = 0;
+
+attack_samples = 0*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_block();
+
+@sample
+
+synth_sample();
+
+learning = (synth_controller(slider1) >= 64);
+learning_notes = 0;
+
+note = synth_note_first();
+while (note > 0) (
+	index = synth_midinote(note);
+	synth_needs_init(note) ? (
+		note[0] = learning;
+		learning ? (
+			sampler_starts[index] = sampler_writepos;
+			sampler_durations[index] = 0;
+			sampler_ref_vel[index] = synth_velocity(note);
+		);
+	);
+
+	note[0] ? (
+		// Learning
+		synth_release(note) > 0 ? (
+			synth_stop(note);
+		) : (
+			learning_notes += 1;
+			sampler_durations[index] = synth_attack(note);
+		);
+	) : (
+		// Playback
+		synth_release(note) > release_samples || synth_attack(note) > sampler_durations[index] ? (
+			synth_stop(note);
+		) : (
+			amp = synth_velocity(note)/sampler_ref_vel[index];
+			attack_samples && synth_attack(note) < attack_samples ? (
+				amp *= synth_attack(note)/attack_samples;
+			);
+			release_samples && synth_release(note) > 0 ? (
+				amp *= (1 - synth_release(note)/release_samples);
+			);
+			spl0 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2];
+			spl1 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2 + 1];
+		);
+	);
+	note = synth_note_next(note);
+);
+
+learning || learning_notes > 0 ? (
+	learning_notes > 0 ? (
+		sampler_buffer[sampler_writepos*2] = spl0;
+		sampler_buffer[sampler_writepos*2 + 1] = spl1;
+		sampler_writepos += 1;
+	);
+	slider2 ? (
+		spl0 = spl1 = 0;
+	);
+) : (
+	sampler_writepos = 0;
+);
+
+@serialize
+
+file_var(0, sampler_srate);
+sampler_srate != srate ? (
+	ui_error("Sample rate changed!");
+);
+
+s_max_buffer_index = 0;
+// Read/write the sampler reference points
+i = 0;
+while (i < 128) (
+	file_var(0, sampler_starts[i]);
+	file_var(0, sampler_durations[i]);
+	file_var(0, sampler_ref_vel[i]);
+	s_max_buffer_index = max(s_max_buffer_index, sampler_starts[i] + sampler_durations[i]);
+	i += 1;
+);
+
+i = 0;
+while (i < s_max_buffer_index) (
+	file_var(0, sampler_buffer[i*2]);
+	file_var(0, sampler_buffer[i*2]);
+);
+
+@gfx 560 470
+
+function draw_sampler() local(i, length, x, note, index) (
+	length = 1;
+	// Read/write the sampler reference points
+	i = 0;
+	while (i < 128) (
+		length = max(length, sampler_starts[i] + sampler_durations[i]);
+		i += 1;
+	);
+	step = ceil(length*0.1/ui_width());
+	
+	control_background_technical();
+	ui_split_topratio(0.5);
+		ui_color(192, 128, 64);
+		ui_graph_step(sampler_buffer, length/step, 2*step, -1, 1);
+	ui_split_next();
+		ui_color(64, 128, 192);
+		ui_graph_step(sampler_buffer + 1, length/step, 2*step, -1, 1);
+	ui_pop();
+	
+	// Draw playback positions
+	ui_colora(255, 255, 255, 0.8);
+	note = synth_note_first();
+	while (note > 0) (
+		index = sampler_starts[synth_midinote(note)] + synth_attack(note);
+		x = ui_left() + ui_width()*index/length;
+		debug.index = index;
+		debug.x = x;
+		gfx_line(x, ui_top(), x, ui_bottom());
+		gfx_line(x, 0, x, 1000);
+		note = synth_note_next(note);
+	);
+	
+	control_finish_technical();
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+	control_navbar("Dynamic Sampler", -1, -1);
+	ui_split_top(50);
+		ui_pad();
+		ui_split_leftratio(0.5);
+			ui_split_right(80);
+				sprintf(#controller_text, "%i", slider1);
+				slider1 = control_selector(slider1, #controller_text, min(127, slider1 + 1), max(1, slider1 - 1));
+			ui_pop();
+			ui_text("Learn controller:");
+		ui_split_next();
+			ui_split_right(50);
+				slider1 = control_switch(slider1);
+			ui_pop();
+			ui_text("Mute when learning:");
+		ui_pop();
+	ui_pop();
+	
+	draw_sampler();
+) : ui_system();
