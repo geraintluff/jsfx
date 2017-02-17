@@ -230,6 +230,11 @@
 				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.4/Learning-Sampler/ui-lib.jsfx-inc</source>
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.4/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
+			<version name="1.0.5" time="2017-02-17T10:55:50.759Z">
+				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.5/Learning-Sampler/Learning%20Sampler.jsfx</source>
+				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.5/Learning-Sampler/ui-lib.jsfx-inc</source>
+				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.5/Learning-Sampler/synth-framework.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 </index>
