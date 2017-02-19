@@ -30,6 +30,10 @@ function synth_setup(freemem, custom_slots) (
 	freemem;
 );
 
+function synth_init(freemem, custom_slots) (
+	synth_setup(freemem, custom_slots);
+);
+
 function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi_msg3, midi_type, midi_channel, i, note, selected_note) (
 	while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 		midisend(midi_offset, midi_msg1, midi_msg23); // passthrough
