@@ -14,6 +14,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Panalysis - visualise and manipulate the stereo field of the audio
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
 * Hammer And String - a monophonic string resonator/synth with portamento
+* Hammer And Chord - a polyphonic string resonator/synth
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -123,8 +124,14 @@ It currently does handle sample-rate changes.
 
 ## Hammer And String
 
-This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.  ([audio demo](audio-demos/hammer-and-string.mp3))
+This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ([audio demo](audio-demos/hammer-and-string.mp3))
 
-The portamento affects how quickly the resonator changes pitch.  The "Anticipation" control starts the portamento before the actual note (this adds latency), which can give more natural movement.
+The portamento affects how quickly the resonator changes pitch.  The "Anticipation" control starts the portamento before the actual note (this adds latency), which can give more natural movement.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.
 
 ![screenshot](Hammer And String.png)
+
+## Hammer And Chord
+
+This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  ([audio demo](audio-demos/hammer-and-chord.mp3))
+
+![screenshot](Hammer And Chord.png)

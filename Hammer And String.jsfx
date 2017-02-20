@@ -141,7 +141,7 @@ delay_buffer1.delay_input(excitation1);
 spl0 = excitation0;
 spl1 = excitation1;
 
-@gfx 490 410
+@gfx 410 410
 
 function labelled_default_dial(value, low, high, bias, label, format_text, default) local(height) (
 	height = min(ui_height()/2, 50);
