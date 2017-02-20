@@ -185,6 +185,9 @@
 				},
 				"synth-framework.jsfx-inc": {
 					"main": false
+				},
+				"filter-utils.jsfx-inc": {
+					"main": false
 				}
 			}
 		}
