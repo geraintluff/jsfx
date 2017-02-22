@@ -195,7 +195,7 @@
 		},
 		"MIDI Gate": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Utility",
 			"files": {
 				"MIDI Gate.jsfx": {
 					"main": false
@@ -206,7 +206,8 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
