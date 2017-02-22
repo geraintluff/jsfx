@@ -15,6 +15,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx) or on [ReaPack]
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
 * Hammer And String - a monophonic string resonator/synth with portamento
 * Hammer And Chord - a polyphonic string resonator/synth
+* MIDI Gate - a MIDI-note-controlled gate (audio passes through only when MIDI note is down)
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -135,3 +136,9 @@ The portamento affects how quickly the resonator changes pitch.  The "Anticipati
 This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  ([audio demo](audio-demos/hammer-and-chord.mp3))
 
 ![screenshot](Hammer And Chord.png)
+
+## MIDI Gate
+
+This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the "Max Velocity" control. ([audio demo](audio-demos/midi-gate.mp3))
+
+![screenshot](MIDI Gate.png)
