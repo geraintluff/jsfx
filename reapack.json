@@ -169,7 +169,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Hammer And Chord": {
 			"type": "effect",
@@ -191,7 +191,22 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
+		},
+		"MIDI Gate": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"MIDI Gate.jsfx": {
+					"main": false
+				},
+				"synth-framework.jsfx-inc": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

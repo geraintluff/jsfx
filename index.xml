@@ -145,6 +145,14 @@
 				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/delay-utils.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Panalysis" type="effect">
+			<metadata>
+			</metadata>
+			<version name="1.0.0" time="2017-02-03T11:07:40.513Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/ui-lib.jsfx-inc</source>
+			</version>
+		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
@@ -192,16 +200,6 @@
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.0.2/PadSynth/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
-	</category>
-	<category name="Misc">
-		<reapack name="Panalysis" type="effect">
-			<metadata>
-			</metadata>
-			<version name="1.0.0" time="2017-02-03T11:07:40.513Z">
-				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/Panalysis.jsfx</source>
-				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/ui-lib.jsfx-inc</source>
-			</version>
-		</reapack>
 		<reapack name="Learning Sampler" type="effect">
 			<metadata>
 			</metadata>
@@ -245,6 +243,12 @@
 				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.0/Hammer-And-String/delay-utils.jsfx-inc</source>
 				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.0/Hammer-And-String/synth-framework.jsfx-inc</source>
 			</version>
+			<version name="1.0.1" time="2017-02-20T12:31:06.825Z">
+				<source file="Hammer-And-String/Hammer And String.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.1/Hammer-And-String/Hammer%20And%20String.jsfx</source>
+				<source file="Hammer-And-String/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.1/Hammer-And-String/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.1/Hammer-And-String/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.1/Hammer-And-String/synth-framework.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Hammer And Chord" type="effect">
 			<metadata>
@@ -256,6 +260,19 @@
 				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.0/Hammer-And-Chord/synth-framework.jsfx-inc</source>
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.0/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 			</version>
+			<version name="1.0.1" time="2017-02-20T12:31:10.088Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.1/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.1/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.1/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.1/Hammer-And-Chord/synth-framework.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.1/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
+		</reapack>
+	</category>
+	<category name="Misc">
+		<reapack name="MIDI Gate" type="effect">
+			<metadata>
+			</metadata>
 		</reapack>
 	</category>
 </index>

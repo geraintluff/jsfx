@@ -9,7 +9,7 @@ import synth-framework.jsfx-inc
 @init
 
 freemem = 0;
-freemem = synth_setup(freemem, 1); // Request one slot to keep the phase in
+freemem = synth_init(freemem, 1); // Request one slot to keep the phase in
 
 attack_samples = 0.01*srate;
 release_samples = 0.01*srate;

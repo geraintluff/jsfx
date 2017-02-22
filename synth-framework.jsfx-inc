@@ -190,12 +190,12 @@ function synth_midinote(note) (
 	(note - synthx_custom_offset)[3/*NOTE:NOTE*/];
 );
 
-function synth_velocity(note) (
-	(note - synthx_custom_offset)[5/*NOTE:VEL*/];
-);
-
 function synth_freq(note) (
 	(note - synthx_custom_offset)[4/*NOTE:BASE_FREQ*/]*synthx_pitchbend_ratio;
+);
+
+function synth_velocity(note) (
+	(note - synthx_custom_offset)[5/*NOTE:VEL*/];
 );
 
 function synth_channel(note) (
