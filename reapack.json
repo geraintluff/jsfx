@@ -208,6 +208,21 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Pulsar": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Pulsar.jsfx": {
+					"main": false
+				},
+				"synth-framework.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

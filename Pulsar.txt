@@ -1,0 +1,102 @@
+desc:Pulsar - Drum Synth (by Geraint Luff)
+
+slider1:param_ampdb=-12<-60,0,0.1>Amp (dB)
+slider2:param_velocitycurve=1<0.1,3,0.1>Velocity curve
+slider3:param_durationms=350<10,10000,1>Duration (ms)
+slider4:param_attackms=1<0,500,1>Attack (ms)
+slider5:param_decaycurve=1<0.5,2, 0.01>Decay curve
+slider6:param_startpitch=60<0,127,1>Start pitch
+slider7:param_endpitch=10<0,127,1>End pitch
+slider8:param_pitchcurve=2<0.1,20,0.1>Pitch curve
+slider9:param_notepitchstart=0<0,1,0.01>Note pitch start
+slider10:param_notepitchend=0<0,1,0.01>Note pitch end
+slider11:param_distortion=0<-1,1,0.01>Distortion
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+freemem = ui_setup(0);
+freemem = synth_setup(freemem, SYNTH_PARAMS#);
+
+@block
+
+synth_block();
+
+@sample
+
+synth_sample();
+
+function add_layer(note, layer) local (attack, envtime, envamp, pitch, freq, phase, value) (
+	attack = synth_attack(note);
+	envtime = attack/layer[SYNTH_PARAMS#duration];
+	(envtime < 1) ? (
+		envamp = layer[SYNTH_PARAMS#amp];
+		envamp *= pow(1 - envtime, layer[SYNTH_PARAMS#amp_curve]);
+		attack < layer[SYNTH_PARAMS#attack] ? (
+			envamp *= attack/layer[SYNTH_PARAMS#attack];
+		);
+
+		envpitch = pow(1 - envtime, layer[SYNTH_PARAMS#note_curve]);
+		pitch = layer[SYNTH_PARAMS#note_low] + (layer[SYNTH_PARAMS#note_high] - layer[SYNTH_PARAMS#note_low])*envpitch;
+		freq = 440*pow(2, (pitch - 69)/12);
+		// For safety
+		envamp *= 1000/(freq + 1000);
+
+		phase = layer[SYNTH_PARAMS#phase];
+		phase = phase + (freq/srate);
+		while (phase >= 1) (
+			phase -= 1;
+		);
+		layer[SYNTH_PARAMS#phase] = phase;
+
+		value = sin(phase*$pi*2);
+		param_distortion > 0 ? (
+			value /= (param_distortion*abs(value) + (1 - param_distortion));
+		) : param_distortion < 0 ? (
+
+			value *= exp((value - 1)*(1/(1.01 + param_distortion) - 1));
+		);
+		spl0 += value*envamp;
+		spl1 += value*envamp;
+
+		1;
+	) : 0;
+);
+
+note = synth_note_first();
+while (note > 0) (
+	synth_needs_init(note) ? (
+		layer = note;
+		layer[SYNTH_PARAMS#enabled] = 1;
+		layer[SYNTH_PARAMS#duration] = param_durationms*0.001*srate;
+		layer[SYNTH_PARAMS#attack] = param_attackms*0.001*srate;
+		layer[SYNTH_PARAMS#amp] = pow(10, param_ampdb/20)*pow(synth_velocity(note)/127, param_velocitycurve);
+		layer[SYNTH_PARAMS#amp_curve] = param_decaycurve;
+		layer[SYNTH_PARAMS#note_high] = param_startpitch + (synth_midinote(note) - param_startpitch)*param_notepitchstart;
+		layer[SYNTH_PARAMS#note_low] = param_endpitch + (synth_midinote(note) - param_endpitch)*param_notepitchend;
+		layer[SYNTH_PARAMS#note_curve] = param_pitchcurve;
+	);
+
+	!add_layer(note, note) ? (
+		synth_stop(note);
+	);
+
+	note = synth_note_next(note);
+);
+
+@gfx 400 250
+
+control_start("main", "default");
+
+ui_screen() == "main" ? (
+	control_navbar("Pulsar - Drum Synth", -1, -1);
+
+	ui_split_bottom(50);
+		ui_split_leftratio(1/4);
+			sprintf(#g_selected_text, "%i", g_selected + 1);
+			g_selected = control_selector(g_selected, #g_selected_text, (g_selected + 1)%LAYER_COUNT, (g_selected + LAYER_COUNT - 1)%LAYER_COUNT);
+		ui_pop();
+	ui_pop();
+) : ui_system();
