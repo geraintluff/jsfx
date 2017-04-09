@@ -183,7 +183,7 @@ function calculate_spectrum(buffer, fftsize, spectrum, resolution) local(i, i2, 
 		spectrum[i] = mag2;
 		i += 1;
 	);
-	
+
 	blurspan = floor(fftsize*resolution/srate + 0.75);
 	sum = 0;
 	i = 0;
@@ -238,9 +238,9 @@ function move_from_input_to_buffer(fftsize, window_length, input, spectrum, reso
 			i2 >= formant_buffer_length ? (
 				i2 -= formant_buffer_length;
 			);
-			
+
 			window_value = (window_ratio < 0) ? 1 : 0.5 + 0.5*cos(window_ratio*2*$pi);
-			
+
 			// Move from input to fft buffer
 			formant_fftbuffer[2*i] = input[2*i2]*window_value;
 			formant_fftbuffer[2*i + 1] = input[2*i2 + 1]*window_value;
@@ -252,7 +252,7 @@ function move_from_input_to_buffer(fftsize, window_length, input, spectrum, reso
 		);
 		i += 1;
 	);
-	
+
 	// TODO: maybe we don't always need an FFT this big - could pass in FFT size to this function
 	fft(formant_fftbuffer, fftsize);
 	fft_permute(formant_fftbuffer, fftsize);
@@ -268,10 +268,10 @@ correct_formants_ugly ? (
 		fftsize = formant_fftsize;
 		formant_remaining += window_length*0.5;
 
-		resolution = max(freq, freq + correction_freq);
+		resolution = max(max(freq, freq + correction_freq), min_freq);
 		move_from_input_to_buffer(fftsize, window_length, formant_input_original, formant_spectrum_original, resolution);
 		move_from_input_to_buffer(fftsize, window_length, formant_input_shifted, formant_spectrum_shifted, resolution);
-		
+
 		factor = (formant_spectrum_original[0]/formant_spectrum_shifted[0])/fftsize/formant_shift_factor;
 		formant_fftbuffer[0] *= factor;
 		formant_fftbuffer[1] *= factor;
@@ -287,12 +287,12 @@ correct_formants_ugly ? (
 			formant_fftbuffer[2*i + 1] *= factor;
 			formant_fftbuffer[2*i2] *= factor;
 			formant_fftbuffer[2*i2 + 1] *= factor;
-			
+
 			i += 1;
 		);
 		fft_ipermute(formant_fftbuffer, fftsize);
 		ifft(formant_fftbuffer, fftsize);
-		
+
 		// Copy to output
 		i = 0;
 		while (i < formant_buffer_length) (
@@ -303,7 +303,7 @@ correct_formants_ugly ? (
 			window_ratio = (i + 0.5)/formant_buffer_length;
 			window_value = 0.5 - 0.5*cos(window_ratio*2*$pi);
 			window_value /= (1 + 0.999*(window_value - 1));
-			
+
 			formant_output[2*i2] += formant_fftbuffer[2*i]*window_value;
 			formant_output[2*i2 + 1] += formant_fftbuffer[2*i + 1]*window_value;
 			i += 1;
@@ -365,7 +365,7 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 	// Draw the thing
 	ui_push_clip();
 		control_background_technical();
-		
+
 		ui_colora(255, 255, 255, 0.2*pow(min(1, ui_height()/(display_top_note - display_bottom_note)/20), 2));
 		i = 0;
 		while (i <= 127) (
@@ -373,7 +373,7 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 			gfx_line(ui_left(), y1, ui_right() - 1, y1);
 			i += 1;
 		);
-		
+
 		width = ui_width();
 		height = ui_height();
 		trange = display_right_time - display_left_time;
@@ -409,7 +409,7 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 				index += 1;
 				index < index2;
 			);
-			
+
 			lowfreq && amp >= display_amp_limit ? (
 				y1 = note_to_y(freq_to_note(lowfreq_corrected));
 				y2 = note_to_y(freq_to_note(highfreq_corrected));
@@ -426,11 +426,11 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 			);
 			i += 1;
 		);
-		
+
 		x = time_to_x(play_position - latencysamples/srate);
 		ui_colora(255, 255, 255, 0.5);
 		gfx_line(x, ui_top(), x, ui_bottom() - 1);
-		
+
 
 		// Keep the current section in view
 		display_follow_playback && (play_state&1) ? (
@@ -444,7 +444,7 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 				display_right_time -= x;
 			);
 		);
-		
+
 		// Pan and zoom
 		ui_scroll_y() ? (
 			zoom_factor = exp(-ui_scroll_y()/1000);
@@ -487,9 +487,9 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 			display_left_time = 0;
 		);
 		display_right_time = min(analysis_count*analysis_interval, display_right_time);
-		
+
 		display_tool_width = max(0.01, min(1, display_tool_width));
-		
+
 		tool_active = ui_press(1) || ui_press(2);
 
 		// Calculate tool parameters
@@ -526,7 +526,7 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 			ui_colora(255, 64, 0, (ui_press() ? 0.2 : 0.1)*max(1, 5 - y2/10));
 			gfx_circle(time_to_x(display_change_time), note_to_y(display_change_note), y2, 1);
 		);
-		
+
 		tool_active ? (
 			// Current position
 			t1 = display_change_time;
@@ -569,9 +569,9 @@ function custom_main() local(width, height, i, x, t1, t2, y1, y2, y1b, y2b, tran
 				) : (
 					entry[ANALYSIS#SHIFT_SEMITONES] += correction*y1;
 				);
-				
+
 				index += 1;
-				
+
 				index < index2;
 			);
 		);
@@ -680,7 +680,7 @@ ui_screen() == "main" ? (
 					display_shift_mode_prev = SHIFT_MODE#PLAIN;
 					display_shift_mode_next = SHIFT_MODE#PLAIN;
 				);
-				
+
 				shift_mode = control_selector(shift_mode, #display_shift_name, display_shift_mode_prev, display_shift_mode_next);
 			ui_pop();
 		ui_split_next();
@@ -690,7 +690,7 @@ ui_screen() == "main" ? (
 			);
 		ui_pop();
 	ui_pop();
-	
+
 	ui_split_right(240);
 		control_group("tool");
 		ui_split_topratio(1/5);
