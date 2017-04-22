@@ -96,7 +96,7 @@ correction_semitones = entry[ANALYSIS#SHIFT_SEMITONES]*(1 - index_ratio) + entry
 index_int >= analysis_count || reset_shift ? (
 	correction_semitones = correction_semitones_global;
 );
-
+w
 //formant_shift_semitones = 0;
 formant_shift_factor = pow(2, formant_shift_semitones/12);
 
