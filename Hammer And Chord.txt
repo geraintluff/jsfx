@@ -16,6 +16,7 @@ slider8:impulse_amp=1<0,1,0.01>-Impulse volume
 slider9:decay_period=1<0,1,0.01>-Decay period
 slider10:damping_factor=1<0,2,0.01>-Damping
 slider11:filter_freq=2000<500,16000,1>-Damping freq
+slider12:ring_mod=1<0,1,1{off,on}>-Anti-tonal ring mod
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -41,7 +42,7 @@ filter_buffer_length = filter_buffer_size();
 
 freemem = 0;
 freemem = ui_setup(freemem);
-freemem = synth_setup(freemem, NOTE# + delay_buffer_length*2 + filter_buffer_length*2);
+freemem = synth_setup(freemem, NOTE# + delay_buffer_length*2 + filter_buffer_length*4);
 
 delay_samples = max_delay_samples;
 delay_samples_target = max_delay_samples;
@@ -123,11 +124,20 @@ while (note > 0) (
 		filter_buffer_highshelf_gainband(note[NOTE#filter1], filter_freq, filter_gain, filter_bandwidth);
 
 		note[NOTE#decay_factor] = decay_factor;
-		
+
 		note[NOTE#impulse_amp] = impulse_amp*pow(synth_velocity(note)/127, impulse_velocity);
 		pan = 0.5 + (rand() - 0.5)*0.05;
 		note[NOTE#pan_left] = (1 - pan)*2;
 		note[NOTE#pan_right] = pan*2;
+
+		mod_filter_freq = synth_freq(note)*0.5;
+		note[NOTE#mod_gain] = sqrt(srate/mod_filter_freq);
+		note[NOTE#mod_filter0] = mem;
+		mem = filter_buffer_init(mem);
+		filter_buffer_lowpass(note[NOTE#mod_filter0], mod_filter_freq, 0.5);
+		note[NOTE#mod_filter1] = mem;
+		mem = filter_buffer_init(mem);
+		filter_buffer_lowpass(note[NOTE#mod_filter1], mod_filter_freq, 0.5);
 	);
 	synth_release(note) >= release_samples ? (
 		synth_stop(note);
@@ -135,13 +145,13 @@ while (note > 0) (
 		decay_factor = note[NOTE#decay_factor];
 		resonator_gain = note[NOTE#resonator_gain];
 		impulse_value = impulse(note);
-		
+
 		delay_samples_target = min(max_delay_samples, srate/synth_freq(note));
 		delay_samples = note[NOTE#delay_samples];
 		delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
 		delay_freq = srate/delay_samples;
 		note[NOTE#delay_samples] = delay_samples;
-		
+
 		note[NOTE#invert_feedback] ? delay_samples *= 0.5;
 
 		buffer0 = note[NOTE#buffer0];
@@ -151,9 +161,17 @@ while (note > 0) (
 		delayed1 = delay_buffer_output_linear(buffer1, delay_samples - 1);
 		delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
 		delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
-		
-		excitation0 = impulse_value*note[NOTE#pan_left] + spl0*resonator_gain + delayed0*decay_factor;
-		excitation1 = impulse_value*note[NOTE#pan_right] + spl1*resonator_gain + delayed1*decay_factor;
+
+		excitation0 = spl0;
+		excitation1 = spl1;
+		ring_mod ? (
+			noise = (rand()*2 - 1)*note[NOTE#mod_gain];
+			excitation0 = filter_buffer_sample(note[NOTE#mod_filter0], noise)*excitation0;
+			noise = (rand()*2 - 1)*note[NOTE#mod_gain];
+			excitation1 = filter_buffer_sample(note[NOTE#mod_filter1], noise)*excitation1;
+		);
+		excitation0 = impulse_value*note[NOTE#pan_left] + excitation0*resonator_gain + delayed0*decay_factor;
+		excitation1 = impulse_value*note[NOTE#pan_right] + excitation1*resonator_gain + delayed1*decay_factor;
 		delay_buffer_input(buffer0, excitation0);
 		delay_buffer_input(buffer1, excitation1);
 
@@ -166,6 +184,10 @@ while (note > 0) (
 
 		output0 += delayed0;
 		output1 += delayed1;
+		ring_mod ? (
+			output0 += excitation0;
+			output1 += excitation1;
+		);
 	);
 	note = synth_note_next(note);
 );
@@ -173,7 +195,7 @@ while (note > 0) (
 spl0 = output0;
 spl1 = output1;
 
-@gfx 490 410
+@gfx 620 439
 
 function labelled_default_dial(value, low, high, bias, label, format_text, default) local(height) (
 	height = min(ui_height()/2, 50);
@@ -233,7 +255,7 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 	ui_split_next();
-		ui_split_leftratio(3/5);
+		ui_split_leftratio(3/6);
 			control_group("Impulse");
 			ui_split_leftratio(1/3);
 				impulse_brightness = labelled_default_dial(impulse_brightness, 0.1, 100, log(1000), "Brightness", "", 30);
@@ -244,10 +266,12 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_split_next();
 			control_group("Resonator");
-			ui_split_leftratio(0.5);
+			ui_split_leftratio(1/3);
 				invert_feedback = labelled_switch(invert_feedback, "Feedback", invert_feedback ? "negative" : "positive");
 			ui_split_next();
 				resonator_scaling = labelled_default_dial(resonator_scaling, 0, 1, 0, "Input type", resonator_scaling < 0.25 ? "continuous" : resonator_scaling < 0.75 ? "hybrid" : "impulse", 0.1);
+			ui_split_next();
+				ring_mod = labelled_switch(ring_mod, "De-tonal", ring_mod ? "on" : "off");
 			ui_pop();
 		ui_pop();
 	ui_pop();
