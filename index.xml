@@ -195,6 +195,11 @@
 				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.6/Spring-Box/ui-lib.jsfx-inc</source>
 				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.6/Spring-Box/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="1.0.7" time="2017-05-10T20:38:58.039Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.7/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.7/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.7/Spring-Box/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">

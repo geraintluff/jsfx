@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"files": {
+		"Spring-Box/Spring-Box.jsfx": {
+			"main": false
+		},
+		"Spring-Box/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Spring-Box/delay-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "Spring-Box.png"
+	},
+	"version": "1.0.7",
+	"package": "Spring-Box",
+	"time": "2017-05-10T20:38:58.039Z"
+}

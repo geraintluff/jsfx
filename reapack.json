@@ -73,7 +73,7 @@
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.0.6"
+			"version": "1.0.7"
 		},
 		"PadSynth": {
 			"type": "effect",
