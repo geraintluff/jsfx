@@ -16,7 +16,7 @@ slider8:impulse_amp=1<0,1,0.01>-Impulse volume
 slider9:decay_period=1<0,1,0.01>-Decay period
 slider10:damping_factor=1<0,2,0.01>-Damping
 slider11:filter_freq=2000<500,16000,1>-Damping freq
-slider12:ring_mod=1<0,1,1{off,on}>-Anti-tonal ring mod
+slider12:ring_mod=0<0,1,1{off,on}>-Anti-tonal ring mod
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
