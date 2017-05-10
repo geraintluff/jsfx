@@ -184,10 +184,6 @@ while (note > 0) (
 
 		output0 += delayed0;
 		output1 += delayed1;
-		ring_mod ? (
-			output0 += excitation0;
-			output1 += excitation1;
-		);
 	);
 	note = synth_note_next(note);
 );
