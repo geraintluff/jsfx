@@ -4,18 +4,18 @@ This is a collection of audio effects I have written in REAPER's JSFX language.
 
 Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP file](http://stash.reaper.fm/v/29933/Geraint%27s%20JSFX.zip), or on [ReaPack](https://reapack.com/) by adding the repository: https://geraintluff.github.io/jsfx/index.xml
 
-* PadSynth - a synth that produces thick sounds, including per-note effects and modulators
-* Spring-Box - an echo/chorus effect
-* Bad Connection - flips between two volumes to simulate poor connection or dropouts
-* Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input
+* PadSynth - a synth that produces thick sounds, including per-note effects and modulators ([audio demo](audio-demos/padsynth.mp3)
+* Spring-Box - an echo/chorus effect ([audio demo](audio-demos/spring-box.mp3))
+* Bad Connection - flips between two volumes to simulate poor connection or dropouts ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3))
+* Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input ([audio demo](audio-demos/sandwich-amp.mp3))
 * Warble - a basic pitch-editing effect
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 * Panalysis - visualise and manipulate the stereo field of the audio
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
-* Hammer And String - a monophonic string resonator/synth with portamento
-* Hammer And Chord - a polyphonic string resonator/synth
-* MIDI Gate - a MIDI-note-controlled gate (audio passes through only when MIDI note is down)
+* Hammer And Chord - a polyphonic string resonator/synth ([audio demo](audio-demos/hammer-and-chord.mp3))
+* Hammer And String - a monophonic string resonator/synth with portamento ([audio demo](audio-demos/hammer-and-string.mp3))
+* MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. ([audio demo](audio-demos/midi-gate.mp3))
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -137,8 +137,14 @@ This effect is a polyphonic string resonator.  It can provide its own impulse (t
 
 ![screenshot](Hammer And Chord.png)
 
+It has two resonators for each note (left and right) and they can be detuned ([audio demo](audio-demos/Hammer And Chord detune demo.mp3)).
+
+If your input audio is tonal (e.g. speech) and those frequencies are coming through, the "de-tonal" setting puts a ring-modulator before each resonator to make it atonal. ([audio demo](Hammer And Chord ringmod demo.mp3))
+
 ## MIDI Gate
 
 This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the "Max Velocity" control. ([audio demo](audio-demos/midi-gate.mp3))
 
 ![screenshot](MIDI Gate.png)
+
+You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. ([audio demo](https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3))

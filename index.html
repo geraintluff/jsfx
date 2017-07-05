@@ -222,20 +222,20 @@ a[href] code {
 	border-color: #68A;
 }</style></head><body><div class="content"><h1 id="geraint-s-jsfx-repository">Geraint&#39;s JSFX repository</h1><div class="section section1">
 <p>This is a collection of audio effects I have written in REAPER&#39;s JSFX language.</p>
-<p>Download them from <a href="https://github.com/geraintluff/jsfx">GitHub</a>, or <a href="http://stash.reaper.fm/v/29933/Geraint%27s%20JSFX.zip">the Stash</a>, or on <a href="https://reapack.com/">ReaPack</a> by adding the repository: <a href="https://geraintluff.github.io/jsfx/index.xml">https://geraintluff.github.io/jsfx/index.xml</a></p>
+<p>Download them from <a href="https://github.com/geraintluff/jsfx">GitHub</a>, or <a href="http://stash.reaper.fm/v/29933/Geraint%27s%20JSFX.zip">as a ZIP file</a>, or on <a href="https://reapack.com/">ReaPack</a> by adding the repository: <a href="https://geraintluff.github.io/jsfx/index.xml">https://geraintluff.github.io/jsfx/index.xml</a></p>
 <ul>
-<li>PadSynth - a synth that produces thick sounds, including per-note effects and modulators</li>
-<li>Spring-Box - an echo/chorus effect</li>
-<li>Bad Connection - flips between two volumes to simulate poor connection or dropouts</li>
-<li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input</li>
+<li>PadSynth - a synth that produces thick sounds, including per-note effects and modulators (<a href="audio-demos/padsynth.mp3">audio demo</a></li>
+<li>Spring-Box - an echo/chorus effect (<a href="audio-demos/spring-box.mp3">audio demo</a>)</li>
+<li>Bad Connection - flips between two volumes to simulate poor connection or dropouts (<a href="audio-demos/Bad Connection/radio-dropout.mp3">audio demo</a>)</li>
+<li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</li>
 <li>Warble - a basic pitch-editing effect</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 <li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
 <li>Panalysis - visualise and manipulate the stereo field of the audio</li>
 <li>Learning Sampler - a basic sampler that records incoming audio and plays it back</li>
-<li>Hammer And String - a monophonic string resonator/synth with portamento</li>
-<li>Hammer And Chord - a polyphonic string resonator/synth</li>
-<li>MIDI Gate - a MIDI-note-controlled gate (audio passes through only when MIDI note is down)</li>
+<li>Hammer And Chord - a polyphonic string resonator/synth (<a href="audio-demos/hammer-and-chord.mp3">audio demo</a>)</li>
+<li>Hammer And String - a monophonic string resonator/synth with portamento (<a href="audio-demos/hammer-and-string.mp3">audio demo</a>)</li>
+<li>MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -300,7 +300,10 @@ a[href] code {
 </div><h2 id="hammer-and-chord">Hammer And Chord</h2><div class="section section2">
 <p>This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  (<a href="audio-demos/hammer-and-chord.mp3">audio demo</a>)</p>
 <p><img src="Hammer And Chord.png" alt="screenshot"></p>
+<p>It has two resonators for each note (left and right) and they can be detuned (<a href="audio-demos/Hammer And Chord detune demo.mp3">audio demo</a>).</p>
+<p>If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. (<a href="Hammer And Chord ringmod demo.mp3">audio demo</a>)</p>
 </div><h2 id="midi-gate">MIDI Gate</h2><div class="section section2">
 <p>This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the &quot;Max Velocity&quot; control. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</p>
 <p><img src="MIDI Gate.png" alt="screenshot"></p>
+<p>You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. (<a href="https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3">audio demo</a>)</p>
 </div></div></div><script></script></body></html>
