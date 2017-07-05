@@ -207,7 +207,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Pulsar": {
 			"type": "effect",

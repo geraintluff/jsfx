@@ -167,6 +167,11 @@
 				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/synth-framework.jsfx-inc</source>
 				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.0.1" time="2017-07-05T19:20:06.240Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Delay">
