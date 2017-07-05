@@ -8,7 +8,7 @@ out_pin:Ch2
 slider1:50<1,1000,1>-density (ms)
 slider2:60<0,99,1>-feedback
 slider3:80<0,95,1>-late-bias (%)
-slider4:50<0,100,1>-wet (%)
+slider4:25<0,100,1>-wet (%)
 slider5:100<0,100,1>-dry (%)
 slider6:0<0,1,1{even,long}>-room shape
 slider7:8000<100,20000,1>-filter (lowpass Hz)
