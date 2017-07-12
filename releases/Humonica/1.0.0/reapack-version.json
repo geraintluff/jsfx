@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Humonica/Humonica.jsfx": {
+			"main": false
+		},
+		"Humonica/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Humonica",
+	"time": "2017-07-12T22:08:31.873Z"
+}
