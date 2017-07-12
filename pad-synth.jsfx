@@ -30,6 +30,7 @@ options_wavetables_count = 18; // This is about one sample per 4 semitones
 options_wavetables_samplerate = 48000; // Samples are rendered at this frequency regardless of project sample rate
 options_wavetables_sampleslength = 65536; // Keeps the repetition just over a second - must be power of 2
 options_polyphony = 64;
+options_spreadsize = 1024;
 
 //////////////// Setup and Memory Layout ////////////////
 
@@ -96,7 +97,7 @@ function get_waveform_value(pos) local(value, warpfactor) (
 	) : param_waveform_type == 3/*WAVEFORM:SQUARE*/ ? (
 		value = pos < 0.5 ? -1 : 1;
 	) : 0;
-	
+
 	param_waveform_warpamount > 0 ? (
 		warpfactor = exp(param_waveform_warpamount);
 		param_waveform_warptype == 3/*WAVEFORM_WARPTYPE:SIN*/ ? (
@@ -128,7 +129,7 @@ function calculate_waveform_spectrum() local(i, sum, rms) (
 		i += 1;
 	);
 	rms = sqrt(rms/gen_spectrum_N/2);
-	
+
 	i = 0;
 	while (i < gen_spectrum_N) (
 		sum = fftblock[i*2]*fftblock[i*2];
@@ -145,9 +146,11 @@ function get_waveform_spectrum_amp(n) local(sum) (
 	);
 );
 
-fftblock = 0;
+freemem = 0;
+
+fftblock = freemem;
 fft_big_working_space = fftblock + options_wavetables_sampleslength*2;
-fftblock_end = fft_big_working_space + 256;
+freemem = fft_big_working_space + 256;
 
 // This factorises (Cooley-Tukey) a large FFT into smaller FFTs to get around REAPER's 32768 limit.
 // "working_space" must be 2*sizeB big - if you're using fft_big()
@@ -167,7 +170,7 @@ function ifft_ab(block, sizeA, sizeB, working_space)
 		shiftleftbits += 1;
 	);
 	shiftrightbits = Nbits - shiftleftbits;
-	
+
 	index1 = 1;
 	while (index1 < N) (
 		target_index = index1;
@@ -208,7 +211,7 @@ function ifft_ab(block, sizeA, sizeB, working_space)
 			twiddle_amount = i*j/N;
 			twiddle_r = cos(twiddle_amount*2*$pi);
 			twiddle_i = sin(twiddle_amount*2*$pi);
-			
+
 			working_space[j*2] = block[(i + j*sizeA)*2]*twiddle_r - block[(i + j*sizeA)*2 + 1]*twiddle_i;
 			working_space[j*2 + 1] = block[(i + j*sizeA)*2]*twiddle_i + block[(i + j*sizeA)*2 + 1]*twiddle_r;
 			j += 1;
@@ -223,7 +226,7 @@ function ifft_ab(block, sizeA, sizeB, working_space)
 		);
 
 		i += 1;
-	); 
+	);
 );
 
 // working_space must be 256 big (128 complex numbers), unless you're doing super-duper large (2^21 or higher) FFTs
@@ -241,27 +244,82 @@ function ifft_big(block, N, working_space) local(sizeB) (
 );
 
 gen_spectrum_N = 1024;
-gen_spectrum = fftblock_end;
-gen_spectrum_end = gen_spectrum + gen_spectrum_N*2;
+gen_spectrum = freemem;
+freemem = gen_spectrum + gen_spectrum_N*2;
 
-uiblock_end = ui_setup(gen_spectrum_end);
+spread_density = freemem;
+spread_cumulative = spread_density + options_spreadsize;
+freemem = spread_cumulative + options_spreadsize;
+
+spread_mean = options_spreadsize/2;
+spread_std = options_spreadsize/10;
+function spread_update() local(i, cumulative, sum, sum2) (
+	sum = sum2 = 0;
+	cumulative = 0;
+	i = 0;
+	while (i < options_spreadsize) (
+		cumulative += spread_density[i];
+		sum += spread_density[i]*i;
+		sum2 += spread_density[i]*i*i;
+		spread_cumulative[i] = cumulative;
+		i += 1;
+	);
+	debug.cumulative = cumulative;
+	cumulative ? (
+		spread_mean = sum/cumulative;
+		spread_std = sqrt(sum2/cumulative - spread_mean*spread_mean);
+		i = 0;
+		while (i < options_spreadsize) (
+			spread_cumulative[i] /= cumulative;
+			i += 1;
+		);
+	);
+);
+function get_spread_cumulative(std) local(index, rounded, ratio) (
+	index = spread_mean + std*spread_std;
+	rounded = floor(index);
+	ratio = index - rounded;
+	rounded < 0 ? (
+		0
+	) : rounded >= (options_spreadsize - 1) ? (
+		1
+	) : (
+		spread_cumulative[rounded] + ratio*(spread_cumulative[rounded + 1] - spread_cumulative[rounded]);
+	);
+);
+function get_spread_density(low_std, high_std) (
+	get_spread_cumulative(high_std) - get_spread_cumulative(low_std);
+);
+// Start with Gaussian density
+function reset_spread_to_gaussian() local(i, std) (
+	i = 0;
+	while (i < options_spreadsize) (
+		std = (i/options_spreadsize - 0.5)*6;
+		spread_density[i] = pow(abs(sin(exp(-std*std)*5)), 5);
+		i += 1;
+	);
+	spread_update();
+);
+reset_spread_to_gaussian();
+
+freemem = ui_setup(freemem);
 
 // Description of all effects in the system
-fx_spec_start = uiblock_end;
+fx_spec_start = freemem;
 fx_spec_count = 7/*FX_SPECLIST_INDEX: */;
 fx_spec_headerlength = 9/*FX_HEADER: NAME, MODCOUNT, FUNC_INIT, CONFIG_UI_FUNCTION, CONFIG_SWAP_FUNCTION, CONFIG_DELETE_FUNCTION, SETUP_NOTE_FUNCTION, PRE_EXEC_NOTE_FUNCTION, EXEC_NOTE_FUNCTION*/;
 fx_spec_modlength = 3/*FX_MOD: RANGE, TYPE, NAME*/;
 fx_spec_var_count = 10; // Maximum number of modulatable parameters
 fx_spec_step = fx_spec_headerlength + fx_spec_modlength*fx_spec_var_count;
-fx_spec_end = fx_spec_start + fx_spec_step*fx_spec_count;
+freemem = fx_spec_start + fx_spec_step*fx_spec_count;
 
-fx_list_start = fx_spec_end;
+fx_list_start = freemem;
 //fx_list_count = 0; // Don't actually reset it here, it'll wipe all effects on playback restart!
 fx_list_maxcount = 10;
 fx_list_headerlength = 2/*FX: SPEC_INDEX, NAME*/;
 fx_list_statelength = 16;
 fx_list_step = fx_list_headerlength + fx_list_statelength;
-fx_list_end = fx_list_start + fx_list_step*fx_list_maxcount;
+freemem = fx_list_start + fx_list_step*fx_list_maxcount;
 
 // First N string slots are reserved for effect names
 string_fx_names_start = 1; // So we don't mistake 0 for a valid index
@@ -280,7 +338,7 @@ function get_mod_range(effectIndex, modIndex) local(target_effect, target_spec, 
 		target_effect = fx_list_start + fx_list_step*effectIndex;
 		target_spec = fx_spec_start + fx_spec_step*target_effect[0/*FX:SPEC_INDEX*/];
 		target_mod = target_spec + fx_spec_headerlength + fx_spec_modlength*modIndex;
-		
+
 		target_mod[0/*FX_MOD:RANGE*/];
 	);
 );
@@ -297,7 +355,7 @@ function get_mod_type(effectIndex, modIndex) local(target_effect, target_mod) (
 		target_effect = fx_list_start + fx_list_step*effectIndex;
 		target_spec = fx_spec_start + fx_spec_step*target_effect[0/*FX:SPEC_INDEX*/];
 		target_mod = target_spec + fx_spec_headerlength + fx_spec_modlength*modIndex;
-		
+
 		target_mod[1/*FX_MOD:TYPE*/];
 	);
 );
@@ -327,7 +385,7 @@ function get_mod_name(effectIndex, modIndex) local(target_effect, target_mod) (
 		target_effect = fx_list_start + fx_list_step*effectIndex;
 		target_spec = fx_spec_start + fx_spec_step*target_effect[0/*FX:SPEC_INDEX*/];
 		target_mod = target_spec + fx_spec_headerlength + fx_spec_modlength*modIndex;
-		
+
 		target_mod[2/*FX_MOD:NAME*/];
 	);
 );
@@ -340,8 +398,8 @@ function get_effect_name(effectIndex) local(target_effect) (
 	);
 );
 
-controller_values = fx_list_end;
-controller_values_end = controller_values + 128;
+controller_values = freemem;
+freemem = controller_values + 128;
 function reset_controllers() (
 	i = 0;
 	while (i < 128) (
@@ -388,12 +446,12 @@ function get_controller_name(index) (
 );
 reset_controllers();
 
-notes_start = controller_values_end;
+notes_start = freemem;
 note_headerlength = 19/*NOTE: FREQ, AMP, GRANULAR_RATE_LOG, ACTIVE, VEL, NOTE, SECONDSFROMSTART, AUDIO_LEFT, AUDIO_RIGHT, SECONDSFROMEND, DECAYRATE, CHANNEL, FREQ_BASE, AMP_BASE, WAVEINDEX_FROM, SAMPLEPOS_FROM, SAMPLEPOS_TO, GRANULAR_POS, ENV*/;
 
 note_fx_statelength = fx_list_statelength;
 notes_step = note_headerlength + note_fx_statelength*fx_list_maxcount;
-notes_end = notes_start + polyphony*notes_step;
+freemem = notes_end = notes_start + polyphony*notes_step;
 // Clear all notes
 function clear_all_notes() local(note) (
 	note = notes_start;
@@ -405,12 +463,12 @@ function clear_all_notes() local(note) (
 );
 clear_all_notes();
 
-wavetables_start = notes_end;
+wavetables_start = freemem;
 wavetables_count = options_wavetables_count;
 wavetable_sampleslength = options_wavetables_sampleslength;
 wavetable_headerlength = 2/*WAVETABLE: FREQ, WAVELENGTH*/; // Freq
 wavetable_step = wavetable_headerlength + wavetable_sampleslength*2;
-wavetables_end = wavetables_start + wavetables_count*wavetable_step;
+freemem = wavetables_start + wavetables_count*wavetable_step;
 
 display_wavetable_index = floor(wavetables_count/2);
 
@@ -443,11 +501,11 @@ modspec[0/*FX_MOD:RANGE*/] = 1;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 1/*effect_init_lfo*/;
 function effect_init_lfo(effect) local(state) (
 	effect[1/*FX:NAME*/] = "LFO Modulator";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*LFO_STATE:MOD_EFFECT*/] = -1; // Initial target: note itself
 	state[1/*LFO_STATE:MOD_INDEX*/] = 1; // Note amplitude
-	
+
 	state[3/*LFO_STATE:FREQ*/] = 5; // Freq
 	state[4/*LFO_STATE:AMP*/] = 0.5; // Amp
 	state[5/*LFO_STATE:PHASE_START*/] = 0; // Negative means "random", positive is phase
@@ -504,7 +562,7 @@ function effect_ui_lfo(effect) local(state, effect_index, mod_range) (
 					);
 				);
 			ui_pop();
-			
+
 			ui_padleft();
 			state[5/*LFO_STATE:PHASE_START*/] >= 0 ? (
 				state[5/*LFO_STATE:PHASE_START*/] = control_hslider(state[5/*LFO_STATE:PHASE_START*/], 0, 2*$pi, 0);
@@ -565,7 +623,7 @@ function effect_note_setup_lfo(effect, note, notestate) local(state) (
 
 	notestate[2/*LFO_NOTE_STATE:LOG_FREQ_BASE*/] = log(state[3/*LFO_STATE:FREQ*/]); // freq
 	notestate[3/*LFO_NOTE_STATE:AMP_BASE*/] = state[4/*LFO_STATE:AMP*/]; // amp
-	
+
 	// Use the remainder for private state
 	notestate[4/*LFO_NOTE_STATE:TARGET*/] = get_mod_index(state[0/*LFO_STATE:MOD_EFFECT*/], state[1/*LFO_STATE:MOD_INDEX*/]);
 	notestate[5/*LFO_NOTE_STATE:MODTYPE*/] = get_mod_type(state[0/*LFO_STATE:MOD_EFFECT*/],
@@ -623,7 +681,7 @@ modspec[0/*FX_MOD:RANGE*/] = 1;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 2/*effect_init_filter*/;
 function effect_init_filter(effect) local(state) (
 	effect[1/*FX:NAME*/] = "Filter";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*FILTER_STATE:FREQ*/] = 1000;
 	state[1/*FILTER_STATE:Q*/] = 1.5;
@@ -759,13 +817,13 @@ function effect_note_setup_filter(effect, note, notestate) local(state) (
 	notestate[6/*FILTER_NOTE_STATE:ATTACK_AMOUNT_BASE*/] = state[2/*FILTER_STATE:ATTACK_AMOUNT*/];
 	notestate[6/*FILTER_NOTE_STATE:ATTACK_AMOUNT_BASE*/] += state[4/*FILTER_STATE:ATTACK_AMOUNT_VELOCITY*/]*note[4/*NOTE:VEL*/]/127;
 	notestate[7/*FILTER_NOTE_STATE:ATTACK_TIME_BASE*/] = state[3/*FILTER_STATE:ATTACK_TIME*/];
-	
+
 	// Private state
 	notestate[8/*FILTER_NOTE_STATE:X1_L*/] = 0;
 	notestate[9/*FILTER_NOTE_STATE:X2_L*/] = 0;
 	notestate[10/*FILTER_NOTE_STATE:Y1_L*/] = 0;
 	notestate[11/*FILTER_NOTE_STATE:Y2_L*/] = 0;
-	
+
 	notestate[12/*FILTER_NOTE_STATE:X1_R*/] = 0;
 	notestate[13/*FILTER_NOTE_STATE:X2_R*/] = 0;
 	notestate[14/*FILTER_NOTE_STATE:Y1_R*/] = 0;
@@ -791,14 +849,14 @@ function effect_note_exec_filter(effect, note, notestate) local(logfreq, freq, Q
 	w0 = 2*$pi*min(0.49, freq/srate);
 	cosW0 = cos(w0);
 	alpha = sin(w0)/(2*Q);
-	
+
 	a0 = 1 + alpha;
 	a1 = (-2*cosW0)/a0;
 	a2 = (1 - alpha)/a0;
 	b1 = (1 - cosW0)/a0;
 	b0 = b1/2;
 	b2 = b0;
-	
+
 	x = note[7/*NOTE:AUDIO_LEFT*/];
 	y = b0*x + b1*notestate[8/*FILTER_NOTE_STATE:X1_L*/] + b2*notestate[9/*FILTER_NOTE_STATE:X2_L*/]
 		- a1*notestate[10/*FILTER_NOTE_STATE:Y1_L*/] - a2*notestate[11/*FILTER_NOTE_STATE:Y2_L*/];
@@ -806,7 +864,7 @@ function effect_note_exec_filter(effect, note, notestate) local(logfreq, freq, Q
 	notestate[8/*FILTER_NOTE_STATE:X1_L*/] = x;
 	notestate[11/*FILTER_NOTE_STATE:Y2_L*/] = notestate[10/*FILTER_NOTE_STATE:Y1_L*/];
 	notestate[10/*FILTER_NOTE_STATE:Y1_L*/] = note[7/*NOTE:AUDIO_LEFT*/] = y;
-		
+
 	x = note[8/*NOTE:AUDIO_RIGHT*/];
 	y = b0*x + b1*notestate[12/*FILTER_NOTE_STATE:X1_R*/] + b2*notestate[13/*FILTER_NOTE_STATE:X2_R*/]
 		- a1*notestate[14/*FILTER_NOTE_STATE:Y1_R*/] - a2*notestate[15/*FILTER_NOTE_STATE:Y2_R*/];
@@ -827,11 +885,11 @@ effectspec[1/*FX_HEADER:MODCOUNT*/] = 0;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 3/*effect_init_conmod*/;
 function effect_init_conmod(effect) local(state) (
 	effect[1/*FX:NAME*/] = "Control/Note/Vel Modulator";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*CONMOD_STATE:MOD_EFFECT*/] = -1; // Initial target: note itself
 	state[1/*CONMOD_STATE:MOD_INDEX*/] = 0; // Frequency
-	
+
 	state[2/*CONMOD_STATE:SOURCE*/] = -1; // -2 is note, -1 is velocity
 	state[3/*CONMOD_STATE:AMOUNT*/] = 0.015;
 	state[4/*CONMOD_STATE:ZERO_POINT*/] = 0.5;
@@ -943,7 +1001,7 @@ function effect_ui_conmod(effect) local(state, effect_index, mod_range, source, 
 			ui_pop();
 		ui_pop();
 	ui_pop();
-	
+
 	ui_color(0, 0, 0);
 	ui_fill();
 	ui_colora(255, 255, 255, 0.8);
@@ -962,7 +1020,7 @@ function effect_ui_conmod(effect) local(state, effect_index, mod_range, source, 
 		);
 		i += 1;
 	);
-	
+
 	ui_color(0, 0, 0);
 	ui_border();
 	control_finish_enabled(1);
@@ -991,18 +1049,18 @@ function effect_delete_conmod(effect, fxIndex) local(state) (
 effectspec[6/*FX_HEADER:SETUP_NOTE_FUNCTION*/] = 3/*effect_note_setup_conmod*/;
 function effect_note_setup_conmod(effect, note, notestate) local(state) (
 	state = effect + fx_list_headerlength;
-	
+
 	// Use the remainder for private state
 	notestate[0/*CONMOD_NOTE_STATE:TARGET*/] = get_mod_index(state[0/*CONMOD_STATE:MOD_EFFECT*/], state[1/*CONMOD_STATE:MOD_INDEX*/]);
 	notestate[1/*CONMOD_NOTE_STATE:MODTYPE*/] = get_mod_type(state[0/*CONMOD_STATE:MOD_EFFECT*/],
 	state[1/*CONMOD_STATE:MOD_INDEX*/]);
-	
+
 	notestate[2/*CONMOD_NOTE_STATE:SOURCE*/] = state[2/*CONMOD_STATE:SOURCE*/];
 	notestate[3/*CONMOD_NOTE_STATE:AMOUNT*/] = state[3/*CONMOD_STATE:AMOUNT*/];
 
 	notestate[4/*CONMOD_NOTE_STATE:CURVE_POWER*/] = exp(state[5/*CONMOD_STATE:CURVE*/]);
 	notestate[5/*CONMOD_NOTE_STATE:OFFSET*/] = pow(state[4/*CONMOD_STATE:ZERO_POINT*/], notestate[4/*CONMOD_NOTE_STATE:CURVE_POWER*/]);
-	
+
 	notestate[6/*CONMOD_NOTE_STATE:VALUE*/] = -1;
 	notestate[7/*CONMOD_NOTE_STATE:SLEWFACTOR*/] = 1/0.005/srate;
 );
@@ -1112,12 +1170,12 @@ function effect_ui_dist(effect) local(state, effect_index, mod_range, i, value, 
 			state[4/*DIST_STATE:WET*/] = control_hslider(state[4/*DIST_STATE:WET*/], 0, 1, 0);
 		ui_pop();
 	ui_pop();
-	
+
 	ui_color(0, 0, 0);
 	ui_fill();
 	ui_colora(255, 255, 255, 0.5);
 	gfx_line(ui_left(), ui_top() + ui_height()/2, ui_right(), ui_top() + ui_height()/2);
-	
+
 	preGain = exp(-state[0/*DIST_STATE:LIMIT_LOG*/]);
 	postGain = exp(state[3/*DIST_STATE:POST_AMP_LOG*/] + state[0/*DIST_STATE:LIMIT_LOG*/]);
 	asymmetry = state[2/*DIST_STATE:ASYMMETRY*/];
@@ -1188,7 +1246,7 @@ modspec[0/*FX_MOD:RANGE*/] = 10;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 5/*effect_init_fm*/;
 function effect_init_fm(effect) local(state) (
 	effect[1/*FX:NAME*/] = "Harmonic Modulator (FM)";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*FM_STATE:HARMONIC_CENTER*/] = 1; // Average freq will be multiple of base freq
 	state[1/*FM_STATE:HARMONIC_CYCLES*/] = 1; // How many freq-mod cycles per wavelength
@@ -1269,7 +1327,7 @@ function effect_note_setup_fm(effect, note, notestate) local(state) (
 
 	notestate[2/*FM_NOTE_STATE:AMP_BASE*/] = state[2/*FM_STATE:AMP*/];
 	notestate[3/*FM_NOTE_STATE:OFFSET_HZ_BASE*/] = state[3/*FM_STATE:OFFSET_HZ*/];
-	
+
 	// Use the remainder for private state
 	notestate[4/*FM_NOTE_STATE:PHASE*/] = rand(2*$pi);
 );
@@ -1288,7 +1346,7 @@ function effect_note_exec_fm(effect, note, notestate) local(state, freq, phase, 
 	phase += (freq*state[1/*FM_STATE:HARMONIC_CYCLES*/] + notestate[1/*FM_NOTE_STATE:OFFSET_HZ*/])*2*$pi*invsrate;
 	modfreq = freq*state[0/*FM_STATE:HARMONIC_CENTER*/]*(1 + sin(phase)*amp);
 	note[0/*NOTE:FREQ*/] = modfreq;
-	
+
 	phase > $pi ? phase -= 2*$pi;
 	notestate[4/*FM_NOTE_STATE:PHASE*/] = phase;
 );
@@ -1320,11 +1378,11 @@ modspec[0/*FX_MOD:RANGE*/] = 1;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 6/*effect_init_env*/;
 function effect_init_env(effect) local(state) (
 	effect[1/*FX:NAME*/] = "Envelope";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*ENV_STATE:MOD_EFFECT*/] = -1; // Initial target: note itself
 	state[1/*ENV_STATE:MOD_INDEX*/] = 2; // Note thickness/detune
-	
+
 	// Attack and release are expressed in the [-1,1] range
 	state[2/*ENV_STATE:ATTACK_VALUE*/] = 0.5;
 	state[3/*ENV_STATE:ATTACK_TIME*/] = 0.1;
@@ -1448,7 +1506,7 @@ function effect_note_setup_env(effect, note, notestate) local(state) (
 effectspec[7/*FX_HEADER:PRE_EXEC_NOTE_FUNCTION*/] = 5/*effect_note_pre_exec_env*/;
 function effect_note_pre_exec_env(effect, note, notestate) local(state) (
 	state = effect + fx_list_headerlength;
-	
+
 	notestate[0/*ENV_NOTE_STATE:ATTACK_VALUE*/] = state[2/*ENV_STATE:ATTACK_VALUE*/];
 	notestate[1/*ENV_NOTE_STATE:ATTACK_TIME*/] = state[3/*ENV_STATE:ATTACK_TIME*/];
 	notestate[2/*ENV_NOTE_STATE:RELEASE_VALUE*/] = state[4/*ENV_STATE:RELEASE_VALUE*/];
@@ -1473,7 +1531,7 @@ function effect_note_exec_env(effect, note, notestate) local(ratio, value) (
 			);
 		);
 		value *= notestate[6/*ENV_NOTE_STATE:SCALE*/];
-		
+
 		notestate[5/*ENV_NOTE_STATE:MODTYPE*/] == 1/*FX_MODTYPE:ADD*/ ? (
 			note[targetIndex] += value;
 		) : (
@@ -1497,11 +1555,11 @@ modspec[0/*FX_MOD:RANGE*/] = 1;
 effectspec[2/*FX_HEADER:FUNC_INIT*/] = 7/*effect_init_slider*/;
 function effect_init_slider(effect) local(state) (
 	effect[1/*FX:NAME*/] = "Slider";
-	
+
 	state = effect + fx_list_headerlength;
 	state[0/*SLIDER_STATE:MOD_EFFECT*/] = -1; // Initial target: note itself
 	state[1/*SLIDER_STATE:MOD_INDEX*/] = 2; // Note thickness/detune
-	
+
 	// Attack and release are expressed in the [-1,1] range
 	state[2/*SLIDER_STATE:STRENGTH*/] = 1;
 	state[3/*SLIDER_STATE:SMOOTHING*/] = 0.005;
@@ -1614,7 +1672,7 @@ function effect_note_setup_slider(effect, note, notestate) local(state) (
 effectspec[7/*FX_HEADER:PRE_EXEC_NOTE_FUNCTION*/] = 6/*effect_note_pre_exec_slider*/;
 function effect_note_pre_exec_slider(effect, note, notestate) local(state) (
 	state = effect + fx_list_headerlength;
-	
+
 	notestate[0/*SLIDER_NOTE_STATE:STRENGTH*/] = notestate[1/*SLIDER_NOTE_STATE:STRENGTH_BASE*/];
 );
 effectspec[8/*FX_HEADER:EXEC_NOTE_FUNCTION*/] = 7/*effect_note_exec_slider*/;
@@ -1644,10 +1702,10 @@ function effect_note_exec_slider(effect, note, notestate) local(state, sliderInd
 	// Smooth
 	//value += (notestate[2/*SLIDER_NOTE_STATE:VALUE*/] - value)*notestate[5/*SLIDER_NOTE_STATE:SMOOTHING_FACTOR*/];
 	notestate[2/*SLIDER_NOTE_STATE:VALUE*/] = value;
-	
+
 	targetIndex >= 0 ? (
 		value *= notestate[0/*SLIDER_NOTE_STATE:STRENGTH*/];
-		
+
 		notestate[4/*SLIDER_NOTE_STATE:MODTYPE*/] == 1/*FX_MODTYPE:ADD*/ ? (
 			note[targetIndex] += value;
 		) : (
@@ -1737,14 +1795,14 @@ function append_effect(index) local(spec, effect, effect_name) (
 		spec = fx_spec_start + fx_spec_step*index;
 		effect_init(spec[2/*FX_HEADER:FUNC_INIT*/], effect);
 		effect[0/*FX:SPEC_INDEX*/] = index;
-	
+
 
 		// Make sure effect is using the correct mutable string slot
 		effect[1/*FX:NAME*/] != effect_name ? (
 			strcpy(effect_name, effect[1/*FX:NAME*/]);
 			effect[1/*FX:NAME*/] = effect_name;
 		);
-		
+
 		clear_all_notes();
 		fx_list_count += 1;
 		clear_all_notes();
@@ -1759,11 +1817,11 @@ function effect_swap(fxIndex1, fxIndex2) local(note, i, tmp, effect, effect2, sp
 	strcpy(#effect_swap_tmp, effect[1/*FX:NAME*/]);
 	strcpy(effect[1/*FX:NAME*/], effect2[1/*FX:NAME*/]);
 	strcpy(effect2[1/*FX:NAME*/], #effect_swap_tmp);
-	
+
 	tmp = effect[0/*FX:SPEC_INDEX*/];
 	effect[0/*FX:SPEC_INDEX*/] = effect2[0/*FX:SPEC_INDEX*/];
 	effect2[0/*FX:SPEC_INDEX*/] = tmp;
-	
+
 	// Swap the states
 	i = 0;
 	while (i < fx_list_statelength) (
@@ -1780,7 +1838,7 @@ function effect_swap(fxIndex1, fxIndex2) local(note, i, tmp, effect, effect2, sp
 		config_swap(spec[4/*FX_HEADER:CONFIG_SWAP_FUNCTION*/], effect, fxIndex1, fxIndex2);
 		i += 1;
 	);
-	
+
 	// Stop all notes, because their internal state is now in the wrong order
 	clear_all_notes();
 );
@@ -1829,11 +1887,10 @@ function reset_to_defaults() (
 
 //////////////// Compute Samples ////////////////
 
-action_recompute || (srate != computed_srate) ? (
+action_recompute ? (
 	can_recompute = 0;
 	action_recompute = 0;
 	recompute_index = 0;
-	computed_srate = srate;
 );
 
 action_recalculate_spectrum ? (
@@ -1842,10 +1899,10 @@ action_recalculate_spectrum ? (
 );
 
 recompute_index < wavetables_count ? (
-	param_width = param_width_cents/1200*log(2);
+	param_width = param_width_cents/1200*log(2)/2; // Divide by an extra 2 because the width_cents is the total width, not standard-deviation
 	wavetable_index = recompute_index;
 	recompute_stop_index = min(wavetables_count, recompute_index + recompute_chunk);
-	
+
 	calculate_waveform_spectrum();
 	while (
 		ratio = (wavetable_index + 0.5)/wavetables_count;
@@ -1857,36 +1914,50 @@ recompute_index < wavetables_count ? (
 			i += 1;
 			i < wavetable_sampleslength*2;
 		);
-		
+
 		harmonic_range_factor = exp(param_width*2);
 		i = 1;
 		while (
 			power = 0;
 			indexfreq = i/wavetable_sampleslength*wavetable_refsrate;
-			indexwidth = log((i + 1)/i);
-			harmonic_freq = base_freq*floor(indexfreq/base_freq/harmonic_range_factor);
+			indexfreq_low = (i - 0.5)/wavetable_sampleslength*wavetable_refsrate;
+			indexfreq_high = (i + 0.5)/wavetable_sampleslength*wavetable_refsrate;
+			harmonic_freq = base_freq*max(1, floor(indexfreq/base_freq/harmonic_range_factor));
+
+			debug.firstharmonicfreq = harmonic_freq;
+			debug.ratio=indexfreq/base_freq;
+
 			end_freq = min(wavetable_maxfreq, indexfreq*harmonic_range_factor);
-			while (
+			while (harmonic_freq < end_freq) (
 				harmonic_index = floor(harmonic_freq/base_freq + 0.5);
 				harmonic_amp = get_waveform_spectrum_amp(harmonic_index);
 				harmonic_power = harmonic_amp*harmonic_amp;
-				log_width = max(indexwidth, param_width);
-				hz_width = exp(log_width)*harmonic_freq;
-				stddistance = log(indexfreq/harmonic_freq)*2/log_width;
-				power += harmonic_power/hz_width*exp(-stddistance*stddistance); // Gaussian
+				stddistance_low = log(indexfreq_low/harmonic_freq)/param_width;
+				stddistance_high = log(indexfreq_high/harmonic_freq)/param_width;
+				a_density = get_spread_density(stddistance_low, stddistance_high);
+				power += harmonic_power*a_density;
+
+				debug.harmonic_freq_x = harmonic_freq;
+				debug.stdratio = indexfreq_low/harmonic_freq;
+				debug.logstdratio = log(indexfreq_low/harmonic_freq);
+				debug.paramwidth = param_width;
+				debug.stddistance_low = stddistance_low;
+				debug.indexfreq = indexfreq;
+				debug.harmonic_freq = harmonic_freq;
+				debug.base_freq = base_freq;
 
 				harmonic_freq += base_freq;
-				harmonic_freq < end_freq;
 			);
+
 			amp = sqrt(power);
 			phase1 = rand(2*$pi);
 			phase2 = rand(2*$pi);
-	
+
 			leftR = amp*cos(phase1);
 			leftI = amp*sin(phase1);
 			rightR = amp*cos(phase2);
 			rightI = amp*sin(phase2);
-			
+
 			i2 = wavetable_sampleslength - i;
 			fftblock[2*i] = leftR - rightI;
 			fftblock[2*i + 1] = leftI + rightR;
@@ -1896,7 +1967,7 @@ recompute_index < wavetables_count ? (
 			i += 1;
 			i < wavetable_sampleslength/2;
 		);
-		
+
 		// IFFT
 
 		ifft_big(fftblock, wavetable_sampleslength, fft_big_working_space);
@@ -1938,7 +2009,7 @@ recompute_index < wavetables_count ? (
 			wavetable_samples[2*i + 1] = right;
 			i += 1;
 		);
-		
+
 		wavetable_index += 1;
 		wavetable_index < recompute_stop_index;
 	);
@@ -1982,7 +2053,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			note[10/*NOTE:DECAYRATE*/] = 0;
 			note[12/*NOTE:FREQ_BASE*/] = 440*pow(2, (note[5/*NOTE:NOTE*/] - 69)/12);
 			note[13/*NOTE:AMP_BASE*/] = volume*note[4/*NOTE:VEL*/]/127;
-			
+
 			// Wavetable params
 			wavetable_index = log(note[12/*NOTE:FREQ_BASE*/]/wavetable_low)/log(wavetable_high/wavetable_low)*wavetables_count;
 			wavetable_index = min(wavetables_count - 1, max(0, floor(wavetable_index)));
@@ -1990,7 +2061,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			note[15/*NOTE:SAMPLEPOS_FROM*/] = rand(wavetable_sampleslength);
 			note[16/*NOTE:SAMPLEPOS_TO*/] = note[15/*NOTE:SAMPLEPOS_FROM*/];
 			note[17/*NOTE:GRANULAR_POS*/] = 1;
-			
+
 			// FX note setup
 			i = 0;
 			i < fx_list_count ? while (
@@ -2005,7 +2076,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			);
 		);
 	) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
-		// Note off 
+		// Note off
 		note = notes_start;
 		while (
 			note[3/*NOTE:ACTIVE*/] && note[11/*NOTE:CHANNEL*/] == midi_channel && note[5/*NOTE:NOTE*/] == midi_msg2 ? (
@@ -2076,7 +2147,7 @@ while (
 			lowvalue = wavetable_samples[2*lowsample + 1];
 			highvalue = wavetable_samples[2*highsample + 1];
 			note[8/*NOTE:AUDIO_RIGHT*/] = lowvalue + (highvalue - lowvalue)*ratio;
-			
+
 			granular_ratio = note[17/*NOTE:GRANULAR_POS*/];
 			granular_ratio ? (
 				// Second sample value
@@ -2084,7 +2155,7 @@ while (
 				lowsample = floor(midsample);
 				highsample = ceil(midsample)%wavetable_sampleslength;
 				ratio = (midsample - lowsample);
-				
+
 				lowvalue = wavetable_samples[2*lowsample];
 				highvalue = wavetable_samples[2*highsample];
 				note[7/*NOTE:AUDIO_LEFT*/] = (lowvalue + (highvalue - lowvalue)*ratio)*granular_ratio + note[7/*NOTE:AUDIO_LEFT*/]*(1 - granular_ratio);
@@ -2181,7 +2252,7 @@ while (
 				midsample -= wavetable_sampleslength;
 			);
 			note[16/*NOTE:SAMPLEPOS_TO*/] = midsample;
-			
+
 			spl0 += note[7/*NOTE:AUDIO_LEFT*/]*note[1/*NOTE:AMP*/]*env;
 			spl1 += note[8/*NOTE:AUDIO_RIGHT*/]*note[1/*NOTE:AMP*/]*env;
 		);
@@ -2246,6 +2317,42 @@ function draw_waveform() local(wavetable, samples, value, x, y, gi, gis, box_lef
 	ui_border();
 );
 
+function draw_density() local(i, box_left, box_top, box_width, box_height, index, density, x, y, w) (
+	box_left = ui_left();
+	box_top = ui_top();
+	box_width = ui_width();
+	box_height = ui_height();
+
+	i = 0;
+	ui_push();
+		ui_colora(255, 255, 255, 0.1);
+		x = box_left + box_width*(spread_mean - spread_std)/options_spreadsize;
+		w = box_width*(2*spread_std)/options_spreadsize;
+		gfx_rect(x, box_top, w, box_height);
+
+		x = box_left + box_width*(spread_mean - 2*spread_std)/options_spreadsize;
+		w = box_width*(4*spread_std)/options_spreadsize;
+		gfx_rect(x, box_top, w, box_height);
+
+		x = box_left + box_width*(spread_mean - 3*spread_std)/options_spreadsize;
+		w = box_width*(6*spread_std)/options_spreadsize;
+		gfx_rect(x, box_top, w, box_height);
+
+		debug.x = x;
+		debug.w = w;
+	ui_pop();
+
+	gfx_a = 0.8;
+	while (i < box_width) (
+		index = floor(i/box_width*options_spreadsize);
+		density = spread_density[index];
+		x = box_left + i;
+		y = box_top + (1 - density)*box_height;
+		gfx_line(x, y, x, box_top + box_height);
+		i += 1;
+	);
+);
+
 ui_start("main"); // Default screen
 
 slider_value = slider_value ? slider_value : 0.5;
@@ -2270,14 +2377,14 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 	ui_padtop();
-	
+
 	ui_split_bottomtext("");
 		ui_split_righttext("Regenerate");
 			control_indicator_button("Regenerate", can_recompute) ? (
 				can_recompute ? action_recompute = 1;
 			);
 		ui_pop();
-	
+
 		ui_split_lefttext("Width (cents)");
 			ui_text("Width (cents)");
 		ui_pop();
@@ -2292,10 +2399,10 @@ ui_screen() == "main" ? (
 		param_width_cents = new_width_cents;
 	ui_pop();
 	ui_padbottom();
-	
+
 	ui_push();
-		ui_color(0, 0, 0);
-		ui_fill();
+		control_background_technical();
+		/*
 		draw_waveform();
 		ui_push();
 			ui_pad();
@@ -2303,16 +2410,20 @@ ui_screen() == "main" ? (
 			ui_colora(255, 255, 255, 0.8);
 			ui_textnumber(polyphony_current, "x%i");
 		ui_pop();
+		*/
+
+		draw_density();
+
 		control_finish_enabled(1);
 	ui_pop();
 ) : ui_screen() == "about" ? (
 	control_navbar("About", -1, -1);
-	
+
 	ui_pad();
 
 	ui_align(0.5, 0.67);
 	text_height = ui_wraptext("This is a JSFX synth based on the 'padsynth' algorithm from ZynAddSubFX, which I love.  It has a focus on flexible per-note effects and modulation, and I\'m adding features as I need them.\n\nIt\'s a sample-based synth, where the samples are designed in the frequency domain (which allows customised harmonic spread) and then generated using an inverse FFT.\n\nThe GUI for this synth uses a JSFX UI library originally written for this synth, but is now a project of its own.\n\nhttps://github.com/geraintluff/jsfx-pad-synth\nhttps://github.com/geraintluff/jsfx-ui-lib");
-	
+
 	ui_push_above(text_height);
 		ui_align(0.5, 0.5);
 		ui_fontsize(20);
@@ -2335,7 +2446,7 @@ ui_screen() == "main" ? (
 				can_recompute ? action_recompute = 1;
 			);
 		ui_pop();
-	
+
 		ui_split_lefttext("Width (cents)");
 			ui_text("Width (cents)");
 		ui_pop();
@@ -2371,12 +2482,12 @@ ui_screen() == "main" ? (
 		ui_split_next();
 			// Recalculate using current params
 			action_recalculate_spectrum = 1;
-			
+
 			ui_pad4(0, 0, ui_hpadding()/2, 0);
 			ui_color(0, 0, 0);
 			ui_fill();
 			ui_color(192, 128, 64);
-			
+
 			g_barwidth = floor(ui_width()/60);
 			g_index = 1;
 			g_left = 1;
@@ -2386,7 +2497,7 @@ ui_screen() == "main" ? (
 				g_amp = get_waveform_spectrum_amp(g_index);
 				g_ratio = max(0, min(1, (4 - log(g_amp))*0.15));
 				gfx_rect(ui_left() + g_left, ui_top() + g_ratio*ui_height(), min(g_right - g_left, ui_width() - g_left), ui_height()*(1 - g_ratio));
-				
+
 				g_index += 1;
 				g_left += g_barwidth;
 				g_right += g_barwidth;
@@ -2405,8 +2516,8 @@ ui_screen() == "main" ? (
 				ui_align(1, 0.5);
 				ui_text("shape");
 			ui_pop();
-			
-			new_param_waveform_type = control_selector(param_waveform_type, get_waveform_name(param_waveform_type), (param_waveform_type + 1)%4/*WAVEFORM: */, (param_waveform_type - 1 + 4/*WAVEFORM: */)%4/*WAVEFORM: */); 
+
+			new_param_waveform_type = control_selector(param_waveform_type, get_waveform_name(param_waveform_type), (param_waveform_type + 1)%4/*WAVEFORM: */, (param_waveform_type - 1 + 4/*WAVEFORM: */)%4/*WAVEFORM: */);
 			new_param_waveform_type != param_waveform_type ? (
 				param_waveform_type = new_param_waveform_type;
 				can_recompute = 1;
@@ -2419,8 +2530,8 @@ ui_screen() == "main" ? (
 				ui_align(1, 0.5);
 				ui_text("warp type");
 			ui_pop();
-			
-			new_param_waveform_warptype = control_selector(param_waveform_warptype, get_warptype_name(param_waveform_warptype), (param_waveform_warptype + 1)%4/*WAVEFORM_WARPTYPE: */, (param_waveform_warptype - 1 + 4/*WAVEFORM_WARPTYPE: */)%4/*WAVEFORM_WARPTYPE: */); 
+
+			new_param_waveform_warptype = control_selector(param_waveform_warptype, get_warptype_name(param_waveform_warptype), (param_waveform_warptype + 1)%4/*WAVEFORM_WARPTYPE: */, (param_waveform_warptype - 1 + 4/*WAVEFORM_WARPTYPE: */)%4/*WAVEFORM_WARPTYPE: */);
 			new_param_waveform_warptype != param_waveform_warptype ? (
 				param_waveform_warptype = new_param_waveform_warptype;
 				can_recompute = 1;
@@ -2433,7 +2544,7 @@ ui_screen() == "main" ? (
 				ui_align(1, 0.5);
 				ui_text("warp strength");
 			ui_pop();
-			
+
 			new_param_waveform_warpamount = control_hslider(param_waveform_warpamount, 0, 5, 2);
 			new_param_waveform_warpamount != param_waveform_warpamount ? (
 				param_waveform_warpamount = new_param_waveform_warpamount;
@@ -2447,7 +2558,7 @@ ui_screen() == "main" ? (
 				ui_align(1, 0.5);
 				ui_text("mod");
 			ui_pop();
-			
+
 			new_param_waveform_mod1strength = control_hslider(param_waveform_mod1strength, 0, 3, 3);
 			new_param_waveform_mod1strength != param_waveform_mod1strength ? (
 				param_waveform_mod1strength = new_param_waveform_mod1strength;
@@ -2461,7 +2572,7 @@ ui_screen() == "main" ? (
 				ui_align(1, 0.5);
 				ui_text("mod phase");
 			ui_pop();
-			
+
 			new_param_waveform_mod1phase = control_hslider(param_waveform_mod1phase, 0, 2*$pi, 0);
 			new_param_waveform_mod1phase != param_waveform_mod1phase ? (
 				param_waveform_mod1phase = new_param_waveform_mod1phase;
@@ -2469,7 +2580,7 @@ ui_screen() == "main" ? (
 			);
 		ui_pop();
 	ui_pop();
-	
+
 ) : ui_screen() == "envelope" ? (
 	control_navbar("Envelope (ADSR)", -1, -1);
 	ui_split_topratio(1/5);
@@ -2537,7 +2648,7 @@ ui_screen() == "main" ? (
 			ui_pop();
 			ui_split_rightratio(0.2);
 			ui_pop();
-			
+
 			ui_align(0, -1); // Align left
 			param_env_linear = control_selector(param_env_linear, param_env_linear ? "Linear" : "Tapered", !param_env_linear, !param_env_linear);
 		ui_pop();
@@ -2563,7 +2674,7 @@ ui_screen() == "main" ? (
 		);
 		g_drageffect_index = -1;
 	);
-	
+
 	ui_split_topratio(1/fx_list_maxcount);
 	while (g_effect_index < fx_list_maxcount) (
 		g_effect_index < fx_list_count ? (
@@ -2578,14 +2689,14 @@ ui_screen() == "main" ? (
 				);
 			);
 			ui_pop();
-			
+
 			// Double-click to edit name
 			ui_click() && ui_clickcount() == 2 ? (
 				ui_screen_open("control.prompt");
 				ui_screen_set(0, g_effect[1/*FX:NAME*/]);
 				ui_screen_set(1, "Rename effect");
 			);
-			
+
 			// Drag to re-order
 			ui_drag() ? (
 				g_drageffect_index = g_effect_index;
@@ -2611,7 +2722,7 @@ ui_screen() == "main" ? (
 					);
 				);
 			);
-			
+
 			strlen(g_effect[1/*FX:NAME*/]) == 0 ? (
 				strcpy(g_effect[1/*FX:NAME*/], g_effect_spec[0/*FX_HEADER:NAME*/]);
 			);
@@ -2628,7 +2739,7 @@ ui_screen() == "main" ? (
 				ui_color(0, 0, 0);
 				ui_text(g_effect[1/*FX:NAME*/]);
 			);
-			
+
 			ui_color(0, 0, 0);
 			ui_hover() && g_drageffect_index >= 0 ? (
 				ui_mouse_yratio() < 0.5 ? (
@@ -2679,7 +2790,7 @@ ui_screen() == "main" ? (
 		gi = 0;
 		while (gi < fx_list_count) (
 			g_effect = fx_list_start + fx_list_step*gi;
-			
+
 			(gi <= g_arg_minIndex) ? (
 				ui_color(224, 224, 224);
 				ui_fill();
@@ -2696,7 +2807,7 @@ ui_screen() == "main" ? (
 					ui_colora(0, 0, 0, 0.1);
 					ui_border_bottom();
 				);
-				
+
 				ui_click() ? (
 					ui_screen_close("automation-target");
 					ui_screen_open("automation-target-index");
@@ -2707,7 +2818,7 @@ ui_screen() == "main" ? (
 					ui_screen_set(4, g_arg_rangemultiplier);
 				);
 			);
-		
+
 			ui_split_next();
 			gi += 1;
 		);
@@ -2730,13 +2841,13 @@ ui_screen() == "main" ? (
 	) : (
 		g_effect_modcount = 3;
 	);
-	
+
 	g_element_height = min(ui_texth() + ui_vpadding()*2, ui_height()/max(1, g_effect_modcount));
 	ui_split_top(g_element_height);
 		gi = 0;
 		while (gi < g_effect_modcount) (
 			g_mod_name = get_mod_name(g_effect_index, gi);
-			
+
 			ui_hover() ? (
 				control_button(g_mod_name);
 			) : (
@@ -2747,14 +2858,14 @@ ui_screen() == "main" ? (
 				ui_colora(0, 0, 0, 0.1);
 				ui_border_bottom();
 			);
-			
+
 			ui_click() ? (
 				g_arg_effect[0] = g_effect_index;
 				g_arg_index[0] = gi;
 				g_arg_range[0] = get_mod_range(g_effect_index, gi)*g_arg_rangemultiplier;
 				ui_screen_close("automation-target-index");
 			);
-		
+
 			ui_split_next();
 			gi += 1;
 		);
@@ -2776,7 +2887,7 @@ ui_screen() == "main" ? (
 				ui_colora(0, 0, 0, 0.1);
 				ui_border_bottom();
 			);
-			
+
 			ui_click() ? (
 				append_effect(gi);
 				ui_screen_close("add-effect");
@@ -2847,14 +2958,14 @@ function read_string_var(string) local(vars_read, char_count, char, string_lengt
 function read_effect() local(read_length, effect, effect_index, spec_index, var_id, i, var_length, value) (
 	fx_list_count < fx_list_maxcount ? (
 		file_var(0, read_length);
-		
+
 		file_var(0, spec_index);
 		read_length -= 1;
 		// TODO: check that the effect is a known type, otherwise put a placeholder in so the indices don't get screwed up (and remove placeholders at the end)
-		
+
 		effect_index = append_effect(spec_index);
 		effect = fx_list_start + fx_list_step*effect_index;
-		
+
 		read_length > 0 ? while(
 			file_var(0, var_id);
 			read_length -= 1;
@@ -2961,14 +3072,14 @@ function write_effects() local(i, effect, var_id, var_length) (
 		var_length = 1; // Index
 		var_length += 2 + strlen(effect[1/*FX:NAME*/]);
 		var_length += 2 + fx_list_statelength;
-		
+
 		file_var(0, var_id);
 		file_var(0, var_length);
-		
+
 		file_var(0, effect[0/*FX:SPEC_INDEX*/]);
 		write_string_var(104/*VAR_ID:effect_name*/, effect[1/*FX:NAME*/]);
 		write_buffer_var(105/*VAR_ID:effect_state*/, effect + fx_list_headerlength, fx_list_statelength);
-		
+
 		i += 1;
 		i < fx_list_count;
 	);

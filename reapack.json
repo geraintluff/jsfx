@@ -223,6 +223,21 @@
 					"main": false
 				}
 			}
+		},
+		"Humonica": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Humonica.jsfx": {
+					"main": false
+				},
+				"synth-framework.jsfx-inc": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

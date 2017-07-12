@@ -1,0 +1,265 @@
+desc:Humonica - Harmoniser/Harmonizer (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:attack_ms=1<0,100,1>-Attack (ms)
+slider2:release_ms=10<1,300,1>-Release (ms)
+slider3:window_ms=50<20,150,1>-Window (ms)
+slider4:crossover_percent=50<50,90,1>-Crossover (%)
+slider5:latency_switch=0<0,1,1{on,off}>-Latency compensation
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+FFT_MAX_SIZE = 32768;
+MAX_WINDOW_MS = 200;
+MAX_WINDOW_SAMPLES = srate*MAX_WINDOW_MS*0.001;
+
+freemem = 0;
+freemem = (fft_block = freemem) + FFT_MAX_SIZE*2;
+kernel_length = MAX_WINDOW_SAMPLES;
+freemem = (kernelA0 = freemem) + kernel_length;
+freemem = (kernelA1 = freemem) + kernel_length;
+freemem = (kernelB0 = freemem) + kernel_length;
+freemem = (kernelB1 = freemem) + kernel_length;
+input_buffer_length = MAX_WINDOW_SAMPLES;
+freemem = (input_buffer0 = freemem) + input_buffer_length;
+freemem = (input_buffer1 = freemem) + input_buffer_length;
+
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem, NOTE##);
+// NOTE#INDEX, NOTE#WAVELENGTH
+
+@block
+
+attack_samples = srate*attack_ms*0.001;
+release_samples = srate*release_ms*0.001;
+window_samples = srate*window_ms*0.001;
+interval_samples = window_samples*(1 - crossover_percent/100);
+fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
+
+input_buffer0[input_index] = spl0;
+input_buffer1[input_index] = spl1;
+
+synth_block();
+
+latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
+
+@sample
+
+input_buffer0[input_index] = spl0;
+input_buffer1[input_index] = spl1;
+input_index += 1;
+input_index >= input_buffer_length ? (
+	input_index = 0;
+);
+
+function fill_kernel(kernel, buffer) local(i, i2, ratio, window_value, index, real, imag, mag) (
+	i = 0;
+	// Fill with input
+	while (i < window_samples && i < fft_size) (
+		ratio = i/window_samples;
+		window_value = 0.5 - 0.5*cos(ratio*2*$pi);
+		index = input_index - i;
+		while (index < 0) (
+			index += input_buffer_length;
+		);
+		fft_block[i*2] = buffer[index]*window_value;
+		fft_block[i*2 + 1] = 0;
+		i += 1;
+	);
+	while (i < fft_size) (
+		fft_block[i*2] = 0;
+		fft_block[i*2 + 1] = 0;
+		i += 1;
+	);
+
+	// Zero-phase
+	fft(fft_block, fft_size);
+	fft_permute(fft_block, fft_size);
+	fft_block[0] = fft_block[1] = 0;
+	i = 1;
+	while (i < fft_size) (
+		real = fft_block[i*2];
+		imag = fft_block[i*2 + 1];
+		mag = sqrt(real*real + imag*imag);
+
+		fft_block[i*2] = mag/fft_size;
+		fft_block[i*2 + 1] = 0;
+		i += 1;
+	);
+	fft_ipermute(fft_block, fft_size);
+	ifft(fft_block, fft_size);
+
+	// Zero out kernel
+	i = 0;
+	while (i < kernel_length) (
+		kernel[i] = 0;
+		i += 1;
+	);
+	// Place result in kernel
+	i = 0;
+	while (i < fft_size*0.5 && i < kernel_length*0.5) (
+		window_value = 1;
+		i2 = i ? (kernel_length - i) : 0;
+		kernel[i] = fft_block[i*2]*window_value;
+		kernel[i2] = kernel[i];
+		i += 1;
+	);
+);
+
+interval_index += 1;
+interval_index >= interval_samples ? (
+	interval_index = 0;
+
+	// Swap kernels
+	tmp = kernelA0;
+	kernelA0 = kernelB0;
+	kernelB0 = tmp;
+	tmp = kernelA1;
+	kernelA1 = kernelB1;
+	kernelB1 = tmp;
+
+	fill_kernel(kernelB0, input_buffer0);
+	fill_kernel(kernelB1, input_buffer1);
+);
+kernel_crossfade = interval_index/interval_samples;
+
+spl0 = spl1 = 0;
+
+synth_sample();
+
+note = synth_note_first();
+while (note > 0) (
+	synth_needs_init(note) ? (
+		note[NOTE#WAVELENGTH] = srate/synth_freq(note);
+		note[NOTE#INDEX] = floor(rand()*note[NOTE#WAVELENGTH]);
+	);
+
+	amp = synth_velocity(note)/127;
+	attack = synth_attack(note) - latency_samples;
+	attack >= 0 ? (
+		attack < attack_samples ? (
+			amp *= attack/attack_samples;
+		);
+		release = synth_release(note) - latency_samples;
+		release > 0 ? (
+			release >= release_samples ? (
+				synth_stop(note);
+				amp = 0;
+			) : (
+				amp *= (1 - release/release_samples);
+			);
+		);
+
+		index = (note[NOTE#INDEX] += 1);
+		wavelength = note[NOTE#WAVELENGTH];
+		index >= wavelength ? (
+			while (index >= wavelength) (
+				index -= wavelength;
+			);
+			wavelength = note[NOTE#WAVELENGTH] = srate/synth_freq(note);
+			while (index >= wavelength) (
+				index -= wavelength;
+			);
+		);
+
+		phase = index/wavelength;
+		floor_indexA = min(floor(index), kernel_length*0.5);
+		floor_indexB = max(kernel_length*0.5, kernel_length - wavelength + floor_indexA);
+
+		valueA = kernelA0[floor_indexA];
+		valueB = kernelA0[floor_indexB];
+		value = valueA + (valueB - valueA)*phase;
+		left = value;
+
+		valueA = kernelA1[floor_indexA];
+		valueB = kernelA1[floor_indexB];
+		value = valueA + (valueB - valueA)*phase;
+		right = value;
+
+		1 ? (
+			valueA = kernelB0[floor_indexA];
+			valueB = kernelB0[floor_indexB];
+			value = valueA + (valueB - valueA)*phase;
+			left += (value - left)*kernel_crossfade;
+
+			valueA = kernelB1[floor_indexA];
+			valueB = kernelB1[floor_indexB];
+			value = valueA + (valueB - valueA)*phase;
+			right += (value - right)*kernel_crossfade;
+		);
+
+		spl0 += left*amp;
+		spl1 += right*amp;
+	);
+
+	note = synth_note_next(note);
+);
+
+@gfx 500 350
+
+function labelled_dial(value, low, high, bias, label, number_format) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	ui_push_above(50);
+		ui_align(0.5, 0.85);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_align(0.5, 0.15);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, text) (
+	ui_push_height(30);
+		ui_push_width(60);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	ui_push_above(50);
+		ui_align(0.5, 0.85);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_align(0.5, 0.15);
+		ui_text(text);
+	ui_pop();
+	value;
+);
+control_start("debug", "default");
+
+ui_screen() == "debug" ? (
+	ui_split_top(150);
+		ui_split_leftratio(2/5);
+			control_group("Envelope");
+			ui_split_leftratio(1/2);
+				attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims");
+			ui_split_next();
+				release_ms = labelled_dial(release_ms, 0, 300, 3, "Release", "%ims");
+			ui_pop();
+		ui_pop();
+		control_group("Analysis");
+		ui_split_leftratio(1/3);
+			window_ms = labelled_dial(window_ms, 20, 150, 2, "Window", "%ims");
+		ui_split_next();
+			crossover_percent = labelled_dial(crossover_percent, 50, 90, 3, "Crossover", "%i%%");
+		ui_split_next();
+			latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero");
+		ui_pop();
+	ui_pop();
+
+	control_background_technical();
+	ui_graph_step(kernelA1, window_samples/2, 1, 0, 0);
+	control_finish_technical();
+) : ui_system();
