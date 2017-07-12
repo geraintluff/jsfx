@@ -16,6 +16,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 * Hammer And Chord - a polyphonic string resonator/synth ([audio demo](audio-demos/hammer-and-chord.mp3))
 * Hammer And String - a monophonic string resonator/synth with portamento ([audio demo](audio-demos/hammer-and-string.mp3))
 * MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. ([audio demo](audio-demos/midi-gate.mp3))
+* Humonica - harmoniser ([audio demo](audio-demos/humonica.mp3))
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -148,3 +149,9 @@ This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MID
 ![screenshot](MIDI Gate.png)
 
 You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. ([audio demo](https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3))
+
+## Humonica
+
+This effect is a harmoniser - it works by periodically sampling the input, converting to zero-phase, and using the result as a wavetable synthesiser. ([audio demo](audio-demos/humonica.mp3))
+
+![screenshot](Humonica.png)
