@@ -295,7 +295,7 @@ function reset_spread_to_gaussian() local(i, std) (
 	i = 0;
 	while (i < options_spreadsize) (
 		std = (i/options_spreadsize - 0.5)*6;
-		spread_density[i] = pow(abs(sin(exp(-std*std)*5)), 5);
+		spread_density[i] = exp(-std*std);//pow(abs(sin(exp(-std*std)*5)), 5);
 		i += 1;
 	);
 	spread_update();
@@ -2059,6 +2059,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			wavetable_index = min(wavetables_count - 1, max(0, floor(wavetable_index)));
 			note[14/*NOTE:WAVEINDEX_FROM*/] = wavetable_index; // Wavetable #0
 			note[15/*NOTE:SAMPLEPOS_FROM*/] = rand(wavetable_sampleslength);
+			debug.start = note[15/*NOTE:SAMPLEPOS_FROM*/];
 			note[16/*NOTE:SAMPLEPOS_TO*/] = note[15/*NOTE:SAMPLEPOS_FROM*/];
 			note[17/*NOTE:GRANULAR_POS*/] = 1;
 
