@@ -5,6 +5,8 @@ slider2:0.6<0.0,1,0.01>-Bias (off - on)
 slider3:5<0,20,0.1>-Transition speed (ms)
 slider4:-15<-60,0,0.5>-"Off" level (dB)
 slider5:0<-12,12,0.2>-Gain (dB)
+slider6:distortion_amount=0<0,1,0.01>-Distortion amount
+slider7:distortion_bumpiness=10<4,20,0.1>-Distortion bumpiness
 
 // v1.0.0 or higher
 import ui-lib.jsfx-inc
@@ -16,27 +18,31 @@ multiplier = 0.5;
 ui_setup(0);
 
 function calculate_params() (
-  totalprob = slider1/srate;
-  
-  slider2 < 1 ? (
-      slider2 > 0 ? (
-          r = slider2/(1 - slider2);
-          onprob = totalprob*(1 + r)/2;
-          offprob = totalprob*(1 + r)/(2*r);
-      ) : (
-          onprob = totalprob/2;
-          offprob = 1;
-      );
-  ) : (
-      onprob = 1;
-      offprob = totalprob/2;
-  );
-  
-  holdfactor = 0.5^(1000/srate/slider3);
-  driftfactor = 1 - holdfactor;
-  offlevel = (10^(slider4/20));
-  onlevel = 1 - offlevel;
-  gain = 10^(slider5/20);
+	totalprob = slider1/srate;
+
+	slider2 < 1 ? (
+			slider2 > 0 ? (
+					r = slider2/(1 - slider2);
+					onprob = totalprob*(1 + r)/2;
+					offprob = totalprob*(1 + r)/(2*r);
+			) : (
+					onprob = totalprob/2;
+					offprob = 1;
+			);
+	) : (
+			onprob = 1;
+			offprob = totalprob/2;
+	);
+
+	holdfactor = 0.5^(1000/srate/slider3);
+	driftfactor = 1 - holdfactor;
+	offlevel = (10^(slider4/20));
+	onlevel = 1 - offlevel;
+	gain = 10^(slider5/20);
+);
+
+function distort(x) (
+       x*(1 + distortion_amount*sin(distortion_bumpiness*log(abs(x))));
 );
 
 @slider
@@ -46,55 +52,92 @@ calculate_params();
 @sample
 
 blocked ? (
-    multiplier = holdfactor*multiplier;
-    rand(1) < onprob ? blocked = 0;
+		multiplier = holdfactor*multiplier;
+		rand(1) < onprob ? blocked = 0;
 ) : (
-    multiplier = holdfactor*multiplier + driftfactor;
-    rand(1) < offprob ? blocked = 1;
+		multiplier = holdfactor*multiplier + driftfactor;
+		rand(1) < offprob ? blocked = 1;
 );
 
 spl0 = gain*spl0*(onlevel*multiplier + offlevel);
 spl1 = gain*
 spl1*(onlevel*multiplier + offlevel);
 
-(rand(1) < prob) ? (blocked  = 1 - blocked);
+distortion_amount ? (
+       spl0 = distort(spl0);
+       spl1 = distort(spl1);
+);
 
-@gfx 400 250
+(rand(1) < prob) ? (blocked	= 1 - blocked);
 
-function labelled_slider(value, low, high, bias, label, display) (
-  ui_split_right(50);
-    ui_align(0, 0.5);
-    ui_padleft();
-    ui_textnumber(value, display);
-  ui_pop();
-  ui_split_left(150);
-    ui_align(1, 0.5);
-    ui_padright();
-    ui_text(label);
-  ui_pop();
-    
-  ui_push_heighttext(label);
-    value = control_hslider(value, low, high, bias);
-  ui_pop();
-  value;
+@gfx 460 350
+
+function labelled_dial(value, low, high, bias, label, displayvalue, format) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(displayvalue, format);
+	ui_pop();
+	value;
+);
+
+function draw_distortion() local(x, y, width, height, top, left) (
+       ui_pad();
+       control_background_technical();
+
+       ui_push_clip(1);
+              top = ui_top();
+              left = ui_left();
+              width = ui_width();
+              height = ui_height();
+
+              gfx_x = left;
+              gfx_y = top + height;
+              x = 1;
+              while (x < width) (
+                     y = (1 - distort(x/width))*height;
+                     gfx_lineto(left + x, top + y);
+                     x += 1;
+              );
+       ui_pop();
+
+       control_finish_technical();
 );
 
 ui_start("main");
 
 ui_screen() == "main" ? (
-  control_navbar("Bad Connection", -1, -1);
+	control_navbar("Bad Connection", -1, -1);
 
-  ui_split_topratio(1/5);
-    slider1 = labelled_slider(slider1, 0, 50, 3, "changes/second", "%i");
-  ui_split_next();
-    slider2 = labelled_slider(slider2*100, 0, 100, 0, "ratio (off/on)", "%i%%")/100;
-  ui_split_next();
-    slider3 = labelled_slider(slider3, 0, 200, 5, "transition", "%ims");
-  ui_split_next();
-    slider4 = labelled_slider(slider4, -60, 0, -2, "\"off\" level", "%idB");
-  ui_split_next();
-    slider5 = labelled_slider(slider5, -20, 20, 0, "gain", "%idB");
-  ui_pop();
+       ui_split_topratio(1/2);
+              control_group("Volume variation");
+       	ui_split_leftratio(1/5);
+       		slider1 = labelled_dial(slider1, 0, 50, 3, "speed", slider1, "%i / sec");
+       	ui_split_next();
+       		slider2 = labelled_dial(slider2, 0, 1, 0, "on/off", slider2*100, "%i%%");
+       	ui_split_next();
+       		slider4 = labelled_dial(slider4, -60, 0, -2, "off level", slider4, "%idB");
+       	ui_split_next();
+       		slider3 = labelled_dial(slider3, 0, 200, 5, "smoothing", slider3, "%ims");
+       	ui_split_next();
+       		slider5 = labelled_dial(slider5, -20, 20, 0, "gain", slider5, "%idB");
+       	ui_pop();
+       ui_split_next();
+              ui_split_leftratio(2/5);
+                     control_group("Distortion");
+                     ui_split_leftratio(1/2);
+                            distortion_amount = labelled_dial(distortion_amount, 0, 1, 3, "amount", distortion_amount*100, "%i%%");
+              	ui_split_next();
+              		distortion_bumpiness = labelled_dial(distortion_bumpiness, 4, 20, 1, "fuzziness", 0, "");
+                     ui_pop();
+              ui_pop();
+
+              draw_distortion();
+       ui_pop();
 ) : ui_system();
 
-calculate_params();
+ui_interacted() ? calculate_params();
