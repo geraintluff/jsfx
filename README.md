@@ -6,7 +6,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 
 * PadSynth - a synth that produces thick sounds, including per-note effects and modulators ([audio demo](audio-demos/padsynth.mp3))
 * Spring-Box - an echo/chorus effect ([audio demo](audio-demos/spring-box.mp3))
-* Bad Connection - simulate poor connections by flipping between two volumes ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3), distortion, and a feedback delay line ([audio demo 2](audio-demos/bad-connection-chaos.mp3)).
+* Bad Connection - simulate poor connections by flipping between two volumes ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3)), distortion, and a feedback delay line ([audio demo 2](audio-demos/bad-connection-chaos.mp3)).
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input ([audio demo](audio-demos/sandwich-amp.mp3))
 * Warble - a basic pitch-editing effect
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
