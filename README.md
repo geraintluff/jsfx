@@ -6,7 +6,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 
 * PadSynth - a synth that produces thick sounds, including per-note effects and modulators ([audio demo](audio-demos/padsynth.mp3))
 * Spring-Box - an echo/chorus effect ([audio demo](audio-demos/spring-box.mp3))
-* Bad Connection - simulate poor connections by flipping between two volumes ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3)), distortion, and a feedback delay line ([audio demo 2](audio-demos/bad-connection-chaos.mp3)).
+* Bad Connection - simulate poor connections by flipping between two volumes ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3)), distortion, and a feedback delay line ([audio demo 2](audio-demos/bad-connection-spring-box-glitch.mp3)).
 * Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input ([audio demo](audio-demos/sandwich-amp.mp3))
 * Warble - a basic pitch-editing effect
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
@@ -46,7 +46,7 @@ Bad Connection has three features:
 
 * randomly change the audio between two volume levels.  It can be used to imitate [dodgy radios](audio-demos/Bad Connection/radio-dropout.mp3) or [glitchy CPU overloads](audio-demos/Bad Connection/cpu-overload.mp3).
 * apply volume-independent distortion (response curve has logarithmic ripples)
-* tempo-dependent feedback delay line, and the feedback line includes the [distortion](audio-demos/bad-connection-3-16-degrade.mp3) and [volume variation](audio-demos/bad-connection-4-16-clean-dissolve.mp3).  Can create clean sounds or [chaos](audio-demos/bad-connection-chaos.mp3).
+* tempo-dependent feedback delay line, and the feedback line includes the [distortion](audio-demos/bad-connection-3-16-degrade.mp3) and [volume variation](audio-demos/bad-connection-4-16-clean-dissolve.mp3).  It can create clean sounds, [destruction](audio-demos/bad-connection-chaos.mp3), or [glitchy textures]((audio-demos/bad-connection-spring-box-glitch.mp3)) (demo includes Spring Box for reverb).
 
 ![screenshot](Bad Connection.png)
 
