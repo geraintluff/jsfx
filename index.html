@@ -250,7 +250,12 @@ a[href] code {
 <p>Early echoes can be suppressed to get a smoother sound (the &quot;late bias&quot; control), by using two parallel delay structures with different feedback ratios, and subtracting the results.</p>
 <p><img src="Spring-Box.png" alt="screenshot"></p>
 </div><h2 id="bad-connection">Bad Connection</h2><div class="section section2">
-<p>Bad Connection is an effect that randomly changes the audio between two volume levels.  It can be used to imitate <a href="audio-demos/Bad Connection/radio-dropout.mp3">dodgy radios</a> or <a href="audio-demos/Bad Connection/cpu-overload.mp3">glitchy CPU overloads</a>.</p>
+<p>Bad Connection has three features:</p>
+<ul>
+<li>randomly change the audio between two volume levels.  It can be used to imitate <a href="audio-demos/Bad Connection/radio-dropout.mp3">dodgy radios</a> or <a href="audio-demos/Bad Connection/cpu-overload.mp3">glitchy CPU overloads</a>.</li>
+<li>apply volume-independent distortion (response curve has logarithmic ripples)</li>
+<li>tempo-dependent feedback delay line, and the feedback line includes the <a href="audio-demos/bad-connection-3-16-degrade.mp3">distortion</a> and <a href="audio-demos/bad-connection-4-16-clean-dissolve.mp3">volume variation</a>.  Can create clean sounds or <a href="audio-demos/bad-connection-chaos.mp3">chaos</a>.</li>
+</ul>
 <p><img src="Bad Connection.png" alt="screenshot"></p>
 </div><h2 id="sandwich-amp">Sandwich Amp</h2><div class="section section2">
 <p>Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</p>
