@@ -11,6 +11,9 @@
 				},
 				"ui-lib.jsfx-inc": {
 					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
 				}
 			},
 			"author": "Geraint Luff",
