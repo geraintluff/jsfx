@@ -226,7 +226,7 @@ a[href] code {
 <ul>
 <li>PadSynth - a synth that produces thick sounds, including per-note effects and modulators (<a href="audio-demos/padsynth.mp3">audio demo</a>)</li>
 <li>Spring-Box - an echo/chorus effect (<a href="audio-demos/spring-box.mp3">audio demo</a>)</li>
-<li>Bad Connection - flips between two volumes to simulate poor connection or dropouts (<a href="audio-demos/Bad Connection/radio-dropout.mp3">audio demo</a>)</li>
+<li>Bad Connection - flipps between two volumes to simulate poor connection, applies volume-independent distortion, and has a feedback delay line) (<a href="audio-demos/Bad Connection/radio-dropout.mp3">audio demo</a>, <a href="audio-demos/bad-connection-chaos.mp3">audio demo 2</a>)</li>
 <li>Sandwich Amp - distortion module with a before/after filter pair, width control and secondary input (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</li>
 <li>Warble - a basic pitch-editing effect</li>
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
@@ -308,7 +308,7 @@ a[href] code {
 <p><img src="MIDI Gate.png" alt="screenshot"></p>
 <p>You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. (<a href="https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3">audio demo</a>)</p>
 </div><h2 id="humonica">Humonica</h2><div class="section section2">
-<p>This effect is a harmoniser - it works by periodically sampling the input, converting to zero-phase, and using the result as a wavetable synthesiser. (<a href="audio-demos/humonica.mp3">audio demo</a>)</p>
+<p>This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. (<a href="audio-demos/humonica.mp3">audio demo</a>)</p>
 <p><img src="Humonica.png" alt="screenshot"></p>
-<p>The resynthesised notes can sound very &quot;bare&quot;, because they are made up of exact frequencies, however they can be softened with chorus. (<a href="audio-demos/humonica-spring-box.mp3">audio demo</a> with Spring-Box chorus and reverb).</p>
+<p>The resynthesised notes can sound very &quot;bare&quot;, because they are made up of exact frequencies, however they can be softened with chorus. (<a href="audio-demos/humonica-spring-box.mp3">audio demo</a> with Spring-Box chorus and reverb)</p>
 </div></div></div><script></script></body></html>
