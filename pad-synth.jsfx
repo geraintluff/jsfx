@@ -253,14 +253,15 @@ freemem = spread_cumulative + options_spreadsize;
 
 spread_mean = options_spreadsize/2;
 spread_std = options_spreadsize/10;
-function spread_update() local(i, cumulative, sum, sum2) (
+function spread_update() local(i, d2, cumulative, sum, sum2) (
 	sum = sum2 = 0;
 	cumulative = 0;
 	i = 0;
 	while (i < options_spreadsize) (
-		cumulative += spread_density[i];
-		sum += spread_density[i]*i;
-		sum2 += spread_density[i]*i*i;
+		d2 = spread_density[i]*spread_density[i];
+		cumulative += d2;
+		sum += d2*i;
+		sum2 += d2*i*i;
 		spread_cumulative[i] = cumulative;
 		i += 1;
 	);
@@ -1873,6 +1874,7 @@ function reset_to_defaults() (
 	param_waveform_mod1strength = 0;
 	param_waveform_mod1phase = 0;
 	param_width_cents = 20;
+	param_width_scaling = 1;
 	param_attack = 0.01;
 	param_decay = 0.3;
 	param_sustain = 0.75;
@@ -1880,6 +1882,8 @@ function reset_to_defaults() (
 	param_env_linear = 0;
 
 	fx_list_count = 0;
+
+	reset_spread_to_gaussian();
 );
 !has_set_parameters ? reset_to_defaults();
 
@@ -1929,22 +1933,14 @@ recompute_index < wavetables_count ? (
 
 			end_freq = min(wavetable_maxfreq, indexfreq*harmonic_range_factor);
 			while (harmonic_freq < end_freq) (
+				harmonic_width = param_width*pow(harmonic_freq/base_freq, param_width_scaling - 1);
 				harmonic_index = floor(harmonic_freq/base_freq + 0.5);
 				harmonic_amp = get_waveform_spectrum_amp(harmonic_index);
 				harmonic_power = harmonic_amp*harmonic_amp;
-				stddistance_low = log(indexfreq_low/harmonic_freq)/param_width;
-				stddistance_high = log(indexfreq_high/harmonic_freq)/param_width;
+				stddistance_low = log(indexfreq_low/harmonic_freq)/harmonic_width;
+				stddistance_high = log(indexfreq_high/harmonic_freq)/harmonic_width;
 				a_density = get_spread_density(stddistance_low, stddistance_high);
 				power += harmonic_power*a_density;
-
-				debug.harmonic_freq_x = harmonic_freq;
-				debug.stdratio = indexfreq_low/harmonic_freq;
-				debug.logstdratio = log(indexfreq_low/harmonic_freq);
-				debug.paramwidth = param_width;
-				debug.stddistance_low = stddistance_low;
-				debug.indexfreq = indexfreq;
-				debug.harmonic_freq = harmonic_freq;
-				debug.base_freq = base_freq;
 
 				harmonic_freq += base_freq;
 			);
@@ -2274,6 +2270,28 @@ while (
 
 //////////////// Graphics ////////////////
 
+function custom_push_labels_h(label, value, format) (
+	ui_split_lefttext(label);
+		ui_align(0.85, 0.5);
+		ui_text(label);
+	ui_pop();
+	ui_split_right(80);
+		ui_align(0.15, 0.5);
+		ui_textnumber(value, format);
+	ui_pop();
+	ui_push();
+);
+
+function custom_push_labels(label, value, format) (
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(value, format);
+	ui_pop();
+	ui_push_height(50);
+);
+
 function draw_waveform() local(wavetable, samples, value, x, y, gi, gis, box_left, box_top, box_width, box_height) (
 	box_left = ui_left();
 	box_top = ui_top();
@@ -2318,6 +2336,14 @@ function draw_waveform() local(wavetable, samples, value, x, y, gi, gis, box_lef
 	ui_border();
 );
 
+function draw_regenerate_button() (
+	ui_push_heighttext("");
+		control_indicator_button("Regenerate", can_recompute) ? (
+			can_recompute ? action_recompute = 1;
+		);
+	ui_pop();
+);
+
 function draw_density() local(i, box_left, box_top, box_width, box_height, index, density, x, y, w) (
 	box_left = ui_left();
 	box_top = ui_top();
@@ -2345,12 +2371,38 @@ function draw_density() local(i, box_left, box_top, box_width, box_height, index
 
 	gfx_a = 0.8;
 	while (i < box_width) (
-		index = floor(i/box_width*options_spreadsize);
+		index = floor(i/box_width*options_spreadsize + 0.5);
 		density = spread_density[index];
 		x = box_left + i;
 		y = box_top + (1 - density)*box_height;
 		gfx_line(x, y, x, box_top + box_height);
 		i += 1;
+	);
+
+	ui_press() || ui_drag() ? (
+		y = max(0, min(1, 1 - ui_mouse_yratio()));
+		index = max(0, min(options_spreadsize - 1, floor(ui_mouse_xratio()*options_spreadsize + 0.5)));
+
+		ui_mouse_down() && !(mouse_cap&8) ? (
+			density_last_index = index;
+			density_last_value = y;
+		);
+		spread_density[index] = y;
+
+		i = index;
+		while (i != density_last_index) (
+			spread_density[i] = density_last_y + (y - density_last_y)*(i - density_last_index)/(index - density_last_index);
+			i < density_last_index ? (
+				i += 1;
+			) : (
+				i -= 1;
+			);
+		);
+
+		density_last_index = index;
+		density_last_y = y;
+		can_recompute = 1;
+		spread_update();
 	);
 );
 
@@ -2379,31 +2431,48 @@ ui_screen() == "main" ? (
 	ui_pop();
 	ui_padtop();
 
-	ui_split_bottomtext("");
+	// Bottom bar
+	ui_split_top(250);
+		control_group("Spread");
+		ui_pad2(-0.5, -0.5);
+		ui_split_topratio(3/4);
+			control_background_technical();
+			draw_density();
+			control_finish_enabled(1);
+		ui_pop();
+		ui_padtop();
+
+		ui_split_lefttext("reset");
+			ui_push_heighttext("");
+				control_button("reset") ? (
+					can_recompute = 1;
+					reset_spread_to_gaussian();
+				);
+			ui_pop();
+		ui_pop();
+
 		ui_split_righttext("Regenerate");
-			control_indicator_button("Regenerate", can_recompute) ? (
-				can_recompute ? action_recompute = 1;
-			);
+			draw_regenerate_button();
 		ui_pop();
 
-		ui_split_lefttext("Width (cents)");
-			ui_text("Width (cents)");
-		ui_pop();
-		ui_split_righttext("200");
-			ui_padleft();
-			ui_align(0, -1);
-			ui_textnumber(param_width_cents + 0.5, "%i");
-		ui_pop();
 
-		new_width_cents = control_hslider(param_width_cents, 5, 200, 3);
-		new_width_cents != param_width_cents ? can_recompute = 1;
-		param_width_cents = new_width_cents;
+		ui_split_leftratio(1/2);
+			custom_push_labels_h("Scaling", param_width_scaling*100 + 0.5, "%i%%");
+				old = param_width_scaling;
+				param_width_scaling = control_dial(param_width_scaling, 0, 1, 1);
+				old != param_width_scaling ? can_recompute = 1;
+			ui_pop();
+		ui_split_next();
+			custom_push_labels_h("Width", param_width_cents + 0.5, "%i cents");
+				old_width_cents = param_width_cents;
+				param_width_cents = control_dial(param_width_cents, 1, 200, 3);
+				old_width_cents != param_width_cents ? can_recompute = 1;
+			ui_pop();
+		ui_pop();
 	ui_pop();
-	ui_padbottom();
 
 	ui_push();
 		control_background_technical();
-		/*
 		draw_waveform();
 		ui_push();
 			ui_pad();
@@ -2411,10 +2480,6 @@ ui_screen() == "main" ? (
 			ui_colora(255, 255, 255, 0.8);
 			ui_textnumber(polyphony_current, "x%i");
 		ui_pop();
-		*/
-
-		draw_density();
-
 		control_finish_enabled(1);
 	ui_pop();
 ) : ui_screen() == "about" ? (
@@ -2441,28 +2506,6 @@ ui_screen() == "main" ? (
 ) : ui_screen() == "waveform" ? (
 	control_navbar("Waveform", -1, -1);
 	ui_pad();
-	ui_split_bottomtext("");
-		ui_split_righttext("Regenerate");
-			control_indicator_button("Regenerate", can_recompute) ? (
-				can_recompute ? action_recompute = 1;
-			);
-		ui_pop();
-
-		ui_split_lefttext("Width (cents)");
-			ui_text("Width (cents)");
-		ui_pop();
-		ui_split_righttext("200");
-			ui_padleft();
-			ui_align(0, -1);
-			ui_textnumber(param_width_cents + 0.5, "%i");
-		ui_pop();
-
-		new_width_cents = control_hslider(param_width_cents, 5, 200, 3);
-		new_width_cents != param_width_cents ? can_recompute = 1;
-		param_width_cents = new_width_cents;
-	ui_pop();
-	ui_padbottom();
-
 	ui_split_topratio(0.4);
 		ui_split_rightratio(0.5);
 			ui_pad4(ui_hpadding()/2, 0, 0, 0);
@@ -2507,6 +2550,10 @@ ui_screen() == "main" ? (
 			ui_border();
 			control_finish_enabled(1);
 		ui_pop();
+	ui_pop();
+
+	ui_split_bottomtext("");
+		draw_regenerate_button();
 	ui_pop();
 
 	control_group("Shape");
@@ -2956,6 +3003,23 @@ function read_string_var(string) local(vars_read, char_count, char, string_lengt
 	);
 	vars_read;
 );
+function read_density_table() local(i, value, N, actual_i, scaled_i, read_length) (
+	file_var(0, read_length);
+	file_var(0, N);
+	i = 0;
+	actual_i = 0;
+	while (i < N) (
+		file_var(0, value);
+		scaled_i = (i + 1)/N*options_spreadsize;
+		while (actual_i < scaled_i) (
+			spread_density[actual_i] = value;
+			actual_i += 1;
+		);
+		i += 1;
+	);
+	spread_update();
+);
+
 function read_effect() local(read_length, effect, effect_index, spec_index, var_id, i, var_length, value) (
 	fx_list_count < fx_list_maxcount ? (
 		file_var(0, read_length);
@@ -3008,6 +3072,8 @@ function read_var() local(var_id, i, effect) (
 	file_var(0, var_id);
 	var_id == 1/*VAR_ID:param_width_cents*/ ? (
 		param_width_cents = read_plain_var();
+	) : var_id == 7/*VAR_ID:param_width_scaling*/ ? (
+		param_width_scaling = read_plain_var();
 	) : var_id == 2/*VAR_ID:param_waveform_type*/ ? (
 		param_waveform_type = read_plain_var();
 	) : var_id == 6/*VAR_ID:param_waveform_warptype*/ ? (
@@ -3030,6 +3096,8 @@ function read_var() local(var_id, i, effect) (
 		param_release = read_plain_var();
 	) : var_id == 106/*VAR_ID:effect*/ ? (
 		read_effect();
+	) : var_id == 200/*VAR_ID:density_table*/ ? (
+		read_density_table();
 	) : (
 		ui_error("Unrecognised variable in state");
 		read_plain_var();
@@ -3062,6 +3130,19 @@ function write_buffer_var(var_id, buffer, length) local(i, value) (
 		file_var(0, value);
 		i += 1;
 		i < length;
+	);
+);
+function write_density_curve() local(i, var_id, var_length) (
+	var_id = 200/*VAR_ID:density_table*/;
+	var_length = 1 + options_spreadsize;
+	file_var(0, var_id);
+	file_var(0, var_length);
+	file_var(0, options_spreadsize);
+
+	i = 0;
+	while (i < options_spreadsize) (
+		file_var(0, spread_density[i]);
+		i += 1;
 	);
 );
 function write_effects() local(i, effect, var_id, var_length) (
@@ -3100,6 +3181,7 @@ file_avail(0) >= 0 ? (
 	action_recompute = 1;
 ) : (
 	write_plain_var(1/*VAR_ID:param_width_cents*/, param_width_cents);
+	write_plain_var(7/*VAR_ID:param_width_scaling*/, param_width_scaling);
 	write_plain_var(2/*VAR_ID:param_waveform_type*/, param_waveform_type);
 	write_plain_var(6/*VAR_ID:param_waveform_warptype*/, param_waveform_warptype);
 	write_plain_var(3/*VAR_ID:param_waveform_warpamount*/, param_waveform_warpamount);
@@ -3110,10 +3192,11 @@ file_avail(0) >= 0 ? (
 	write_plain_var(102/*VAR_ID:param_sustain*/, param_sustain);
 	write_plain_var(103/*VAR_ID:param_release*/, param_release);
 	write_plain_var(99/*VAR_ID:param_env_linear*/, param_env_linear);
+	write_density_curve();
 	write_effects();
 );
 
 // Stop the pre-processor complaining - these variables are never counted, but that's OK
-// 107/*VAR_ID: */
+// 201/*VAR_ID: */
 // 1/*DIST_CURVE: */
 // 2/*FX_MODTYPE: MULT, ADD*/
