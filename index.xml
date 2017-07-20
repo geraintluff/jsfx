@@ -352,6 +352,11 @@
 				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.0.0/Humonica/synth-framework.jsfx-inc</source>
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.0.0/Humonica/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.1.0" time="2017-07-20T21:54:27.553Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/1.1.0/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.1.0/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.1.0/Humonica/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 </index>
