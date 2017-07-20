@@ -45,7 +45,11 @@ release_samples = srate*release_ms*0.001;
 window_samples = srate*window_ms*0.001;
 interval_samples = window_samples*(1 - crossover_percent/100);
 fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
-timbre_shift_factor = pow(2, timbre_shift_semitones/12);
+abs(timbre_shift_semitones) > 0.1 ? (
+	timbre_shift_factor = pow(2, timbre_shift_semitones/12);
+) : (
+	timbre_shift_factor = 1;
+);
 
 input_buffer0[input_index] = spl0;
 input_buffer1[input_index] = spl1;
@@ -299,7 +303,7 @@ ui_screen() == "main" ? (
 
 	ui_pad();
 	control_background_technical();
-	ui_graph_step(kernelA1, window_samples/2, 1, 0.00001, 0.00001);
+	ui_graph_step(kernelA1, window_samples/2, 1, 0.00000001, 0.00000001);
 	control_finish_technical();
 ) : ui_screen() == "help" ? (
 	control_navbar("Humonica - Help", -1, -1);
