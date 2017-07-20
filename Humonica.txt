@@ -203,7 +203,7 @@ while (note > 0) (
 
 		phase = index/wavelength;
 		indexA = min(index*timbre_shift_factor, kernel_length*0.5);
-		indexB = max(kernel_length*0.5, kernel_length - (wavelength + indexA)*timbre_shift_factor);
+		indexB = max(kernel_length*0.5, kernel_length - wavelength*timbre_shift_factor + indexA);
 		floor_indexA = floor(indexA);
 		floor_indexB = floor(indexB);
 
