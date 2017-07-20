@@ -237,6 +237,10 @@
 				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.0/PadSynth/pad-synth.jsfx</source>
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.0/PadSynth/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.1.1" time="2017-07-20T21:02:56.776Z">
+				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.1/PadSynth/pad-synth.jsfx</source>
+				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.1/PadSynth/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Learning Sampler" type="effect">
 			<metadata>
