@@ -12,6 +12,7 @@ slider4:crossover_percent=60<50,90,1>-Crossover (%)
 slider5:latency_switch=0<0,1,1{on,off}>-Latency compensation
 slider6:stereo_switch=0<0,1,1{2ch,1ch}>-Stereo
 slider7:timbre_shift_semitones=0<-12,12,0.1>-Timbre shift (semitones)
+slider8:timbre_shift_tracking=0<-1,1,0.01>-Timbre key-tracking (relative to middle C)
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -56,6 +57,12 @@ input_buffer1[input_index] = spl1;
 synth_block();
 
 latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
+
+note = synth_note_first();
+while (note > 0) (
+	note[NOTE#TIMBRE_FACTOR] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
+	note = synth_note_next(note);
+);
 
 @sample
 
@@ -170,6 +177,7 @@ while (note > 0) (
 	synth_needs_init(note) ? (
 		note[NOTE#WAVELENGTH] = srate/synth_freq(note);
 		note[NOTE#INDEX] = floor(rand()*note[NOTE#WAVELENGTH]);
+		note[NOTE#TIMBRE_FACTOR] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
 	);
 
 	amp = synth_velocity(note)/127;
@@ -178,7 +186,7 @@ while (note > 0) (
 		attack < attack_samples ? (
 			amp *= attack/attack_samples;
 		);
-		release = synth_release(note) - latency_samples;
+		release = synth_sustain_release(note) - latency_samples;
 		release > 0 ? (
 			release >= release_samples ? (
 				synth_stop(note);
@@ -201,9 +209,10 @@ while (note > 0) (
 			note[NOTE#INDEX] = index;
 		);
 
+		timbre_factor = timbre_shift_factor*note[NOTE#TIMBRE_FACTOR];
 		phase = index/wavelength;
-		indexA = min(index*timbre_shift_factor, kernel_length*0.5);
-		indexB = max(kernel_length*0.5, kernel_length - wavelength*timbre_shift_factor + indexA);
+		indexA = min(index*timbre_factor, kernel_length*0.5);
+		indexB = max(kernel_length*0.5, kernel_length - wavelength*timbre_factor + indexA);
 		floor_indexA = floor(indexA);
 		floor_indexB = floor(indexB);
 
@@ -276,22 +285,30 @@ ui_screen() == "main" ? (
 	control_navbar("Humonica", "help", "help");
 
 	ui_split_top(150);
-		control_group("Analysis");
-		ui_split_leftratio(1/5);
-			window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims");
-		ui_split_next();
-			crossover_percent = labelled_dial(crossover_percent, 50, 90, 0, "Crossover", "%i%%");
-		ui_split_next();
-			latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero");
-		ui_split_next();
-			stereo_switch = labelled_switch(stereo_switch, "Stereo", stereo_switch ? "separate" : "joined");
-		ui_split_next();
-			timbre_shift_semitones = labelled_dial(timbre_shift_semitones, -12, 12, 0, "Timbre", "%.1f st");
+		ui_split_leftratio(4/6);
+			control_group("Analysis");
+			ui_split_leftratio(1/4);
+				window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims");
+			ui_split_next();
+				crossover_percent = labelled_dial(crossover_percent, 50, 90, 0, "Crossover", "%i%%");
+			ui_split_next();
+				latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero");
+			ui_split_next();
+				stereo_switch = labelled_switch(stereo_switch, "Stereo", stereo_switch ? "separate" : "joined");
+			ui_pop();
+		ui_pop();
+
+		control_group("Timbre");
+		ui_split_leftratio(1/2);
+			timbre_shift_semitones = labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st");
 			ui_click() && ui_clickcount() == 2 ? timbre_shift_semitones = 0;
+		ui_split_next();
+			timbre_shift_tracking = labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "(relative to\nmiddle C)");
+			ui_click() && ui_clickcount() == 2 ? timbre_shift_tracking = 0;
 		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(2/5);
+	ui_split_leftratio(2/6);
 		control_group("Envelope");
 		ui_split_leftratio(1/2);
 			attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims");

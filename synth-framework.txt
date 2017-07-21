@@ -31,7 +31,7 @@ function synth_setup(freemem, custom_slots) (
 	synthx_current_note = 0;
 	freemem = (synthx_controllers = freemem) + 128;
 	freemem = (synthx_notestack = freemem) + synthx_polyphony*synthx_step;
-	
+
 	synth_reset_controllers();
 	freemem;
 );
@@ -84,6 +84,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			selected_note[NOTE#ACTIVE] = 1;
 			selected_note[NOTE#SAMPLES_FROM_ATTACK] = -midi_offset;
 			selected_note[NOTE#SAMPLES_FROM_RELEASE] = -synthx_maxduration;
+			selected_note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] = -synthx_maxduration;
 			selected_note[NOTE#NOTE] = midi_msg2;
 			selected_note[NOTE#BASE_FREQ] = 440*pow(2, (midi_msg2 - 69)/12);
 			selected_note[NOTE#VEL] = midi_msg3;
@@ -96,6 +97,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				note = synthx_notestack + synthx_step*i;
 				note[NOTE#NOTE] == midi_msg2 ? (
 					note[NOTE#SAMPLES_FROM_RELEASE] = max(note[NOTE#SAMPLES_FROM_RELEASE], -midi_offset);
+					note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] = max(note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE], -midi_offset);
 				);
 				i += 1;
 			);
@@ -109,6 +111,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				while (i < synthx_polyphony) (
 					note = synthx_notestack + synthx_step*i;
 					note[NOTE#SAMPLES_FROM_RELEASE] = max(note[NOTE#SAMPLES_FROM_RELEASE], 0);
+					note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] = max(note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE], 0);
 					i += 1;
 				);
 			) : midi_msg == 120 ? (
@@ -145,6 +148,9 @@ function synth_sample() local(i, note) (
 		note[NOTE#ACTIVE] ? (
 			note[NOTE#SAMPLES_FROM_ATTACK] += 1;
 			note[NOTE#SAMPLES_FROM_RELEASE] += 1;
+			synthx_controllers[64] < 64 ? (
+				note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] += 1;
+			);
 		);
 		i += 1;
 	);
@@ -217,8 +223,16 @@ function synth_release(note) (
 	(note - synthx_custom_offset)[NOTE#SAMPLES_FROM_RELEASE];
 );
 
+function synth_sustain_release(note) (
+	(note - synthx_custom_offset)[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE];
+);
+
 function synth_release_seconds(note) (
 	(note - synthx_custom_offset)[NOTE#SAMPLES_FROM_RELEASE]*synthx_timestep;
+);
+
+function synth_sustain_release_seconds(note) (
+	(note - synthx_custom_offset)[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE]*synthx_timestep;
 );
 
 function synth_controller(number) (
