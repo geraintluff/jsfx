@@ -244,7 +244,7 @@ while (note > 0) (
 	note = synth_note_next(note);
 );
 
-@gfx 500 350
+@gfx 550 350
 
 function labelled_dial(value, low, high, bias, label, number_format) (
 	ui_push_height(50);
