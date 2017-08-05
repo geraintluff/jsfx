@@ -477,7 +477,9 @@ volume_db = -12;
 volume = pow(10, volume_db/20);
 note_maxduration = 60*60*24*365;
 
-wavetable_maxfreq = 18000;
+wavetable_maxfreq = options_wavetables_samplerate*0.5;
+wavetable_taper_lowfreq = options_wavetables_samplerate*0.45;
+wavetable_taper_highfreq = options_wavetables_samplerate*0.5;
 wavetable_refsrate = options_wavetables_samplerate;
 // 6+ octaves, centred on 440
 wavetable_low = options_wavetables_lowfreq;
@@ -1700,22 +1702,8 @@ function effect_note_exec_slider(effect, note, notestate) local(state, sliderInd
 	state = effect + fx_list_headerlength;
 	targetIndex = notestate[3/*SLIDER_NOTE_STATE:TARGET*/];
 	sliderIndex = state[4/*SLIDER_STATE:SLIDER_INDEX*/];
-	sliderIndex == 1 ? (
-		value = slider1;
-	) : sliderIndex == 2 ? (
-		value = slider2;
-	) : sliderIndex == 3 ? (
-		value = slider2;
-	) : sliderIndex == 4 ? (
-		value = slider2;
-	) : sliderIndex == 5 ? (
-		value = slider5;
-	) : sliderIndex == 6 ? (
-		value = slider6;
-	) : sliderIndex == 7 ? (
-		value = slider7;
-	) : sliderIndex == 8 ? (
-		value = slider8;
+	sliderIndex >= 1 && sliderIndex <= 8 ? (
+		value = slider(sliderIndex);
 	) : (
 		value = 0;
 	);
@@ -1949,7 +1937,7 @@ recompute_index < wavetables_count ? (
 
 		harmonic_range_factor = exp(param_width*2);
 		i = 1;
-		while (
+		while (i < wavetable_sampleslength/2) (
 			power = 0;
 			indexfreq = i/wavetable_sampleslength*wavetable_refsrate;
 			indexfreq_low = (i - 0.5)/wavetable_sampleslength*wavetable_refsrate;
@@ -1974,6 +1962,13 @@ recompute_index < wavetables_count ? (
 			);
 
 			amp = sqrt(power);
+			indexfreq > wavetable_taper_lowfreq ? (
+				indexfreq < wavetable_taper_highfreq ? (
+					amp *= (indexfreq - wavetable_taper_highfreq)/(wavetable_taper_lowfreq - wavetable_taper_highfreq);
+				) : (
+					amp = 0;
+				);
+			);
 			phase1 = rand(2*$pi);
 			phase2 = rand(2*$pi);
 
@@ -1989,7 +1984,6 @@ recompute_index < wavetables_count ? (
 			fftblock[2*i2 + 1] = rightR - leftI;
 
 			i += 1;
-			i < wavetable_sampleslength/2;
 		);
 
 		// IFFT

@@ -239,9 +239,12 @@
 				},
 				"ui-lib.jsfx-inc": {
 					"main": false
+				},
+				"filter-utils.jsfx-inc": {
+					"main": false
 				}
 			},
-			"version": "1.2.1"
+			"version": "1.2.2"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
