@@ -13,9 +13,11 @@ slider5:latency_switch=0<0,1,1{on,off}>-Latency compensation
 slider6:stereo_switch=0<0,1,1{2ch,1ch}>-Stereo
 slider7:timbre_shift_semitones=0<-12,12,0.1>-Timbre shift (semitones)
 slider8:timbre_shift_tracking=0<-1,1,0.01>-Timbre key-tracking (relative to middle C)
+slider9:lowpass_freq_khz=8<1,20,0.1>-Lowpass (kHz)
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
+import filter-utils.jsfx-inc
 
 @init
 
@@ -36,6 +38,9 @@ freemem = (input_buffer1 = freemem) + input_buffer_length;
 
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, NOTE##);
+
+freemem = filter_buffer_init(filter_left = freemem);
+freemem = filter_buffer_init(filter_right = freemem);
 // NOTE#INDEX, NOTE#WAVELENGTH
 
 @block
@@ -63,6 +68,10 @@ while (note > 0) (
 	note[NOTE#TIMBRE_FACTOR] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
 	note = synth_note_next(note);
 );
+
+lowpass_freq = lowpass_freq_khz*1000;
+filter_buffer_lowpass(filter_left, lowpass_freq, 1.4);
+filter_buffer_lowpass(filter_right, lowpass_freq, 1.4);
 
 @sample
 
@@ -211,29 +220,43 @@ while (note > 0) (
 
 		timbre_factor = timbre_shift_factor*note[NOTE#TIMBRE_FACTOR];
 		phase = index/wavelength;
-		indexA = min(index*timbre_factor, kernel_length*0.5);
+		indexA = min(index*timbre_factor, kernel_length*0.5 - 1);
 		indexB = max(kernel_length*0.5, kernel_length - wavelength*timbre_factor + indexA);
 		floor_indexA = floor(indexA);
 		floor_indexB = floor(indexB);
+		floor_indexA2 = floor_indexA + 1;
+		floor_indexA2 >= kernel_length ? floor_indexA2 -= kernel_length;
+		floor_indexB2 = floor_indexB + 1;
+		floor_indexB2 >= kernel_length ? floor_indexB2 -= kernel_length;
+		ratioA = indexA - floor_indexA;
+		ratioB = indexB - floor_indexB;
 
 		valueA = kernelA0[floor_indexA];
+		valueA += (kernelA0[floor_indexA2] - valueA)*ratioA;
 		valueB = kernelA0[floor_indexB];
+		valueB += (kernelA0[floor_indexB2] - valueB)*ratioB;
 		value = valueA + (valueB - valueA)*phase;
 		left = value;
 
 		valueA = kernelA1[floor_indexA];
+		valueA += (kernelA1[floor_indexA2] - valueA)*ratioA;
 		valueB = kernelA1[floor_indexB];
+		valueB += (kernelA1[floor_indexB2] - valueB)*ratioB;
 		value = valueA + (valueB - valueA)*phase;
 		right = value;
 
 		// Crossfade
 		valueA = kernelB0[floor_indexA];
+		valueA += (kernelB0[floor_indexA2] - valueA)*ratioA;
 		valueB = kernelB0[floor_indexB];
+		valueB += (kernelB0[floor_indexB2] - valueB)*ratioB;
 		value = valueA + (valueB - valueA)*phase;
 		left += (value - left)*kernel_crossfade;
 
 		valueA = kernelB1[floor_indexA];
+		valueA += (kernelB1[floor_indexA2] - valueA)*ratioA;
 		valueB = kernelB1[floor_indexB];
+		valueB += (kernelB1[floor_indexB2] - valueB)*ratioB;
 		value = valueA + (valueB - valueA)*phase;
 		right += (value - right)*kernel_crossfade;
 
@@ -244,7 +267,10 @@ while (note > 0) (
 	note = synth_note_next(note);
 );
 
-@gfx 550 350
+spl0 = filter_buffer_sample(filter_left, spl0);
+spl1 = filter_buffer_sample(filter_right, spl1);
+
+@gfx 650 350
 
 function labelled_dial(value, low, high, bias, label, number_format) (
 	ui_push_height(50);
@@ -285,7 +311,7 @@ ui_screen() == "main" ? (
 	control_navbar("Humonica", "help", "help");
 
 	ui_split_top(150);
-		ui_split_leftratio(4/6);
+		ui_split_leftratio(4/7);
 			control_group("Analysis");
 			ui_split_leftratio(1/4);
 				window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims");
@@ -299,12 +325,15 @@ ui_screen() == "main" ? (
 		ui_pop();
 
 		control_group("Timbre");
-		ui_split_leftratio(1/2);
+		ui_split_leftratio(1/3);
 			timbre_shift_semitones = labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st");
 			ui_click() && ui_clickcount() == 2 ? timbre_shift_semitones = 0;
 		ui_split_next();
 			timbre_shift_tracking = labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "(relative to\nmiddle C)");
 			ui_click() && ui_clickcount() == 2 ? timbre_shift_tracking = 0;
+		ui_split_next();
+			lowpass_freq_khz = labelled_dial(lowpass_freq_khz, 1, 20, 2, "Filter", "%.f kHz");
+			ui_click() && ui_clickcount() == 2 ? lowpass_freq_khz = 8;
 		ui_pop();
 	ui_pop();
 
