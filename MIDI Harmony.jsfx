@@ -1,0 +1,86 @@
+desc:MIDI Harmony (by Geraint Luff)
+
+in_pin:none
+out_pin:none
+
+slider1:output_centre=60<0,127,1>Centre (MIDI note)
+slider2:output_range=12<1,24,1>Range (MIDI note)
+slider3:octave_up_only=0<0,1,1{off,on}>Shift-up only
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem, 0);
+synth_option_midi_sink(1);
+
+freemem = (active_notes = freemem) + 12;
+freemem = (prev_active_notes = freemem) + 12;
+freemem = (output_notes = freemem) + 128;
+
+@block
+
+synth_block();
+
+@sample
+
+synth_sample();
+
+tmp = prev_active_notes;
+prev_active_notes = active_notes;
+active_notes = tmp;
+i = 0;
+while (i < 12) (
+	active_notes[i] = 1000;
+	i += 1;
+);
+
+note = synth_note_first();
+while (note > 0) (
+	synth_sustain_release(note) >= 0 ? (
+		synth_stop(note);
+	) : (
+		midi_note = synth_midinote(note);
+		modulo_note = midi_note%12;
+		!octave_up_only ? midi_note = modulo_note;
+		active_notes[modulo_note] = min(active_notes[modulo_note], midi_note);
+	);
+	note = synth_note_next(note);
+);
+
+modulo_note = 0;
+while (modulo_note < 12) (
+	active_notes[modulo_note] != !prev_active_notes[modulo_note] ? (
+		midi_note = modulo_note;
+		lowest_note = active_notes[modulo_note];
+
+		while (midi_note < 128) (
+			dist = abs(midi_note - output_centre);
+			dist < output_range && midi_note > lowest_note ? (
+				// It should be playing
+				!output_notes[midi_note] ? (
+					output_notes[midi_note] = 1;
+					vel = 0.5 + 0.5*cos(dist/output_range*$pi);
+					midisend(0, $x90, midi_note, floor(vel*127));
+				);
+			) : (
+				// It shouldn't be playing
+				output_notes[midi_note] ? (
+					midisend(0, $x80, midi_note, 0);
+					output_notes[midi_note] = 0;
+				);
+			);
+			midi_note += 12;
+		);
+	);
+	modulo_note += 1;
+);
+
+@gfx
+
+ui_start("main");
+
+ui_graph(active_notes, 12, 0, 128);
