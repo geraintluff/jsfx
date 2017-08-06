@@ -9,7 +9,7 @@ slider3:octave_up_only=0<0,1,1{off,on}>Shift-up only
 slider4:sequence_length=8<2,32,1>Sequence length
 slider5:repeat_interval=0<0,1,0.25>Interval (1/4)
 slider6:note_mode=0<0,1,1{chord,note}>Mode
-slider7:free_mode=1<0,1,1{beats,note-on}>Sync
+slider7:free_mode=1<0,1,1{beats,note-on}>Sequence Sync
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -99,6 +99,12 @@ repeat_interval ? (
 		);
 	);
 
+	modulo_note = 0;
+	while (modulo_note < 12) (
+		prev_active_notes[modulo_note] = 1000;
+		modulo_note += 1;
+	);
+
 	sequence_target = output_centre + output_range*sequence_pitch[beat_interval];
 	sequence_range = output_range;
 	sequence_vel = sequence_velocity[beat_interval];
@@ -108,12 +114,12 @@ repeat_interval ? (
 	sequence_vel = 1;
 );
 
-modulo_note = 0;
 closest_note = -1;
 closest_note_dist = 1000;
 
+modulo_note = 0;
 while (modulo_note < 12) (
-	active_notes[modulo_note] != !prev_active_notes[modulo_note] ? (
+	active_notes[modulo_note] != prev_active_notes[modulo_note] ? (
 		midi_note = modulo_note;
 		lowest_note = active_notes[modulo_note];
 
@@ -196,9 +202,13 @@ function edit_sequence(seq, low, high) local(extra, i, y, x1, x2) (
 ui_start("main");
 
 ui_screen() == "main" ? (
-	ui_split_topratio(0.5);
+	ui_split_topratio(0.3);
 		edit_sequence(sequence_pitch, -1, 1);
 	ui_split_next();
 		edit_sequence(sequence_velocity, 0, 1);
 	ui_pop();
+
+	ui_graph(active_notes, 12, 0, 128);
+	ui_color(255, 0, 0);
+	ui_graph(prev_active_notes, 12, 0, 128);
 ) : control_system();
