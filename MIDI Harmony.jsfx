@@ -6,6 +6,9 @@ out_pin:none
 slider1:output_centre=60<0,127,1>Centre (MIDI note)
 slider2:output_range=12<1,24,1>Range (MIDI note)
 slider3:octave_up_only=0<0,1,1{off,on}>Shift-up only
+slider4:sequence_length=8<2,32,1>Sequence length
+slider5:repeat_interval=0<0,1,0.25>Interval (1/4)
+slider6:note_mode=0<0,1,1{chord,note}>Mode
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -20,14 +23,38 @@ synth_option_midi_sink(1);
 freemem = (active_notes = freemem) + 12;
 freemem = (prev_active_notes = freemem) + 12;
 freemem = (output_notes = freemem) + 128;
+freemem = (sequence_pitch = freemem) + 100;
+freemem = (sequence_velocity = freemem) + 100;
+
+max_vel = 0;
+i = 0;
+while (i < 100) (
+	max_vel = max(max_vel, sequence_velocity[i]);
+	i += 1;
+);
+!max_vel ? (
+	i = 0;
+	while (i < 100) (
+		v = sqrt(3)*(sqrt(i%16) + 1);
+		v = v - floor(v);
+		sequence_velocity[i] = 0.2 + 0.8*v;
+		v = sqrt(2)*(i + 1);
+		v = v - floor(v);
+		sequence_pitch[i] = v*2 - 1;
+		i += 1;
+	);
+);
 
 @block
 
 synth_block();
 
-@sample
+play_state > 0 && play_state != 6 ? (
+	beats = beat_position + floor((beats - beat_position)*8 + 0.5)*0.125;
+);
+beats_per_sample = 120/60/srate;
 
-synth_sample();
+@sample
 
 tmp = prev_active_notes;
 prev_active_notes = active_notes;
@@ -40,7 +67,7 @@ while (i < 12) (
 
 note = synth_note_first();
 while (note > 0) (
-	synth_sustain_release(note) >= 0 ? (
+	synth_sustain_release(note) > 0 ? (
 		synth_stop(note);
 	) : (
 		midi_note = synth_midinote(note);
@@ -51,20 +78,56 @@ while (note > 0) (
 	note = synth_note_next(note);
 );
 
+repeat_interval ? (
+	last_beat_interval = beat_interval;
+	beat_interval = floor(beats/repeat_interval);
+	beat_interval >= sequence_length ? (
+		beat_interval = beats = 0;
+	);
+	last_beat_interval != beat_interval ? (
+		last_beat_interval = beat_interval;
+		midi_note = 0;
+		while (midi_note < 128) (
+			output_notes[midi_note] ? (
+				midisend(0, $x80, midi_note, 0);
+				output_notes[midi_note] = 0;
+			);
+			midi_note += 1;
+		);
+	);
+
+	sequence_target = output_centre + output_range*sequence_pitch[beat_interval];
+	sequence_range = output_range;
+	sequence_vel = sequence_velocity[beat_interval];
+) : (
+	sequence_target = output_centre;
+	sequence_range = output_range;
+	sequence_vel = 1;
+);
+
 modulo_note = 0;
+closest_note = -1;
+closest_note_dist = 1000;
 while (modulo_note < 12) (
 	active_notes[modulo_note] != !prev_active_notes[modulo_note] ? (
 		midi_note = modulo_note;
 		lowest_note = active_notes[modulo_note];
 
 		while (midi_note < 128) (
-			dist = abs(midi_note - output_centre);
-			dist < output_range && midi_note > lowest_note ? (
+			dist = abs(midi_note - sequence_target);
+			dist < sequence_range && midi_note > lowest_note ? (
 				// It should be playing
-				!output_notes[midi_note] ? (
-					output_notes[midi_note] = 1;
-					vel = 0.5 + 0.5*cos(dist/output_range*$pi);
-					midisend(0, $x90, midi_note, floor(vel*127));
+				note_mode == 0 ? (
+					!output_notes[midi_note] ? (
+						output_notes[midi_note] = 1;
+						vel = 0.5 + 0.5*cos(dist/sequence_range*$pi);
+						midisend(0, $x90, midi_note, floor(vel*sequence_vel*127));
+					);
+				) : (
+					dist < closest_note_dist ? (
+						closest_note = midi_note;
+						closest_note_dist = dist;
+					);
 				);
 			) : (
 				// It shouldn't be playing
@@ -79,8 +142,42 @@ while (modulo_note < 12) (
 	modulo_note += 1;
 );
 
+note_mode == 1 ? (
+	midi_note = closest_note;
+	!output_notes[midi_note] ? (
+		output_notes[midi_note] = 1;
+		midisend(0, $x90, midi_note, floor(sequence_vel*127 + 0.5));
+	);
+);
+
+beats += beats_per_sample;
+
+synth_sample();
+
 @gfx
+
+function edit_sequence(seq, low, high) local(extra, i, y, x1, x2) (
+	extra = (high - low)*0.05;
+	low -= extra;
+	high += extra;
+	control_background_technical();
+	i = 0;
+	while (i < sequence_length) (
+		x1 = ui_left() + i/sequence_length*ui_width();
+		x2 = ui_left() + (i + 1)/sequence_length*ui_width();
+		y = ui_top() + (seq[i] - high)/(low - high)*ui_height();
+		gfx_line(x1, y, x2, y);
+		i += 1;
+	);
+	control_finish_technical();
+);
 
 ui_start("main");
 
-ui_graph(active_notes, 12, 0, 128);
+ui_screen() == "main" ? (
+	ui_split_topratio(0.5);
+		edit_sequence(sequence_pitch, -1, 1);
+	ui_split_next();
+		edit_sequence(sequence_velocity, 0, 1);
+	ui_pop();
+) : control_system();
