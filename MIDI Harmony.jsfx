@@ -23,8 +23,8 @@ synth_option_midi_sink(1);
 freemem = (active_notes = freemem) + 12;
 freemem = (prev_active_notes = freemem) + 12;
 freemem = (output_notes = freemem) + 128;
-freemem = (sequence_pitch = freemem) + 100;
-freemem = (sequence_velocity = freemem) + 100;
+freemem = (sequence_pitch = freemem) + 1000;
+freemem = (sequence_velocity = freemem) + 1000;
 
 max_vel = 0;
 i = 0;
@@ -108,6 +108,7 @@ repeat_interval ? (
 modulo_note = 0;
 closest_note = -1;
 closest_note_dist = 1000;
+
 while (modulo_note < 12) (
 	active_notes[modulo_note] != !prev_active_notes[modulo_note] ? (
 		midi_note = modulo_note;
@@ -142,11 +143,20 @@ while (modulo_note < 12) (
 	modulo_note += 1;
 );
 
-note_mode == 1 ? (
+note_mode == 1 && closest_note >= 0 ? (
 	midi_note = closest_note;
 	!output_notes[midi_note] ? (
 		output_notes[midi_note] = 1;
 		midisend(0, $x90, midi_note, floor(sequence_vel*127 + 0.5));
+	);
+	midi_note = 0;
+	while (midi_note < 128) (
+		// It shouldn't be playing
+		output_notes[midi_note] && midi_note != closest_note ? (
+			midisend(0, $x80, midi_note, 0);
+			output_notes[midi_note] = 0;
+		);
+		midi_note += 1;
 	);
 );
 
