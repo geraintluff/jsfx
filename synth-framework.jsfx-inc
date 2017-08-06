@@ -18,6 +18,10 @@ function synth_reset_controllers() local(i) (
 	synthx_controllers[11] = 127;
 );
 
+function synth_option_midi_sink(value) (
+	synthx_midi_sink = value;
+);
+
 function synth_setup(freemem, custom_slots) (
 	synthx_polyphony = 16;
 	synthx_custom_offset = 9/*NOTE: ACTIVE, SAMPLES_FROM_RELEASE, SAMPLES_FROM_ATTACK, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, BASE_FREQ, VEL, CHANNEL, CUSTOM_INIT*/;
@@ -43,7 +47,9 @@ function synth_init(freemem, custom_slots) (
 
 function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi_msg3, midi_type, midi_channel, i, note, selected_note) (
 	while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
-		midisend(midi_offset, midi_msg1, midi_msg23); // passthrough
+		!synthx_midi_sink ? (
+			midisend(midi_offset, midi_msg1, midi_msg23); // passthrough
+		);
 		midi_type = midi_msg1>>4;
 		midi_channel = midi_msg1&0x0f;
 		midi_msg2 = midi_msg23&$xff; // note / controller
