@@ -53,7 +53,7 @@ synth_block();
 !free_mode && play_state > 0 && play_state != 6 ? (
 	beats = beat_position;
 );
-beats_per_sample = 120/60/srate;
+beats_per_sample = tempo/60/srate;
 
 @sample
 
@@ -125,7 +125,7 @@ while (modulo_note < 12) (
 
 		while (midi_note < 128) (
 			dist = abs(midi_note - sequence_target);
-			dist < sequence_range && midi_note > lowest_note ? (
+			dist < sequence_range && midi_note >= lowest_note ? (
 				// It should be playing
 				note_mode == 0 ? (
 					!output_notes[midi_note] ? (
