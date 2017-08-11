@@ -14,6 +14,8 @@ slider6:stereo_switch=0<0,1,1{2ch,1ch}>-Stereo
 slider7:timbre_shift_semitones=0<-12,12,0.1>-Timbre shift (semitones)
 slider8:timbre_shift_tracking=0<-1,1,0.01>-Timbre key-tracking (relative to middle C)
 slider9:lowpass_freq_khz=8<1,20,0.1>-Lowpass (kHz)
+slider10:vibrato_tracking=0<0,1,0.01>-Vibrato tracking
+slider11:tonality_limit=0<0,0.5,0.01>-Tonality limit
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -72,6 +74,16 @@ while (note > 0) (
 lowpass_freq = lowpass_freq_khz*1000;
 filter_buffer_lowpass(filter_left, lowpass_freq, 1.4);
 filter_buffer_lowpass(filter_right, lowpass_freq, 1.4);
+
+freq_slew = 1/(interval_samples + 0.03*srate);
+!freq_factor ? freq_factor = 1;
+
+tonality_smooth_seconds = 0.05;
+tonality_smooth_slew = 1/(tonality_smooth_seconds*srate);
+
+wavelength_average_seconds = 0.05;
+wavelength_average_slew = 1/(wavelength_average_seconds*srate);
+//wavelength_average = target_wavelength = 0;
 
 @sample
 
@@ -174,8 +186,52 @@ interval_index >= interval_samples ? (
 			i += 1;
 		);
 	);
+
+	vibrato_tracking || tonality_limit ? (
+		lowest_value = 0;
+		highest_value = 0;
+		highest_index = 0;
+		i = 0;
+		while (i < kernel_length/2) (
+			value = (kernelB0[i] + kernelB1[i]);
+			value < lowest_value ? (
+				highest_value = highest_index = 0;
+				lowest_value = value;
+			) : value > highest_value ? (
+				highest_value = value;
+				highest_index = i;
+			);
+			i += 1;
+		);
+		highest_index ? (
+			target_wavelength = highest_index;
+		);
+
+		tonality_limit ? (
+			first_value = (kernelB0[0] + kernelB1[0]);
+			tonality = first_value ? highest_value/first_value : 0;
+			factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
+			tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
+
+			i = 0;
+			while (i < kernel_length) (
+				kernelB0[i] *= tonality_factor;
+				kernelB1[i] *= tonality_factor;
+				i += 1;
+			);
+		);
+	);
 );
 kernel_crossfade = interval_index/interval_samples;
+
+vibrato_tracking ? (
+	wavelength_average += (target_wavelength - wavelength_average)*wavelength_average_slew;
+	target_ratio = target_wavelength/wavelength_average;
+	target_ratio = max(0.94, min(1.065, target_ratio));
+	freq_factor += (target_ratio - freq_factor)*freq_slew;
+) : (
+	freq_factor = 1;
+);
 
 spl0 = spl1 = 0;
 
@@ -211,7 +267,8 @@ while (note > 0) (
 			while (index >= wavelength) (
 				index -= wavelength;
 			);
-			wavelength = note[NOTE#WAVELENGTH] = srate/synth_freq(note);
+			vibrato_factor = vibrato_tracking ? pow(freq_factor, min(1, attack/(0.3*srate))*vibrato_tracking) : 1;
+			wavelength = note[NOTE#WAVELENGTH] = srate/synth_freq(note)*vibrato_factor;
 			while (index >= wavelength) (
 				index -= wavelength;
 			);
@@ -337,12 +394,21 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(2/6);
-		control_group("Envelope");
+	ui_split_leftratio(4/7);
+		ui_split_leftratio(2/4);
+			control_group("Envelope");
+			ui_split_leftratio(1/2);
+				attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims");
+			ui_split_next();
+				release_ms = labelled_dial(release_ms, 0, 300, 3, "Release", "%ims");
+			ui_pop();
+		ui_pop();
+
+		control_group("Pitch & Tonality");
 		ui_split_leftratio(1/2);
-			attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims");
+			vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Pitch", "tracking"));
 		ui_split_next();
-			release_ms = labelled_dial(release_ms, 0, 300, 3, "Release", "%ims");
+			tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit");
 		ui_pop();
 	ui_pop();
 
