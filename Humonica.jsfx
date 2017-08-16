@@ -415,7 +415,7 @@ ui_screen() == "main" ? (
 
 	ui_pad();
 	control_background_technical();
-	ui_graph_step(kernelA1, window_samples/2, 1, 0.00000001, 0.00000001);
+	ui_graph_step(kernelA0[0] ? kernelA0 : kernelA1, window_samples/2, 1, 0.00000001, 0.00000001);
 	control_finish_technical();
 ) : ui_screen() == "help" ? (
 	control_navbar("Humonica - Help", -1, -1);
