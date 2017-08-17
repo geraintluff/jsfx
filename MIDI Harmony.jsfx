@@ -5,9 +5,9 @@ out_pin:none
 
 slider1:input_source=0<0,1,1{fixed,MIDI}>-Target
 slider2:shift_up_only=0<0,1,1{up and down,up only}>-Shift mode
-slider3:note_mode=0<0,1,1{chord,note}>-Note
-slider4:output_centre=60<0,127,1>-Centre (MIDI note)
-slider5:output_range=12<1,36,1>-Range (MIDI note)
+slider3:fixed_note_mode=0<0,1,1{chord,note}>-Note
+slider4:fixed_centre=60<0,127,1>-Centre (MIDI note)
+slider5:fixed_range=12<1,36,1>-Range (MIDI note)
 slider6:sequence_length=8<2,32,1>-Sequence length
 slider7:repeat_interval=0<0,1,0.25>-Interval (1/4)
 slider8:free_mode=1<0,1,1{beats,note-on}>-Sequence Sync
@@ -97,13 +97,13 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp) (
 	input_source ? (
 		ui_error("MIDI input not supported");
 	) : (
-		note_start = floor(output_centre - output_range);
-		note_end = ceil(output_centre + output_range);
+		note_start = max(0, floor(fixed_centre - fixed_range));
+		note_end = min(127, ceil(fixed_centre + fixed_range));
 
 		i = note_start + 1;
 		while (i < note_end) (
 			allowed_notes[i] ? (
-				dist = (i - output_centre)/output_range;
+				dist = (i - fixed_centre)/fixed_range;
 				output_notes[i] = allowed_notes[i]*(0.5 + 0.5*cos(dist*$pi));
 			);
 			i += 1;
@@ -126,6 +126,14 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp) (
 	);
 );
 
+function set_sustain(value) (
+	value >= 64 ? (
+		0;
+	) : (
+		0;
+	);
+);
+
 current_offset = 0;
 needs_recalculate = 0;
 while (midirecv(offset, msg1, note, vel)) (
@@ -145,6 +153,18 @@ while (midirecv(offset, msg1, note, vel)) (
 		needs_recalculate = 1;
 		input_notes[note] = 0;
 	) : (
+		type == $xB0 ? ( // Controller
+			note == 64 ? (
+				set_sustain(vel);
+			) : note == 121 ? (
+				set_sustain(0);
+			) : note == 123 || note == 120 ? (
+				note = 0;
+				while (note < 128) (
+					input_notes[note] = 0;
+				);
+			);
+		);
 		midisend(type|output_channel, msg1, note, vel);
 	);
 );
@@ -238,9 +258,9 @@ ui_screen() == "main" ? (
 		ui_split_leftratio(4/7);
 			control_group("Range");
 			ui_split_leftratio(1/4);
-				output_centre = labelled_dial(output_centre, 0, 127, 0, "Centre", "");
+				fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", "");
 			ui_split_next();
-				output_range = labelled_dial(output_range, 1, 36, 2, "Span", "");
+				fixed_range = labelled_dial(fixed_range, 1, 36, 2, "Span", "");
 			ui_split_next();
 				push_labelled("Shift", 0, shift_up_only ? "up only" : "up/down");
 					ui_push_heighttext(-1);
@@ -249,10 +269,10 @@ ui_screen() == "main" ? (
 					ui_pop();
 				ui_pop();
 			ui_split_next();
-				push_labelled("Mode", 0, note_mode ? "note" : "chord");
+				push_labelled("Mode", 0, fixed_note_mode ? "note" : "chord");
 					ui_push_heighttext(-1);
 						ui_pad2(-1, 0);
-						note_mode = control_switch(note_mode);
+						fixed_note_mode = control_switch(fixed_note_mode);
 					ui_pop();
 				ui_pop();
 			ui_pop();

@@ -40,6 +40,7 @@ function tanh(x) (
 
 min_freq = 10;
 max_delay_samples = srate/min_freq;
+min_delay_samples = 4.1;
 delay_buffer_length = delay_buffer_size(max_delay_samples);
 filter_buffer_length = filter_buffer_size();
 
@@ -109,7 +110,7 @@ while (note > 0) (
 	note_min_release = min(note_min_release, synth_release(note));
 	synth_needs_init(note) ? (
 		mem = note + NOTE#;
-		note[NOTE#delay_samples] = min(max_delay_samples, srate/synth_freq(note));
+		note[NOTE#delay_samples] = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
 		note[NOTE#buffer0] = mem;
 		mem = delay_buffer_init(mem, max_delay_samples);
 		note[NOTE#buffer1] = mem;
@@ -159,13 +160,13 @@ while (note > 0) (
 		resonator_gain = note[NOTE#resonator_gain];
 		impulse_value = impulse(note);
 
-		delay_samples_target = min(max_delay_samples, srate/synth_freq(note));
+		delay_samples_target = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
 		delay_samples = note[NOTE#delay_samples];
 		delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
 		delay_freq = srate/delay_samples;
 		note[NOTE#delay_samples] = delay_samples;
 
-		note[NOTE#invert_feedback] ? delay_samples *= 0.5;
+		note[NOTE#invert_feedback] ? delay_samples = max(min_delay_samples, delay_samples*0.5);
 
 		buffer0 = note[NOTE#buffer0];
 		buffer1 = note[NOTE#buffer1];
