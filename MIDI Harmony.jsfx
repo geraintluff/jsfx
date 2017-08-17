@@ -3,30 +3,27 @@ desc:MIDI Harmony (by Geraint Luff)
 in_pin:none
 out_pin:none
 
-slider1:output_centre=60<0,127,1>-Centre (MIDI note)
-slider2:output_range=12<1,36,1>-Range (MIDI note)
-slider3:octave_up_only=0<0,1,1{up and down,up only}>-Shift mode
-slider4:sequence_length=8<2,32,1>-Sequence length
-slider5:repeat_interval=0<0,1,0.25>-Interval (1/4)
-slider6:note_mode=0<0,1,1{chord,note}>-Mode
-slider7:free_mode=1<0,1,1{beats,note-on}>-Sequence Sync
+slider1:input_source=0<0,1,1{fixed,MIDI}>-Target
+slider2:shift_up_only=0<0,1,1{up and down,up only}>-Shift mode
+slider3:note_mode=0<0,1,1{chord,note}>-Note
+slider4:output_centre=60<0,127,1>-Centre (MIDI note)
+slider5:output_range=12<1,36,1>-Range (MIDI note)
+slider6:sequence_length=8<2,32,1>-Sequence length
+slider7:repeat_interval=0<0,1,0.25>-Interval (1/4)
+slider8:free_mode=1<0,1,1{beats,note-on}>-Sequence Sync
 
 import ui-lib.jsfx-inc
-import synth-framework.jsfx-inc
 
 @init
 
+output_channel = 0;
+
 freemem = 0;
 freemem = ui_setup(freemem);
-freemem = synth_setup(freemem, 0);
-synth_option_midi_sink(1);
 
-freemem = (active_notes = freemem) + 12;
-freemem = (prev_active_notes = freemem) + 12;
-freemem = (output_notes = freemem) + 128;
+// Set up sequence
 freemem = (sequence_pitch = freemem) + 1000;
 freemem = (sequence_velocity = freemem) + 1000;
-
 max_vel = 0;
 i = 0;
 while (i < 100) (
@@ -46,158 +43,116 @@ while (i < 100) (
 	);
 );
 
-midi_note = 0;
-debug.reset += 1;
-while (midi_note < 128) (
-	output_notes[midi_note] ? (
-		debug.note_count += 1;
-		debug.note = midi_note;
-		midisend(0, $x80, midi_note, 0);
-		output_notes[midi_note] = 0;
-	);
-	midi_note += 1;
-);
+// Set up note filtering
+freemem = (input_notes = freemem) + 128;
+freemem = (allowed_notes = freemem) + 128;
+freemem = (prev_output_notes = freemem) + 128;
+freemem = (output_notes = freemem) + 128;
 
 @block
-
-synth_block();
 
 !free_mode && play_state > 0 && play_state != 6 ? (
 	beats = beat_position;
 );
 beats_per_sample = tempo/60/srate;
 
+function recalculate(offset) local(i, note, note_start, note_end, tmp) (
+	i = 0;
+	while (i < 12) (
+		allowed_notes[i] = input_notes[i];
+		i += 1;
+	);
+	shift_up_only ? (
+		while (i < 128) (
+			allowed_notes[i] = max(input_notes[i], allowed_notes[i - 12]);
+			i += 1;
+		);
+	) : (
+		while (i < 128) (
+			note = i%12;
+			allowed_notes[note] = max(allowed_notes[note], input_notes[i]);
+			i += 1;
+		);
+		i = 0;
+		while (i < 12) (
+			note = i + 12;
+			while (note < 128) (
+				allowed_notes[note] = allowed_notes[i];
+				note += 12;
+			);
+			i += 1;
+		);
+	);
+
+	tmp = output_notes;
+	output_notes = prev_output_notes;
+	prev_output_notes = tmp;
+
+	i = 0;
+	while (i < 128) (
+		output_notes[i] = 0;
+		i += 1;
+	);
+
+	input_source ? (
+		ui_error("MIDI input not supported");
+	) : (
+		note_start = floor(output_centre - output_range);
+		note_end = ceil(output_centre + output_range);
+
+		i = note_start + 1;
+		while (i < note_end) (
+			allowed_notes[i] ? (
+				dist = (i - output_centre)/output_range;
+				output_notes[i] = allowed_notes[i]*(0.5 + 0.5*cos(dist*$pi));
+			);
+			i += 1;
+		);
+	);
+
+	i = 0;
+	while (i < 128) (
+		output_notes[i] > prev_output_notes[i] ? (
+			prev_output_notes[i] ? (
+				midisend(offset, $x80|output_channel, i, 0);
+			);
+			midisend(offset, $x90|output_channel, i, ceil(output_notes[i]));
+		) : output_notes[i] < prev_output_notes[i] ? (
+			!output_notes[i] ? (
+				midisend(offset, $x80|output_channel, i, 0);
+			); // TODO: optionally re-send with lower velocity?
+		);
+		i += 1;
+	);
+);
+
+current_offset = 0;
+needs_recalculate = 0;
+while (midirecv(offset, msg1, note, vel)) (
+	offset != current_offset ? (
+		needs_recalculate ? recalculate(current_offset);
+		needs_recalculate = 0;
+		current_offset = offset;
+	);
+
+	type = (msg1&240);
+	channel = (msg1&15);
+	note_modulo = note%12;
+	type == $x90 && vel != 0 ? (
+		needs_recalculate = 1;
+		input_notes[note] = vel;
+	) : type == $x80 || (type == $x90 && vel == 0) ? (
+		needs_recalculate = 1;
+		input_notes[note] = 0;
+	) : (
+		midisend(type|output_channel, msg1, note, vel);
+	);
+);
+needs_recalculate ? recalculate(current_offset);
+
 @sample
 
-tmp = prev_active_notes;
-prev_active_notes = active_notes;
-active_notes = tmp;
-i = 0;
-while (i < 12) (
-	active_notes[i] = 1000;
-	i += 1;
-);
-
-note = synth_note_first();
-polyphony = 0;
-while (note > 0) (
-	polyphony += 1;
-	synth_sustain_release(note) > 0 ? (
-		synth_stop(note);
-	) : (
-		midi_note = synth_midinote(note);
-		modulo_note = midi_note%12;
-		!octave_up_only ? midi_note = modulo_note;
-		active_notes[modulo_note] = min(active_notes[modulo_note], midi_note);
-	);
-	note = synth_note_next(note);
-);
-
-repeat_interval ? (
-	last_beat_interval = beat_interval;
-	beat_interval = floor(beats/repeat_interval);
-	beat_interval >= sequence_length ? (
-		beat_interval = beats = 0;
-	);
-	last_beat_interval != beat_interval ? (
-		last_beat_interval = beat_interval;
-		midi_note = 0;
-		while (midi_note < 128) (
-			output_notes[midi_note] ? (
-				midisend(0, $x80, midi_note, 0);
-				output_notes[midi_note] = 0;
-			);
-			midi_note += 1;
-		);
-	);
-
-	modulo_note = 0;
-	while (modulo_note < 12) (
-		prev_active_notes[modulo_note] = 1000;
-		modulo_note += 1;
-	);
-
-	sequence_target = output_centre + output_range*sequence_pitch[beat_interval];
-	sequence_range = output_range;
-	sequence_vel = sequence_velocity[beat_interval];
-) : (
-	sequence_target = output_centre;
-	sequence_range = output_range;
-	sequence_vel = 1;
-);
-
-closest_note = -1;
-closest_note_dist = 1000;
-
-modulo_note = 0;
-while (modulo_note < 12) (
-	active_notes[modulo_note] != prev_active_notes[modulo_note] ? (
-		midi_note = modulo_note;
-		lowest_note = active_notes[modulo_note];
-
-		while (midi_note < 128) (
-			dist = abs(midi_note - sequence_target);
-			dist < sequence_range && midi_note >= lowest_note ? (
-				// It should be playing
-				note_mode == 0 ? (
-					!output_notes[midi_note] ? (
-						vel = 0.5 + 0.5*cos(dist/sequence_range*$pi);
-						vel = floor(vel*sequence_vel*127);
-						vel > 0 ? (
-							output_notes[midi_note] = 1;
-							midisend(0, $x90, midi_note, vel);
-						);
-					);
-				) : (
-					dist < closest_note_dist ? (
-						closest_note = midi_note;
-						closest_note_dist = dist;
-					);
-				);
-			) : (
-				// It shouldn't be playing
-				output_notes[midi_note] ? (
-					midisend(0, $x80, midi_note, 0);
-					output_notes[midi_note] = 0;
-				);
-			);
-			midi_note += 12;
-		);
-	);
-	modulo_note += 1;
-);
-
-note_mode == 1 && closest_note >= 0 ? (
-	midi_note = closest_note;
-	!output_notes[midi_note] ? (
-		vel = floor(sequence_vel*127 + 0.5);
-		vel > 0 ? (
-			output_notes[midi_note] = 1;
-			midisend(0, $x90, midi_note, vel);
-		);
-	);
-	midi_note = 0;
-	while (midi_note < 128) (
-		// It shouldn't be playing
-		output_notes[midi_note] && midi_note != closest_note ? (
-			midisend(0, $x80, midi_note, 0);
-			output_notes[midi_note] = 0;
-		);
-		midi_note += 1;
-	);
-);
-
 beats += beats_per_sample;
-
-!polyphony ? (
-	free_mode ? (
-		beats = 0;
-	) : (
-		beats = beat_position;
-	);
-);
-
-synth_sample();
 
 @gfx 640 360
 
@@ -273,6 +228,12 @@ function push_labelled(label, number, number_format) (
 ui_start("main");
 
 ui_screen() == "main" ? (
+	ui_split_top(100);
+		control_background_technical();
+		ui_graph_step(output_notes, 128, 1, -127, 127);
+		control_finish_technical();
+	ui_pop();
+
 	ui_split_top(140);
 		ui_split_leftratio(4/7);
 			control_group("Range");
@@ -281,10 +242,10 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				output_range = labelled_dial(output_range, 1, 36, 2, "Span", "");
 			ui_split_next();
-				push_labelled("Shift", 0, octave_up_only ? "up only" : "up/down");
+				push_labelled("Shift", 0, shift_up_only ? "up only" : "up/down");
 					ui_push_heighttext(-1);
 						ui_pad2(-1, 0);
-						octave_up_only = control_switch(octave_up_only);
+						shift_up_only = control_switch(shift_up_only);
 					ui_pop();
 				ui_pop();
 			ui_split_next();
