@@ -46,6 +46,18 @@ while (i < 100) (
 	);
 );
 
+midi_note = 0;
+debug.reset += 1;
+while (midi_note < 128) (
+	output_notes[midi_note] ? (
+		debug.note_count += 1;
+		debug.note = midi_note;
+		midisend(0, $x80, midi_note, 0);
+		output_notes[midi_note] = 0;
+	);
+	midi_note += 1;
+);
+
 @block
 
 synth_block();
@@ -218,8 +230,8 @@ function edit_sequence(seq, low, high, is_vel) local(extra, i, y, x1, x2) (
 			gfx_rect(x1, y - 1, x2 - x1, 3);
 		);
 
-		ui_press() && (ui_mouse_x() + ui_left() > x1 && ui_mouse_x() + ui_left() < x2) ? (
-			seq[i] = high + ui_mouse_yratio()*(low - high);
+		(ui_drag() || ui_mouse_down()) && (ui_mouse_x() + ui_left() > x1 && ui_mouse_x() + ui_left() < x2) ? (
+			seq[i] = high + min(1, max(0, ui_mouse_yratio()))*(low - high);
 		);
 
 		i += 1;

@@ -21,7 +21,7 @@ function synth_option_midi_sink(value) (
 	synthx_midi_sink = value;
 );
 
-function synth_setup(freemem, custom_slots) (
+function synth_setup(freemem, custom_slots) local(i) (
 	synthx_polyphony = 16;
 	synthx_custom_offset = NOTE##;
 	synthx_timestep = 1/srate;
@@ -37,6 +37,11 @@ function synth_setup(freemem, custom_slots) (
 	freemem = (synthx_notestack = freemem) + synthx_polyphony*synthx_step;
 
 	synth_reset_controllers();
+	i = 0;
+	while (i < synthx_polyphony*synthx_step) (
+		synthx_notestack[i] = 0;
+		i += 1;
+	);
 	freemem;
 );
 
