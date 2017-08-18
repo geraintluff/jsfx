@@ -317,10 +317,13 @@ function labelled_switch(value, label, text) (
 ui_start("main");
 
 ui_screen() == "main" ? (
-	ui_split_top(30);
+	ui_split_top(50);
 		control_background_technical();
 		ui_graph_step(output_notes, 128, 1, 0, 127);
 		control_finish_technical();
+
+		ui_color(255, 255, 255);
+		ui_text("MIDI Harmony");
 	ui_pop();
 
 	ui_split_top(140);
