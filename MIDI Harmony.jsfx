@@ -12,6 +12,7 @@ slider6:fixed_sequence_enabled=0<0,1,1{off,on}>-Fixed sequence (on/off)
 slider7:sequence_length=8<2,64,1>-Sequence length
 slider8:sequence_interval_pow2=0<0,3,1{1/4,1/8,1/16,1/32}>-Sequence interval
 slider9:free_mode=0<0,1,1{beats,note-on}>-Sequence Sync
+slider10:midi_input_channel=1<1,16,1>-MIDI side-channel
 
 import ui-lib.jsfx-inc
 
@@ -49,12 +50,14 @@ freemem = (input_notes = freemem) + 128;
 input_polyphony = 0;
 freemem = (allowed_notes = freemem) + 128;
 freemem = (prev_output_notes = freemem) + 128;
+freemem = (target_notes = freemem) + 128;
 freemem = (output_notes = freemem) + 128;
 
 i = 0;
 while (i < 128) (
 	input_notes[i] = 0;
 	allowed_notes[i] = 0;
+	target_notes[i] = 0;
 	i += 1;
 );
 
@@ -104,8 +107,35 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_d
 	);
 
 	input_source ? (
-		ui_error("MIDI input not supported");
-		input_source = 0;
+		note = 0;
+		target_range = fixed_range;
+		while (note < 128) (
+			target_notes[note] ? (
+				target_vel = target_notes[note]/127;
+				closest_dist = 1000000;
+				closest_note = -1;
+
+				note_start = max(0, floor(note - target_range));
+				note_end = min(127, ceil(note + target_range));
+				i = note_start + 1;
+				while (i < note_end) (
+					// TODO: allow duplicate notes?
+					allowed_notes[i] ? (
+						dist = (i - note)/target_range;
+						dist = abs(dist);
+						closest_dist > dist ? (
+							closest_dist = dist;
+							closest_note = i;
+						);
+					);
+					i += 1;
+				);
+				closest_note >= 0 ? (
+					output_notes[closest_note] = max(output_notes[closest_note], target_vel*allowed_notes[closest_note]*(0.5 + 0.5*cos(closest_dist*$pi)));
+				);
+			);
+			note += 1;
+		);
 	) : (
 		target_centre = fixed_centre;
 		target_range = fixed_range;
@@ -178,7 +208,7 @@ function checkSequence(samples_elapsed, recalc) local(i, partial_beat) (
 	);
 	beats += beats_per_sample*samples_elapsed;
 	sequence_index = floor(beats*sequence_interval)%sequence_length;
-	sequence_index != prev_sequence_index && fixed_sequence_enabled ? (
+	sequence_index != prev_sequence_index && fixed_sequence_enabled && !input_source ? (
 		partial_beat = beats*sequence_interval;
 		partial_beat = partial_beat - floor(partial_beat);
 		current_offset = max(current_offset, current_offset + samples_elapsed - partial_beat/beats_per_sample);
@@ -208,17 +238,25 @@ while (midirecv(offset, msg1, note, vel)) (
 	);
 
 	type = (msg1&240);
-	channel = (msg1&15);
+	channel = (msg1&15) + 1;
 	note_modulo = note%12;
 	type == $x90 && vel != 0 ? (
 		needs_recalculate = 1;
-		!input_notes[note] ? input_polyphony += 1;
-		input_notes[note] = vel;
+		input_source && midi_input_channel == channel ? (
+			target_notes[note] = vel;
+		) : (
+			!input_notes[note] ? input_polyphony += 1;
+			input_notes[note] = vel;
+		);
 	) : type == $x80 || (type == $x90 && vel == 0) ? (
 		needs_recalculate = 1;
-		input_notes[note] ? (
-			input_polyphony -= 1;
-			input_notes[note] = 0;
+		input_source && midi_input_channel == channel ? (
+			target_notes[note] = 0;
+		) : (
+			input_notes[note] ? (
+				input_polyphony -= 1;
+				input_notes[note] = 0;
+			);
 		);
 	) : (
 		type == $xB0 ? ( // Controller
@@ -313,12 +351,28 @@ function labelled_switch(value, label, text) (
 	value;
 );
 
+function labelled_selector(value, value_text, up_value, down_value, label, text) (
+	push_labelled(label, 0, text);
+		ui_push_heighttext(-1);
+			ui_pad2(-1, 0);
+			value = control_selector(value, value_text, up_value, down_value);
+		ui_pop();
+	ui_pop();
+	value;
+);
+
 ui_start("main");
 
 ui_screen() == "main" ? (
 	ui_split_top(50);
 		control_background_technical();
 		ui_graph_step(output_notes, 128, 1, 0, 127);
+		ui_colora(255, 255, 255, 0.2);
+		ui_graph_step(allowed_notes, 128, 1, 0, 127);
+		input_source ? (
+			ui_color(64, 128, 192);
+			ui_graph_step(target_notes, 128, 1, 0, 127);
+		);
 		control_finish_technical();
 
 		ui_color(255, 255, 255);
@@ -337,7 +391,9 @@ ui_screen() == "main" ? (
 		ui_pop();
 
 		input_source ? (
-			ui_error("MIDI input not supported");
+			control_group("MIDI");
+			sprintf(#channel, "%i", midi_input_channel);
+			midi_input_channel = labelled_selector(midi_input_channel, #channel, min(16, midi_input_channel + 1), max(1, midi_input_channel - 1), "Control Channel", "");
 		) : (
 			ui_split_leftratio(4/4);
 				control_group("Range");
@@ -355,7 +411,8 @@ ui_screen() == "main" ? (
 	ui_pop();
 
 	input_source ? (
-		ui_error("MIDI input not supported");
+		0;
+		//ui_error("MIDI input not supported");
 	) : fixed_sequence_enabled ? (
 		ui_split_left(250);
 			control_group("Sequence");
