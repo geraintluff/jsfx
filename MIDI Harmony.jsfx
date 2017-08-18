@@ -3,7 +3,7 @@ desc:MIDI Harmony (by Geraint Luff)
 in_pin:none
 out_pin:none
 
-slider1:input_source=0<0,1,1{fixed,MIDI}>-Target
+slider1:input_source=0<0,1,1{fixed,MIDI}>-Source
 slider2:shift_up_only=0<0,1,1{up and down,up only}>-Shift mode
 slider3:fixed_note_mode=0<0,1,1{chord,note}>-Note
 slider4:fixed_centre=60<0,127,1>-Centre (MIDI note)
@@ -56,7 +56,7 @@ freemem = (output_notes = freemem) + 128;
 );
 beats_per_sample = tempo/60/srate;
 
-function recalculate(offset) local(i, note, note_start, note_end, tmp) (
+function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_dist, closest_note) (
 	i = 0;
 	while (i < 12) (
 		allowed_notes[i] = input_notes[i];
@@ -96,17 +96,35 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp) (
 
 	input_source ? (
 		ui_error("MIDI input not supported");
+		input_source = 0;
 	) : (
 		note_start = max(0, floor(fixed_centre - fixed_range));
 		note_end = min(127, ceil(fixed_centre + fixed_range));
 
+		fixed_note_mode ? (
+			closest_dist = 1000000;
+			closest_note = -1;
+		);
 		i = note_start + 1;
 		while (i < note_end) (
 			allowed_notes[i] ? (
 				dist = (i - fixed_centre)/fixed_range;
-				output_notes[i] = allowed_notes[i]*(0.5 + 0.5*cos(dist*$pi));
+				fixed_note_mode ? (
+					dist = abs(dist);
+					// TODO: switch for this
+					// dist /= allowed_notes[i];
+					closest_dist > dist ? (
+						closest_dist = dist;
+						closest_note = i;
+					);
+				) : (
+					output_notes[i] = allowed_notes[i]*(0.5 + 0.5*cos(dist*$pi));
+				);
 			);
 			i += 1;
+		);
+		fixed_note_mode && closest_note >= 0 ? (
+			output_notes[closest_note] = allowed_notes[closest_note]*(0.5 + 0.5*cos(closest_dist*$pi));
 		);
 	);
 
@@ -214,23 +232,6 @@ function edit_sequence(seq, low, high, is_vel) local(extra, i, y, x1, x2) (
 	control_finish_technical();
 );
 
-function labelled_dial(value, low, high, bias, label, number_format) (
-	ui_push_height(50);
-		value = control_dial(value, low, high, bias);
-	ui_pop();
-	ui_push_above(50);
-		ui_align(0.5, 0.85);
-		ui_text(label);
-	ui_pop();
-	ui_push_below(50);
-		ui_align(0.5, 0.15);
-		number_format >= 0 ? (
-			ui_textnumber(value, number_format);
-		);
-	ui_pop();
-	value;
-);
-
 function push_labelled(label, number, number_format) (
 	ui_push_above(50);
 		ui_align(0.5, 0.85);
@@ -239,10 +240,27 @@ function push_labelled(label, number, number_format) (
 	ui_push_below(50);
 		ui_align(0.5, 0.15);
 		number_format >= 0 ? (
-			ui_textnumber(value, number_format);
+			ui_textnumber(number, number_format);
 		);
 	ui_pop();
 	ui_push_height(50);
+);
+
+function labelled_dial(value, low, high, bias, label, number_format) (
+	push_labelled(label, value, number_format);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, text) (
+	push_labelled(label, 0, text);
+		ui_push_heighttext(-1);
+			ui_pad2(-1, 0);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	value;
 );
 
 ui_start("main");
@@ -250,34 +268,37 @@ ui_start("main");
 ui_screen() == "main" ? (
 	ui_split_top(100);
 		control_background_technical();
-		ui_graph_step(output_notes, 128, 1, -127, 127);
+		ui_graph_step(output_notes, 128, 1, 0, 127);
 		control_finish_technical();
 	ui_pop();
 
 	ui_split_top(140);
-		ui_split_leftratio(4/7);
-			control_group("Range");
-			ui_split_leftratio(1/4);
-				fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", "");
+		ui_split_leftratio(2/7);
+			control_group("Mode");
+			ui_split_leftratio(1/2);
+				input_source = labelled_switch(input_source, "Target", input_source ? "MIDI" : "fixed");
 			ui_split_next();
-				fixed_range = labelled_dial(fixed_range, 1, 36, 2, "Span", "");
+				shift_up_only = !labelled_switch(!shift_up_only, "Shift", shift_up_only ? "up only" : "up/down");
 			ui_split_next();
-				push_labelled("Shift", 0, shift_up_only ? "up only" : "up/down");
-					ui_push_heighttext(-1);
-						ui_pad2(-1, 0);
-						shift_up_only = control_switch(shift_up_only);
-					ui_pop();
-				ui_pop();
-			ui_split_next();
-				push_labelled("Mode", 0, fixed_note_mode ? "note" : "chord");
-					ui_push_heighttext(-1);
-						ui_pad2(-1, 0);
-						fixed_note_mode = control_switch(fixed_note_mode);
-					ui_pop();
-				ui_pop();
 			ui_pop();
 		ui_pop();
+		input_source ? (
+			ui_error("MIDI input not supported");
+		) : (
+			ui_split_leftratio(3/5);
+				control_group("Range");
+				ui_split_leftratio(1/3);
+					fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", "");
+				ui_split_next();
+					fixed_range = labelled_dial(fixed_range, 1, 36, 1.4, "Range", "%i st");
+				ui_split_next();
+					fixed_note_mode = !labelled_switch(!fixed_note_mode, "Output", fixed_note_mode ? "note" : "chord");
+				ui_pop();
+			ui_pop();
+		);
+	ui_pop();
 
+	ui_split_top(140);
 		ui_split_leftratio(3/3);
 			control_group("Sequence");
 			ui_split_leftratio(1/3);
