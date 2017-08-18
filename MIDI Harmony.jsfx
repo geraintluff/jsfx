@@ -178,9 +178,7 @@ function checkSequence(samples_elapsed, recalc) local(i, partial_beat) (
 	);
 	beats += beats_per_sample*samples_elapsed;
 	sequence_index = floor(beats*sequence_interval)%sequence_length;
-	sequence_index != prev_sequence_index ? (
-		prev_sequence_index = sequence_index;
-
+	sequence_index != prev_sequence_index && fixed_sequence_enabled ? (
 		partial_beat = beats*sequence_interval;
 		partial_beat = partial_beat - floor(partial_beat);
 		current_offset = max(current_offset, current_offset + samples_elapsed - partial_beat/beats_per_sample);
@@ -195,6 +193,7 @@ function checkSequence(samples_elapsed, recalc) local(i, partial_beat) (
 		// TODO: should this always recalculate? Why doesn't that work?
 		recalc ? recalculate(current_offset);
 	);
+	prev_sequence_index = sequence_index;
 );
 
 current_offset = 0;
