@@ -5,12 +5,13 @@ out_pin:none
 
 slider1:input_source=0<0,1,1{fixed,MIDI}>-Source
 slider2:shift_up_only=0<0,1,1{up and down,up only}>-Shift mode
-slider3:fixed_note_mode=0<0,1,1{chord,note}>-Note
-slider4:fixed_centre=60<0,127,1>-Centre (MIDI note)
-slider5:fixed_range=12<1,36,1>-Range (MIDI note)
-slider6:sequence_length=8<2,32,1>-Sequence length
-slider7:repeat_interval=0<0,1,0.25>-Interval (1/4)
-slider8:free_mode=1<0,1,1{beats,note-on}>-Sequence Sync
+slider3:fixed_note_mode=0<0,1,1{chord,note}>-Fixed Mode (chord/note)
+slider4:fixed_centre=60<0,127,1>-Fixed Centre (MIDI note)
+slider5:fixed_range=12<1,36,1>-Fixed Range (semitones)
+slider6:fixed_sequence=0<0,1,1{off,on}>-Fixed sequence (on/off)
+slider7:sequence_length=8<2,64,1>-Sequence length
+slider8:repeat_interval=0<0,1,0.25>-Interval (1/4)
+slider9:free_mode=1<0,1,1{beats,note-on}>-Sequence Sync
 
 import ui-lib.jsfx-inc
 
