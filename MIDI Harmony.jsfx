@@ -12,7 +12,8 @@ slider6:fixed_sequence_enabled=0<0,1,1{off,on}>-Fixed sequence (on/off)
 slider7:sequence_length=8<2,64,1>-Sequence length
 slider8:sequence_interval_pow2=0<0,3,1{1/4,1/8,1/16,1/32}>-Sequence interval
 slider9:free_mode=0<0,1,1{beats,note-on}>-Sequence Sync
-slider10:midi_input_channel=1<1,16,1>-MIDI side-channel
+slider10:midi_input_channel=16<1,16,1>-MIDI side-channel
+slider11:midi_input_transpose=0<-24,24,1>-MIDI transpose
 
 import ui-lib.jsfx-inc
 
@@ -111,17 +112,18 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_d
 		target_range = fixed_range;
 		while (note < 128) (
 			target_notes[note] ? (
+				target_centre = note + midi_input_transpose;
 				target_vel = target_notes[note]/127;
 				closest_dist = 1000000;
 				closest_note = -1;
 
-				note_start = max(0, floor(note - target_range));
-				note_end = min(127, ceil(note + target_range));
+				note_start = max(0, floor(target_centre - target_range));
+				note_end = min(127, ceil(target_centre + target_range));
 				i = note_start + 1;
 				while (i < note_end) (
 					// TODO: allow duplicate notes?
 					allowed_notes[i] ? (
-						dist = (i - note)/target_range;
+						dist = (i - target_centre)/target_range;
 						dist = abs(dist);
 						closest_dist > dist ? (
 							closest_dist = dist;
@@ -392,8 +394,14 @@ ui_screen() == "main" ? (
 
 		input_source ? (
 			control_group("MIDI");
-			sprintf(#channel, "%i", midi_input_channel);
-			midi_input_channel = labelled_selector(midi_input_channel, #channel, min(16, midi_input_channel + 1), max(1, midi_input_channel - 1), "Control Channel", "");
+			ui_split_leftratio(1/4);
+				sprintf(#channel, "%i", midi_input_channel);
+				midi_input_channel = labelled_selector(midi_input_channel, #channel, min(16, midi_input_channel + 1), max(1, midi_input_channel - 1), "Control Channel", "");
+			ui_split_next();
+				fixed_range = labelled_dial(fixed_range, 1, 36, 1.4, "Range", "%i st");
+			ui_split_next();
+				midi_input_transpose = labelled_dial(midi_input_transpose, -24, 24, 0, "Transpose", "%i st");
+			ui_pop();
 		) : (
 			ui_split_leftratio(4/4);
 				control_group("Range");
