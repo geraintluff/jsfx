@@ -384,15 +384,15 @@ ui_screen() == "main" ? (
 		ui_pop();
 
 		ui_split_topratio(0.5);
-			ui_split_lefttext("pitch");
-				ui_text("pitch");
-			ui_pop();
 			edit_sequence(sequence_pitch, -1, 1, 0);
+			ui_align(0, 0);
+			ui_pad();
+			ui_text("pitch");
 		ui_split_next();
-			ui_split_lefttext("pitch");
-				ui_text("vel");
-			ui_pop();
 			edit_sequence(sequence_velocity, 0, 1, 1);
+			ui_align(0, 0);
+			ui_pad();
+			ui_text("vel");
 		ui_pop();
 	);
 ) : control_system();
