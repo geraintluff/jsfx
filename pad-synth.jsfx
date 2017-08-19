@@ -301,7 +301,13 @@ function reset_spread_to_gaussian() local(i, std) (
 	);
 	spread_update();
 );
-reset_spread_to_gaussian();
+needs_reset = 1;
+i = 0;
+while (i < options_spreadsize) (
+	spread_density[i] ? needs_reset = 0;
+	i += 1;
+);
+needs_reset ? reset_spread_to_gaussian();
 
 freemem = ui_setup(freemem);
 
