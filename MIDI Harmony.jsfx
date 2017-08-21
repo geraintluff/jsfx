@@ -183,6 +183,8 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_d
 			prev_output_notes[i] ? (
 				midisend(offset, $x80|output_channel, i, 0);
 			);
+
+			debug.note_on_offset = offset;
 			midisend(offset, $x90|output_channel, i, max(1, min(127, ceil(output_notes[i]))));
 		) : output_notes[i] < prev_output_notes[i] ? (
 			!output_notes[i] ? (
@@ -203,40 +205,41 @@ function set_sustain(value) (
 
 sequence_interval = 1<<sequence_interval_pow2;
 
-function checkSequence(samples_elapsed, recalc) local(i, partial_beat) (
+function moveToOffset(next_offset) local(i, partial_beat) (
 	free_mode && !input_polyphony ? (
 		// TODO: have a controller for "silence ms", and only reset after that much gap
 		beats = 0;
 	);
+	samples_elapsed = next_offset - current_offset;
 	beats += beats_per_sample*samples_elapsed;
 	sequence_index = floor(beats*sequence_interval)%sequence_length;
 	sequence_index != prev_sequence_index && fixed_sequence_enabled && !input_source ? (
 		partial_beat = beats*sequence_interval;
-		partial_beat = partial_beat - floor(partial_beat);
-		current_offset = max(current_offset, current_offset + samples_elapsed - partial_beat/beats_per_sample);
+		partial_beat = (partial_beat - floor(partial_beat))/sequence_interval;
+		current_offset = max(current_offset, floor(next_offset - partial_beat/beats_per_sample + 0.5));
 		i = 0;
 		while (i < 128) (
 			output_notes[i] ? (
-				midisend(current_offset, $x80|output_channel, i, 0);
+				midisend(max(0, current_offset - 1), $x80|output_channel, i, 0);
 				output_notes[i] = 0;
 			);
 			i += 1;
 		);
-		// TODO: should this always recalculate? Why doesn't that work?
-		recalc ? recalculate(current_offset);
+		needs_recalculate = 1;
+	) : (
+		current_offset = next_offset;
 	);
 	prev_sequence_index = sequence_index;
 );
 
 current_offset = 0;
 needs_recalculate = 0;
-checkSequence(0, 0);
+moveToOffset(0);
 while (midirecv(offset, msg1, note, vel)) (
-	offset != current_offset ? (
+	while (offset != current_offset) (
 		needs_recalculate ? recalculate(current_offset);
 		needs_recalculate = 0;
-		checkSequence(offset - current_offset, 0);
-		current_offset = offset;
+		moveToOffset(offset);
 	);
 
 	type = (msg1&240);
@@ -267,7 +270,6 @@ while (midirecv(offset, msg1, note, vel)) (
 			) : note == 121 ? (
 				set_sustain(0);
 			) : note == 123 || note == 120 ? (
-				debug.resets += 1;
 				note = 0;
 				while (note < 128) (
 					input_notes[note] = 0;
@@ -276,11 +278,14 @@ while (midirecv(offset, msg1, note, vel)) (
 				);
 			);
 		);
-		midisend(type|output_channel, msg1, note, vel);
+		midisend(offset, type|output_channel, note, vel);
 	);
 );
-needs_recalculate ? recalculate(current_offset);
-checkSequence(samplesblock - current_offset, 1);
+while (samplesblock != current_offset) (
+	needs_recalculate ? recalculate(current_offset);
+	needs_recalculate = 0;
+	moveToOffset(samplesblock);
+);
 
 @gfx 640 360
 
