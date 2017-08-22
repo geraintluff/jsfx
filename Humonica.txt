@@ -43,7 +43,9 @@ freemem = synth_setup(freemem, NOTE##);
 
 freemem = filter_buffer_init(filter_left = freemem);
 freemem = filter_buffer_init(filter_right = freemem);
-// NOTE#INDEX, NOTE#WAVELENGTH
+
+freemem = filter_buffer_init(freq_factor_filter = freemem);
+filter_buffer_highpass(freq_factor_filter, 3, 1.5);
 
 @block
 
@@ -81,7 +83,7 @@ freq_slew = 1/(interval_samples + 0.03*srate);
 tonality_smooth_seconds = 0.05;
 tonality_smooth_slew = 1/(tonality_smooth_seconds*srate);
 
-wavelength_average_seconds = 0.05;
+wavelength_average_seconds = 0.3;
 wavelength_average_slew = 1/(wavelength_average_seconds*srate);
 //wavelength_average = target_wavelength = 0;
 
@@ -225,9 +227,15 @@ interval_index >= interval_samples ? (
 kernel_crossfade = interval_index/interval_samples;
 
 vibrato_tracking ? (
+	low_factor = 0.98;
+	high_factor = 1/low_factor;
 	wavelength_average += (target_wavelength - wavelength_average)*wavelength_average_slew;
+	wavelength_average = max(target_wavelength*low_factor, min(target_wavelength*high_factor, wavelength_average));
 	target_ratio = target_wavelength/wavelength_average;
-	target_ratio = max(0.94, min(1.065, target_ratio));
+	//target_ratio = max(low_factor, min(high_factor, target_ratio));
+	target_ratio = 1 + filter_buffer_sample(freq_factor_filter, target_ratio - 1);
+	target_ratio = max(low_factor, min(high_factor, target_ratio));
+
 	freq_factor += (target_ratio - freq_factor)*freq_slew;
 ) : (
 	freq_factor = 1;
@@ -406,7 +414,7 @@ ui_screen() == "main" ? (
 
 		control_group("Pitch & Tonality");
 		ui_split_leftratio(1/2);
-			vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Pitch", "tracking"));
+			vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Vib", "tracking"));
 		ui_split_next();
 			tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit");
 		ui_pop();

@@ -40,11 +40,13 @@ freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
 
 freemem = ui_setup(freemem);
-freemem = synth_setup(freemem, 3/*NOTE: INDEX, WAVELENGTH, TIMBRE_FACTOR*/);
+freemem = synth_setup(freemem, 3/*NOTE: TIMBRE_FACTOR, WAVELENGTH, INDEX*/);
 
 freemem = filter_buffer_init(filter_left = freemem);
 freemem = filter_buffer_init(filter_right = freemem);
-// 0/*NOTE:INDEX*/, 1/*NOTE:WAVELENGTH*/
+
+freemem = filter_buffer_init(freq_factor_filter = freemem);
+filter_buffer_highpass(freq_factor_filter, 3, 1.5);
 
 @block
 
@@ -68,7 +70,7 @@ latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
 
 note = synth_note_first();
 while (note > 0) (
-	note[2/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
+	note[0/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
 	note = synth_note_next(note);
 );
 
@@ -82,7 +84,7 @@ freq_slew = 1/(interval_samples + 0.03*srate);
 tonality_smooth_seconds = 0.05;
 tonality_smooth_slew = 1/(tonality_smooth_seconds*srate);
 
-wavelength_average_seconds = 0.05;
+wavelength_average_seconds = 0.3;
 wavelength_average_slew = 1/(wavelength_average_seconds*srate);
 //wavelength_average = target_wavelength = 0;
 
@@ -226,9 +228,15 @@ interval_index >= interval_samples ? (
 kernel_crossfade = interval_index/interval_samples;
 
 vibrato_tracking ? (
+	low_factor = 0.98;
+	high_factor = 1/low_factor;
 	wavelength_average += (target_wavelength - wavelength_average)*wavelength_average_slew;
+	wavelength_average = max(target_wavelength*low_factor, min(target_wavelength*high_factor, wavelength_average));
 	target_ratio = target_wavelength/wavelength_average;
-	target_ratio = max(0.94, min(1.065, target_ratio));
+	//target_ratio = max(low_factor, min(high_factor, target_ratio));
+	target_ratio = 1 + filter_buffer_sample(freq_factor_filter, target_ratio - 1);
+	target_ratio = max(low_factor, min(high_factor, target_ratio));
+
 	freq_factor += (target_ratio - freq_factor)*freq_slew;
 ) : (
 	freq_factor = 1;
@@ -242,8 +250,8 @@ note = synth_note_first();
 while (note > 0) (
 	synth_needs_init(note) ? (
 		note[1/*NOTE:WAVELENGTH*/] = srate/synth_freq(note);
-		note[0/*NOTE:INDEX*/] = floor(rand()*note[1/*NOTE:WAVELENGTH*/]);
-		note[2/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
+		note[2/*NOTE:INDEX*/] = floor(rand()*note[1/*NOTE:WAVELENGTH*/]);
+		note[0/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
 	);
 
 	amp = synth_velocity(note)/127;
@@ -262,7 +270,7 @@ while (note > 0) (
 			);
 		);
 
-		index = (note[0/*NOTE:INDEX*/] += 1);
+		index = (note[2/*NOTE:INDEX*/] += 1);
 		wavelength = note[1/*NOTE:WAVELENGTH*/];
 		index >= wavelength ? (
 			while (index >= wavelength) (
@@ -273,10 +281,10 @@ while (note > 0) (
 			while (index >= wavelength) (
 				index -= wavelength;
 			);
-			note[0/*NOTE:INDEX*/] = index;
+			note[2/*NOTE:INDEX*/] = index;
 		);
 
-		timbre_factor = timbre_shift_factor*note[2/*NOTE:TIMBRE_FACTOR*/];
+		timbre_factor = timbre_shift_factor*note[0/*NOTE:TIMBRE_FACTOR*/];
 		phase = index/wavelength;
 		indexA = min(index*timbre_factor, kernel_length*0.5 - 1);
 		indexB = max(kernel_length*0.5, kernel_length - wavelength*timbre_factor + indexA);
@@ -407,7 +415,7 @@ ui_screen() == "main" ? (
 
 		control_group("Pitch & Tonality");
 		ui_split_leftratio(1/2);
-			vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Pitch", "tracking"));
+			vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Vib", "tracking"));
 		ui_split_next();
 			tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit");
 		ui_pop();

@@ -35,8 +35,6 @@ function filter_buffer_lowpass(obj, freq, BW) local(inv_a0, b1, w0, sin_w0, Q, a
 	sin_w0 = sin(w0);
 	cos_w0 = cos(w0);
 
-	debug.BW = BW;
-	debug.x = log(2)*0.5*BW*w0/sin_w0;
 	BW > 0 ? (
 		Q = 0.5/sinh(log(2)*0.5*BW*w0/sin_w0);
 	) : (
@@ -49,6 +47,26 @@ function filter_buffer_lowpass(obj, freq, BW) local(inv_a0, b1, w0, sin_w0, Q, a
 	obj[1/*FILTER:A2*/] = (1 - alpha)*inv_a0;
 	b0 = obj[2/*FILTER:B0*/] = (1 - cos_w0)*0.5*inv_a0;
 	obj[3/*FILTER:B1*/] = 2*b0;
+	obj[4/*FILTER:B2*/] = b0;
+);
+
+function filter_buffer_highpass(obj, freq, BW) local(inv_a0, b1, w0, sin_w0, Q, alpha) (
+	w0 = 2*$pi*min(0.49, freq/srate);
+	sin_w0 = sin(w0);
+	cos_w0 = cos(w0);
+
+	BW > 0 ? (
+		Q = 0.5/sinh(log(2)*0.5*BW*w0/sin_w0);
+	) : (
+		Q = -BW;
+	);
+	alpha = sin_w0*0.5/Q;
+
+	inv_a0 = 1/(1 + alpha);
+	obj[0/*FILTER:A1*/] = -2*cos_w0*inv_a0;
+	obj[1/*FILTER:A2*/] = (1 - alpha)*inv_a0;
+	b0 = obj[2/*FILTER:B0*/] = (1 + cos_w0)*0.5*inv_a0;
+	obj[3/*FILTER:B1*/] = -2*b0;
 	obj[4/*FILTER:B2*/] = b0;
 );
 
