@@ -31,6 +31,7 @@ options_wavetables_samplerate = 48000; // Samples are rendered at this frequency
 options_wavetables_sampleslength = 65536; // Keeps the repetition just over a second - must be power of 2
 options_polyphony = 64;
 options_spreadsize = 1024;
+options_polyphonic_aftertouch = 1;
 
 //////////////// Setup and Memory Layout ////////////////
 
@@ -404,6 +405,9 @@ function get_effect_name(effectIndex) local(target_effect) (
 		target_effect[1/*FX:NAME*/];
 	);
 );
+
+polyphonic_aftertouch = freemem;
+freemem = polyphonic_aftertouch + 128;
 
 controller_values = freemem;
 freemem = controller_values + 128;
@@ -886,7 +890,7 @@ function effect_note_exec_filter(effect, note, notestate) local(logfreq, freq, Q
 //////////////// Controller Mod ////////////////
 
 8/*CONMOD_NOTE_STATE: TARGET, MODTYPE, SOURCE, AMOUNT, CURVE_POWER, OFFSET, VALUE, SLEWFACTOR*/ > note_fx_statelength ? ui_error("note state too small for controller mod");
-8/*CONMOD_STATE: AMP*/ > fx_list_statelength ? ui_error("effect state too small for controller mod");
+9/*CONMOD_STATE: AMP*/ > fx_list_statelength ? ui_error("effect state too small for controller mod");
 effectspec = fx_spec_start + fx_spec_step*2/*FX_SPECLIST_INDEX:CONMOD*/;
 effectspec[0/*FX_HEADER:NAME*/] = "Controller/Note/Vel";
 effectspec[1/*FX_HEADER:MODCOUNT*/] = 0;
@@ -904,6 +908,7 @@ function effect_init_conmod(effect) local(state) (
 	state[4/*CONMOD_STATE:ZERO_POINT*/] = 0.5;
 	state[5/*CONMOD_STATE:CURVE*/] = 0;
 	state[6/*CONMOD_STATE:INVERT_SOURCE*/] = 0;
+	state[7/*CONMOD_STATE:SMOOTHING_MS*/] = 5;
 );
 effectspec[3/*FX_HEADER:CONFIG_UI_FUNCTION*/] = 3/*effect_ui_conmod*/;
 function effect_conmod_curve(value, zero_point, curve) local(curvepower) (
@@ -922,13 +927,23 @@ function effect_ui_conmod(effect) local(state, effect_index, mod_range, source, 
 				ui_padright();
 				ui_text("source");
 			ui_pop();
-			ui_split_rightratio(0.2);
-				ui_padleft();
-				ui_align(0, -1);
-				ui_text("invert");
+			ui_split_rightratio(0.3);
+				ui_split_leftratio(0.6);
+					ui_align(1, -1);
+					ui_text("Smooth");
+				ui_pop();
+				state[7/*CONMOD_STATE:SMOOTHING_MS*/] = control_dial(state[7/*CONMOD_STATE:SMOOTHING_MS*/], 1, 100, 3);
+			ui_split_next();
+				ui_split_leftratio(0.6);
+					ui_padright();
+					ui_align(1, -1);
+					ui_text("invert");
+				ui_pop();
+
+				state[6/*CONMOD_STATE:INVERT_SOURCE*/] = control_switch(state[6/*CONMOD_STATE:INVERT_SOURCE*/]);
 			ui_pop();
 
-			ui_split_leftratio(0.8);
+			ui_push();
 				ui_padright();
 
 				source = state[2/*CONMOD_STATE:SOURCE*/];
@@ -952,8 +967,6 @@ function effect_ui_conmod(effect) local(state, effect_index, mod_range, source, 
 				ui_align(0, -1);
 				state[2/*CONMOD_STATE:SOURCE*/] = control_selector(source, source_name, source_next, source_prev);
 			ui_pop();
-
-			state[6/*CONMOD_STATE:INVERT_SOURCE*/] = control_switch(state[6/*CONMOD_STATE:INVERT_SOURCE*/]);
 		ui_pop();
 	ui_split_next();
 		ui_push_heighttext(-1);
@@ -1066,7 +1079,7 @@ function effect_delete_conmod(effect, fxIndex) local(state) (
 		// Our target was just deleted - reset the effect
 		effect_init_conmod(effect);
 		// Amplitude to zero
-		state[7/*CONMOD_STATE:AMP*/] = 0;
+		state[8/*CONMOD_STATE:AMP*/] = 0;
 	);
 );
 effectspec[6/*FX_HEADER:SETUP_NOTE_FUNCTION*/] = 3/*effect_note_setup_conmod*/;
@@ -1084,8 +1097,8 @@ function effect_note_setup_conmod(effect, note, notestate) local(state) (
 	notestate[4/*CONMOD_NOTE_STATE:CURVE_POWER*/] = exp(state[5/*CONMOD_STATE:CURVE*/]);
 	notestate[5/*CONMOD_NOTE_STATE:OFFSET*/] = pow(state[4/*CONMOD_STATE:ZERO_POINT*/], notestate[4/*CONMOD_NOTE_STATE:CURVE_POWER*/]);
 
-	notestate[6/*CONMOD_NOTE_STATE:VALUE*/] = -1;
-	notestate[7/*CONMOD_NOTE_STATE:SLEWFACTOR*/] = 1/0.005/srate;
+	notestate[6/*CONMOD_NOTE_STATE:VALUE*/] = -10000;
+	notestate[7/*CONMOD_NOTE_STATE:SLEWFACTOR*/] = 1/(state[7/*CONMOD_STATE:SMOOTHING_MS*/]*0.001*srate);
 );
 effectspec[7/*FX_HEADER:PRE_EXEC_NOTE_FUNCTION*/] = 0;
 effectspec[8/*FX_HEADER:EXEC_NOTE_FUNCTION*/] = 3/*effect_note_exec_conmod*/;
@@ -1100,10 +1113,11 @@ function effect_note_exec_conmod(effect, note, notestate) local(source, value, t
 		);
 
 		value = notestate[3/*CONMOD_NOTE_STATE:AMOUNT*/]*2*(pow(value, notestate[4/*CONMOD_NOTE_STATE:CURVE_POWER*/]) - notestate[5/*CONMOD_NOTE_STATE:OFFSET*/]);
-		notestate[6/*CONMOD_NOTE_STATE:VALUE*/] < 0 ? (
+		notestate[6/*CONMOD_NOTE_STATE:VALUE*/] == -10000 ? (
 			notestate[6/*CONMOD_NOTE_STATE:VALUE*/] = value;
 		) : (
 			value = notestate[6/*CONMOD_NOTE_STATE:VALUE*/] = notestate[6/*CONMOD_NOTE_STATE:VALUE*/] + (value - notestate[6/*CONMOD_NOTE_STATE:VALUE*/])*notestate[7/*CONMOD_NOTE_STATE:SLEWFACTOR*/];
+			debug.slewfactor = notestate[7/*CONMOD_NOTE_STATE:SLEWFACTOR*/];
 		);
 		notestate[1/*CONMOD_NOTE_STATE:MODTYPE*/] == 1/*FX_MODTYPE:ADD*/ ? (
 			note[targetIndex] += value;
@@ -1902,6 +1916,8 @@ function reset_to_defaults() (
 	param_release = 0.03;
 	param_env_linear = 0;
 	param_vel_power = 1;
+	param_polytonic_aftertouch_enabled = 1;
+	param_polyphonic_aftertouch_smoothing_ms = 150;
 
 	fx_list_count = 0;
 
@@ -2072,6 +2088,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			note[11/*NOTE:CHANNEL*/] = midi_channel;
 			note[5/*NOTE:NOTE*/] = midi_msg2;
 			note[4/*NOTE:VEL*/] = midi_msg3;
+			polyphonic_aftertouch[midi_msg2] = midi_msg3; // Initial aftertouch value
 			note[6/*NOTE:SECONDSFROMSTART*/] = -midi_offset*invsrate;
 			note[9/*NOTE:SECONDSFROMEND*/] = -note_maxduration - midi_offset*invsrate;
 			note[10/*NOTE:DECAYRATE*/] = 0;
@@ -2110,6 +2127,8 @@ while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 			note += notes_step;
 			note < notes_end;
 		);
+	) : (midi_type == 10) ? (
+		polyphonic_aftertouch[midi_msg2] = midi_msg3;
 	) : (midi_type == 11) ? (
 		midi_msg2 == 121 ? (
 			reset_controllers();
@@ -2141,12 +2160,16 @@ while (
 	note < notes_end;
 );
 
+polyphonic_aftertouch_slew = param_polytonic_aftertouch_enabled ? (
+	1/(srate*param_polyphonic_aftertouch_smoothing_ms*0.001);
+) : 0;
+
 @sample
 
 //////////////// Sampler ////////////////
 
 note = notes_start;
-while (
+while (note < note_active_end) (
 	note[3/*NOTE:ACTIVE*/] ? (
 		secondsFromStart = note[6/*NOTE:SECONDSFROMSTART*/];
 		secondsFromEnd = note[9/*NOTE:SECONDSFROMEND*/];
@@ -2155,6 +2178,11 @@ while (
 			note[0/*NOTE:FREQ*/] = note[12/*NOTE:FREQ_BASE*/];
 			note[1/*NOTE:AMP*/] = note[13/*NOTE:AMP_BASE*/];
 			note[2/*NOTE:GRANULAR_RATE_LOG*/] = 0;
+
+			polyphonic_aftertouch_slew && secondsFromEnd < 0 ? (
+				note[4/*NOTE:VEL*/] += (polyphonic_aftertouch[note[5/*NOTE:NOTE*/]] - note[4/*NOTE:VEL*/])*polyphonic_aftertouch_slew;
+				note[13/*NOTE:AMP_BASE*/] = volume*pow(note[4/*NOTE:VEL*/]/127, param_vel_power);
+			);
 
 			// Sample from waveforms
 			wavetable = wavetables_start + note[14/*NOTE:WAVEINDEX_FROM*/]*wavetable_step;
@@ -2291,7 +2319,6 @@ while (
 		);
 	);
 	note += notes_step;
-	note < note_active_end;
 );
 
 @gfx 580 460
@@ -2722,7 +2749,7 @@ ui_screen() == "main" ? (
 			ui_text("Curve");
 		ui_pop();
 
-		ui_split_leftratio(0.4);
+		ui_split_leftratio(0.25);
 			ui_push_heighttext(-1);
 				ui_align(0, -1); // Align left
 				param_env_linear = control_selector(param_env_linear, param_env_linear ? "Linear" : "Tapered", !param_env_linear, !param_env_linear);
@@ -2730,17 +2757,32 @@ ui_screen() == "main" ? (
 		ui_pop();
 
 		ui_push_height(50);
-			ui_align(0.3, -1);
+			ui_split_leftratio(0.4);
+				ui_align(0.2, -1);
+				ui_push_width(50);
+					param_vel_power = control_dial(param_vel_power, 0, 2, 0);
+					ui_click() && ui_clickcount() == 2 ? (
+						param_vel_power = 1;
+					);
+				ui_pop();
+				ui_push_rightof(50);
+					ui_padleft();
+					ui_align(0, -1);
+					ui_text("Velocity");
+				ui_pop();
+			ui_pop();
+
+			ui_align(0.1, -1);
 			ui_push_width(50);
-				param_vel_power = control_dial(param_vel_power, 0, 2, 0);
+				param_polyphonic_aftertouch_smoothing_ms = control_dial(param_polyphonic_aftertouch_smoothing_ms, 10, 300, 2);
 				ui_click() && ui_clickcount() == 2 ? (
-					param_vel_power = 1;
+					param_polyphonic_aftertouch_smoothing_ms = 150;
 				);
 			ui_pop();
 			ui_push_rightof(50);
 				ui_padleft();
 				ui_align(0, -1);
-				ui_text("Velocity");
+				ui_text("Aftertouch smooth");
 			ui_pop();
 		ui_pop();
 	ui_pop();
@@ -3131,6 +3173,10 @@ function read_var() local(var_id, i, effect) (
 		param_env_linear = read_plain_var();
 	) : var_id == 98/*VAR_ID:param_vel_power*/ ? (
 		param_vel_power = read_plain_var();
+	) : var_id == 97/*VAR_ID:param_polytonic_aftertouch_enabled*/ ? (
+		param_polytonic_aftertouch_enabled = read_plain_var();
+	) : var_id == 96/*VAR_ID:param_polyphonic_aftertouch_smoothing_ms*/ ? (
+		param_polyphonic_aftertouch_smoothing_ms = read_plain_var();
 	) : var_id == 100/*VAR_ID:param_attack*/ ? (
 		param_attack = read_plain_var();
 	) : var_id == 101/*VAR_ID:param_decay*/ ? (
@@ -3238,6 +3284,8 @@ file_avail(0) >= 0 ? (
 	write_plain_var(103/*VAR_ID:param_release*/, param_release);
 	write_plain_var(99/*VAR_ID:param_env_linear*/, param_env_linear);
 	write_plain_var(98/*VAR_ID:param_vel_power*/, param_vel_power);
+	write_plain_var(97/*VAR_ID:param_polytonic_aftertouch_enabled*/, param_polytonic_aftertouch_enabled);
+	write_plain_var(96/*VAR_ID:param_polyphonic_aftertouch_smoothing_ms*/, param_polyphonic_aftertouch_smoothing_ms);
 	write_density_curve();
 	write_effects();
 );
