@@ -5,12 +5,100 @@ import synth-framework.jsfx-inc
 
 @init
 
-freemem = ui_setup(0);
+MAX_PARAM_SPECTRUM_SIZE = 16384;
+
+options_sample_length = 16384;
+
+freemem = 0;
+freemem = (fftblock = freemem) + options_sample_length*2;
+freemem = (impulse = freemem) + options_sample_length;
+
+freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, 0);
+freemem = (spectrum_db = freemem) + MAX_PARAM_SPECTRUM_SIZE;
+
+!param_spectrum_size ? (
+	param_spectrum_size = 1000;
+	param_spectrum_lowfreq = 10;
+	param_spectrum_highfreq = 20000;
+
+	i = 0;
+	while (i < param_spectrum_size) (
+		r = i/param_spectrum_size;
+		spectrum_db[i] = 10*sin(r*60) - 60*r;
+		i += 1;
+	);
+);
 
 @block
 
 synth_block();
+
+function minimum_phase_impulse() local(i, r, f, real, imag, spectrum_i, db, fftsize) (
+	i = 0;
+	fftsize = options_sample_length;
+	while (i < fftsize) (
+		r = (i + 0.5)/fftsize;
+		f = srate*min(r, 1 - r);
+		spectrum_i = (f <= param_spectrum_lowfreq) ? (
+			0
+		) : (f >= param_spectrum_highfreq) ? (
+			param_spectrum_size - 1;
+		) : (
+			floor(param_spectrum_size*log(f/param_spectrum_lowfreq)/log(param_spectrum_highfreq/param_spectrum_lowfreq));
+		);
+		db = spectrum_db[spectrum_i];
+		debug.si = spectrum_i;
+
+		fftblock[2*i] = max(-100, db)*log(10)/20;
+		fftblock[2*i + 1] = 0;
+		i += 1;
+	);
+
+	fft_ipermute(fftblock, fftsize);
+	ifft(fftblock, fftsize);
+
+	i = 1;
+	fftblock[0] *= 2;
+	fftblock[1] = 0;
+	while (i < fftsize*0.5) (
+		i2 = fftsize - i;
+		fftblock[2*i] += fftblock[2*i2];
+		fftblock[2*i + 1] += fftblock[2*i2 + 1];
+		i += 1;
+	);
+	fftblock[fftsize] = 0;
+	fftblock[fftsize + 1] = 0;
+	while (i < fftsize) (
+		fftblock[2*i] = 0;
+		fftblock[2*i + 1] = 0;
+		i += 1;
+	);
+
+	fft(fftblock, fftsize);
+	fft_permute(fftblock, fftsize);
+
+	i = 0;
+	while (i < fftsize) (
+		real = fftblock[2*i]/fftsize;
+		imag = fftblock[2*i + 1]/fftsize;
+		mag = exp(real);
+		fftblock[2*i] = cos(imag)*mag;
+		fftblock[2*i + 1] = sin(imag)*mag;
+		i += 1;
+	);
+
+	fft_ipermute(fftblock, fftsize);
+	ifft(fftblock, fftsize);
+
+	i = 0;
+	while (i < fftsize) (
+		impulse[i] = fftblock[2*i];
+		i += 1;
+	);
+);
+
+minimum_phase_impulse();
 
 @sample
 
@@ -29,17 +117,24 @@ while (note > 0) (
 	note = synth_note_next(note);
 );
 
+xi += 1;
+xi >= options_sample_length ? (
+	xi = 0;
+);
+spl0 = spl1 = impulse[xi];
+
 @gfx 400 250
 
 control_start("main", "default");
 
 ui_screen() == "main" ? (
-	control_navbar("Pulsar - Drum Synth", -1, -1);
-
-	ui_split_bottom(50);
-		ui_split_leftratio(1/4);
-			sprintf(#g_selected_text, "%i", g_selected + 1);
-			g_selected = control_selector(g_selected, #g_selected_text, (g_selected + 1)%LAYER_COUNT, (g_selected + LAYER_COUNT - 1)%LAYER_COUNT);
-		ui_pop();
+	ui_split_topratio(1/2);
+		control_background_technical();
+		ui_graph_step(spectrum_db, param_spectrum_size, 1, -100, 20);
+		control_finish_technical();
+	ui_split_next();
+		control_background_technical();
+		debug.scale = ui_graph_step(impulse, options_sample_length, 1, 0, 0);
+		control_finish_technical();
 	ui_pop();
 ) : ui_system();
