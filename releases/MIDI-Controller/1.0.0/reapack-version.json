@@ -1,0 +1,15 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"MIDI-Controller/MIDI-Controller-Control.jsfx": {
+			"main": false
+		},
+		"MIDI-Controller/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "MIDI Controller",
+	"time": "2017-09-29T08:41:13.367Z"
+}

@@ -260,6 +260,19 @@
 					"main": false
 				}
 			}
+		},
+		"MIDI Controller": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"MIDI-Controller-Control.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

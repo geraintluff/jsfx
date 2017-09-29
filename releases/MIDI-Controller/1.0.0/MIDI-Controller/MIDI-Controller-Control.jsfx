@@ -1,0 +1,60 @@
+desc:MIDI Controller Control (by Geraint Luff)
+
+in_pin:none
+out_pin:none
+
+slider1:controller_number=1<0,128,1{off,1,2,3,4,5,6,7,8,9,10,11 Expression,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128}>Controller
+slider2:channel_number=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+slider3:slew_ms=50<1,1500,1>Smoothing (ms)
+
+import ui-lib.jsfx-inc
+
+@init
+
+freemem = ui_setup(0);
+
+// Reset controller_value - different reset values (or no reset at all) as per MIDI spec
+(controller_number == 0 || controller_number == 7 || controller_number == 10 || controller_number == 32 || (controller_number >= 91 && controller_number <= 95) || (controller_number >= 70 && controller_number <= 79) || controller_number >= 120) ? (
+	controller_value = controller_value;
+) : (controller_number == 11 || (controller_number >= 98 && controller_number <= 101)) ? (
+	controller_value = 127;
+) : (
+	controller_value = 0;
+);
+
+controller_value_smoothed = controller_value;
+last_rounded_value = -1; // Force a re-emit of event
+
+@block
+
+slew_factor = 1/(slew_ms*0.001*srate);
+
+current_offset = 0;
+
+function moveToOffset(offset) (
+	last_rounded_value != controller_value ? (
+		while (current_offset < offset) (
+			controller_value_smoothed += (controller_value - controller_value_smoothed)*slew_factor;
+			rounded_value = floor(controller_value_smoothed + 0.5);
+			rounded_value != last_rounded_value ? (
+				midisend(offset, $xB0|channel_number, note, rounded_value);
+				last_rounded_value = rounded_value;
+			);
+			current_offset += 1;
+		);
+	);
+);
+
+while (midirecv(offset, msg1, note, vel)) (
+	moveToOffset(offset);
+
+	type = msg1&240;
+	channel = msg1&15;
+	type == $xB0 && note == controller_number && channel == channel_number ? (
+		controller_value = vel;
+	) : (
+		midisend(offset, msg1, note, vel);
+	);
+);
+
+moveToOffset(samplesblock);

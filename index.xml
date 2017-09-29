@@ -386,5 +386,13 @@
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.2.2/Humonica/filter-utils.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="MIDI Controller" type="effect">
+			<metadata>
+			</metadata>
+			<version name="1.0.0" time="2017-09-29T08:41:13.367Z">
+				<source file="MIDI-Controller/MIDI-Controller-Control.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Controller/1.0.0/MIDI-Controller/MIDI-Controller-Control.jsfx</source>
+				<source file="MIDI-Controller/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Controller/1.0.0/MIDI-Controller/ui-lib.jsfx-inc</source>
+			</version>
+		</reapack>
 	</category>
 </index>
