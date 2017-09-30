@@ -16,10 +16,11 @@ slider8:impulse_amp=1<0,1,0.01>-Impulse volume
 slider9:decay_period=1<0,1,0.01>-Decay period
 slider10:damping_factor=1<0,5,0.01>-Damping
 slider11:filter_freq=2000<500,16000,1>-Damping freq
-slider12:ring_mod=0<0,1,1{off,on}>-Anti-tonal ring mod
+slider12:ring_mod=0<0,1,1{off,on}>-Input Deo-tonal ring mod
 slider13:detune_lr_cents=0<-30,30,1>-Detuning (L/R)
 slider14:stereo_width=0.5<0.1,1,0.01>-Stereo Width
 slider15:damping_freq_velocity=0<-3,3,0.01>-Decay velocity
+slider16:input_decay_ms=0<0,1000,1>Input decay
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -59,6 +60,9 @@ anticipation_samples = 0;//ceil(anticipation_ms*srate/1000);
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
 pdc_delay = anticipation_samples;
+
+input_decay_samples = input_decay_ms*0.001*srate;
+input_decay_factor = input_decay_samples ? exp(-1/input_decay_samples) : 1;
 
 synth_block();
 
@@ -144,6 +148,8 @@ while (note > 0) (
 		note[NOTE#pan_left] = (1 - pan)*2;
 		note[NOTE#pan_right] = pan*2;
 
+		note[NOTE#input_decay_gain] = 1;
+
 		mod_filter_freq = synth_freq(note)*0.5;
 		note[NOTE#mod_gain] = sqrt(srate/mod_filter_freq);
 		note[NOTE#mod_filter0] = mem;
@@ -176,8 +182,9 @@ while (note > 0) (
 		delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
 		delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
 
-		excitation0 = input0;
-		excitation1 = input1;
+		input_envelope = note[NOTE#input_decay_gain] = note[NOTE#input_decay_gain]*input_decay_factor;
+		excitation0 = input0*input_envelope;
+		excitation1 = input1*input_envelope;
 		ring_mod ? (
 			noise = (rand()*2 - 1)*note[NOTE#mod_gain];
 			excitation0 = filter_buffer_sample(note[NOTE#mod_filter0], noise)*excitation0;
