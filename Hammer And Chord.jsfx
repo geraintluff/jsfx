@@ -21,7 +21,7 @@ slider12:ring_mod=0<0,1,1{off,on}>-Input Deo-tonal ring mod
 slider13:detune_lr_cents=0<-30,30,1>-Detuning (L/R)
 slider14:stereo_width=0.5<0.1,1,0.01>-Stereo Width
 slider15:damping_freq_velocity=0<-3,3,0.01>-Decay velocity
-slider16:input_decay_ms=0<0,1000,1>Input decay
+slider16:input_decay_ms=0<0,1000,1>-Input decay
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -216,7 +216,7 @@ outputS = (output1 - output0)*0.5;
 spl0 = outputM - outputS*stereo_width;
 spl1 = outputM + outputS*stereo_width;
 
-@gfx 640 440
+@gfx 750 390
 
 function labelled_default_dial(value, low, high, bias, label, format_text, default) local(height) (
 	height = min(ui_height()/2, 50);
@@ -247,11 +247,11 @@ function labelled_switch(value, label, format_text) local(height) (
 		ui_pop();
 	ui_pop(height);
 	ui_push_above(height);
-		ui_align(0.5, 0.85);
+		ui_align(0.5, 0.7);
 		ui_text(label);
 	ui_pop(height);
 	ui_push_below(height);
-		ui_align(0.5, 0.15);
+		ui_align(0.5, 0.3);
 		ui_text(format_text);
 	ui_pop();
 	value;
@@ -262,19 +262,8 @@ control_start("main", "tron");
 ui_screen() == "main" ? (
 	control_navbar("Hammer And Chord (polyphonic)", -1, -1);
 
-	ui_split_rightratio(1/5);
-		control_group("Resonator");
-		ui_split_topratio(1/3);
-			invert_feedback = labelled_switch(invert_feedback, "Feedback", invert_feedback ? "negative" : "positive");
-		ui_split_next();
-			resonator_scaling = labelled_default_dial(resonator_scaling, 0, 1, 0, "Input type", resonator_scaling < 0.25 ? "continuous" : resonator_scaling < 0.75 ? "hybrid" : "impulse", 0.1);
-		ui_split_next();
-			ring_mod = labelled_switch(ring_mod, "De-tonal", ring_mod ? "on" : "off");
-		ui_pop();
-	ui_pop();
-
 	ui_split_topratio(0.5);
-		ui_split_leftratio(3/6);
+		ui_split_leftratio(3/7);
 			control_group("Envelope");
 			ui_split_leftratio(1/3);
 				decay_wavelengths_on = labelled_default_dial(decay_wavelengths_on, 1, 1000, 4, "Decay", "", 50);
@@ -285,18 +274,20 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(3/3);
+		ui_split_leftratio(4/4);
 			control_group("Damping");
-			ui_split_leftratio(1/3);
+			ui_split_leftratio(1/4);
 				filter_freq = labelled_default_dial(filter_freq, 500, 16000, log(16000/500), "Freq", "%iHz", 2000);
 			ui_split_next();
 				damping_factor = labelled_default_dial(damping_factor, 0, 5, 1.5, "Amount", "", 1);
 			ui_split_next();
 				damping_freq_velocity = labelled_default_dial(damping_freq_velocity, -3, 3, 0, "Velocity", "", 0);
+			ui_split_next();
+				invert_feedback = labelled_switch(invert_feedback, "Feedback", invert_feedback ? "negative" : "positive");
 			ui_pop();
 		ui_pop();
 	ui_split_next();
-		ui_split_leftratio(3/5);
+		ui_split_leftratio(3/8);
 			control_group("Impulse");
 			ui_split_leftratio(1/3);
 				impulse_brightness = labelled_default_dial(impulse_brightness, 0.1, 100, log(1000), "Brightness", "", 30);
@@ -307,12 +298,23 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(2/2);
+		ui_split_leftratio(2/5);
 			control_group("Stereo");
 			ui_split_leftratio(1/2);
 				detune_lr_cents = labelled_default_dial(detune_lr_cents, -30, 30, 0, "Detune", "%ict", 0);
 			ui_split_next();
 				stereo_width = labelled_default_dial(stereo_width, 0.1, 1, 0.45, "Width", "", 0.5);
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(3/3);
+			control_group("Input");
+			ui_split_leftratio(1/3);
+				resonator_scaling = labelled_default_dial(resonator_scaling, 0, 1, 0, "Type", resonator_scaling < 0.25 ? "continuous" : resonator_scaling < 0.75 ? "hybrid" : "impulse", 0.1);
+			ui_split_next();
+				input_decay_ms = labelled_default_dial(input_decay_ms, 0, 1000, 3, "Decay", input_decay_ms ? "%ims" : "infinite", 0);
+			ui_split_next();
+				ring_mod = labelled_switch(ring_mod, "De-tonal", ring_mod ? "on" : "off");
 			ui_pop();
 		ui_pop();
 	ui_pop();
