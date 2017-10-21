@@ -178,9 +178,8 @@ while (note > 0) (
 
 		buffer0 = note[NOTE#buffer0];
 		buffer1 = note[NOTE#buffer1];
-		plotbuffer = buffer0;
-		delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
-		delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
+		delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
+		delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
 		delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
 		delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
 
@@ -315,9 +314,9 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				input_decay_ms = labelled_default_dial(input_decay_ms, 0, 1000, 3, "Decay", input_decay_ms ? "%ims" : "infinite", 0);
 			ui_split_next();
-				input_decay_velocity_curve = labelled_default_dial(input_decay_velocity_curve, 0, 1, 0, "Decay", "Velocity", 0);
+				input_decay_velocity_curve = labelled_default_dial(input_decay_velocity_curve, 0, 1, 0, "Decay", "Velocity", 0.5);
 			ui_split_next();
-				input_velocity_curve = labelled_default_dial(input_velocity_curve, 0, 1, 0, "Gain", "Velocity", 0);
+				input_velocity_curve = labelled_default_dial(input_velocity_curve, 0, 1, 0, "Gain", "Velocity", 0.5);
 			ui_split_next();
 				ring_mod = labelled_switch(ring_mod, "De-tonal", ring_mod ? "on" : "off");
 			ui_pop();

@@ -39,31 +39,36 @@ function delay_buffer_size(max_delay_samples) local(length, interp_samples, inte
 	interp_samples = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
 	length = ceil(max_delay_samples + interp_samples + 1);
 	interp_scale = 64;
-	7/*DELAY: interp_samples, length, index, buffer, interp_scale, interp_offset, interp_buffer*/ + length + interp_scale*interp_samples;
+	10/*DELAY: interp_samples, length, index, allpass_x1, allpass_y1, allpass_prev_delay, buffer, interp_scale, interp_offset, interp_buffer*/ + length + interp_scale*interp_samples;
 );
 
 function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buffer, interp_buffer, freemem) (
 	obj[0/*DELAY:interp_samples*/] = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
 	obj[1/*DELAY:length*/] = ceil(max_delay_samples + obj[0/*DELAY:interp_samples*/] + 1);
 	obj[2/*DELAY:index*/] = 0;
-	freemem = obj + 7/*DELAY: interp_samples, length, index, buffer, interp_scale, interp_offset, interp_buffer*/;
-	buffer = obj[3/*DELAY:buffer*/] = freemem;
-	freemem = obj[3/*DELAY:buffer*/] + obj[1/*DELAY:length*/];
+
+	obj[3/*DELAY:allpass_x1*/] = 0;
+	obj[4/*DELAY:allpass_y1*/] = 0;
+	obj[5/*DELAY:allpass_prev_delay*/] = 1;
+
+	freemem = obj + 10/*DELAY: interp_samples, length, index, allpass_x1, allpass_y1, allpass_prev_delay, buffer, interp_scale, interp_offset, interp_buffer*/;
+	buffer = obj[6/*DELAY:buffer*/] = freemem;
+	freemem = obj[6/*DELAY:buffer*/] + obj[1/*DELAY:length*/];
 	i = 0;
 	while (i < obj[1/*DELAY:length*/]) (
 		buffer[i] = 0;
 		i += 1;
 	);
-	obj[4/*DELAY:interp_scale*/] = 64;
-	obj[5/*DELAY:interp_offset*/] = obj[0/*DELAY:interp_samples*/]/2;
-	interp_buffer = obj[6/*DELAY:interp_buffer*/] = freemem;
-	freemem = interp_buffer + obj[0/*DELAY:interp_samples*/]*obj[4/*DELAY:interp_scale*/];
+	obj[7/*DELAY:interp_scale*/] = 64;
+	obj[8/*DELAY:interp_offset*/] = obj[0/*DELAY:interp_samples*/]/2;
+	interp_buffer = obj[9/*DELAY:interp_buffer*/] = freemem;
+	freemem = interp_buffer + obj[0/*DELAY:interp_samples*/]*obj[7/*DELAY:interp_scale*/];
 	i = 0;
-	while (i < obj[0/*DELAY:interp_samples*/]*obj[4/*DELAY:interp_scale*/]) (
-		wr = (i + 0.5)/(obj[0/*DELAY:interp_samples*/]*obj[4/*DELAY:interp_scale*/]);
+	while (i < obj[0/*DELAY:interp_samples*/]*obj[7/*DELAY:interp_scale*/]) (
+		wr = (i + 0.5)/(obj[0/*DELAY:interp_samples*/]*obj[7/*DELAY:interp_scale*/]);
 		// Blackman window
 		w = 0.42 - 0.5*cos(wr*$pi*2) + 0.08*cos(wr*$pi*4);
-		t = i/obj[4/*DELAY:interp_scale*/] - obj[5/*DELAY:interp_offset*/];
+		t = i/obj[7/*DELAY:interp_scale*/] - obj[8/*DELAY:interp_offset*/];
 		interp_buffer[i] = sinc(t*$pi)*w; // Windowed sinc
 		i += 1;
 	);
@@ -92,7 +97,7 @@ function delay_buffer_input(obj, spl) local(buffer, index) (
 	obj[2/*DELAY:index*/] >= obj[1/*DELAY:length*/] ? (
 		index = obj[2/*DELAY:index*/] = 0;
 	);
-	buffer = obj[3/*DELAY:buffer*/];
+	buffer = obj[6/*DELAY:buffer*/];
 	buffer[index] = spl;
 	spl;
 );
@@ -122,24 +127,22 @@ function delay_output_linear(samples) local(index, index1, index2, ratio, i, int
 );
 
 function delay_buffer_output_linear(obj, samples) local(index, index1, index2, ratio, i, interp_buffer, buffer, interp_index, sum) (
-	debug.obj = obj;
-	index = obj[2/*DELAY:index*/] - max(obj[0/*DELAY:interp_samples*/], samples + obj[5/*DELAY:interp_offset*/] - 1);
+	index = obj[2/*DELAY:index*/] - max(obj[0/*DELAY:interp_samples*/], samples + obj[8/*DELAY:interp_offset*/] - 1);
 	index1 = floor(index);
 	ratio = index - index1;
 	while (index1 < 0) (
 		index1 += obj[1/*DELAY:length*/];
 	);
-	debug.length = obj[1/*DELAY:length*/];
 
 	sum = 0;
 	index = index1;
-	buffer = obj[3/*DELAY:buffer*/];
-	interp_buffer = obj[6/*DELAY:interp_buffer*/];
-	interp_index = floor((1 - ratio)*obj[4/*DELAY:interp_scale*/]);
+	buffer = obj[6/*DELAY:buffer*/];
+	interp_buffer = obj[9/*DELAY:interp_buffer*/];
+	interp_index = floor((1 - ratio)*obj[7/*DELAY:interp_scale*/]);
 	i = 0;
 	while (i < obj[0/*DELAY:interp_samples*/]) (
 		sum += interp_buffer[interp_index]*buffer[index];
-		interp_index += obj[4/*DELAY:interp_scale*/];
+		interp_index += obj[7/*DELAY:interp_scale*/];
 		index += 1;
 		index >= obj[1/*DELAY:length*/] ? (
 			index = 0;
@@ -147,4 +150,34 @@ function delay_buffer_output_linear(obj, samples) local(index, index1, index2, r
 		i += 1;
 	);
 	sum;
+);
+
+function delay_buffer_output_allpass(obj, samples)
+		local(interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1) (
+	buffer = obj[6/*DELAY:buffer*/];
+	index = obj[2/*DELAY:index*/] - max(1, samples);
+	index1 = floor(index - 0.1);
+	delta = index - index1;
+	while (index1 < 0) (
+		index1 += obj[1/*DELAY:length*/];
+	);
+
+	obj[5/*DELAY:allpass_prev_delay*/] != index1 ? (
+		// Reset the filter
+		index2 = index1 - 1;
+		index2 < 0 ? index2 += obj[1/*DELAY:length*/];
+		obj[3/*DELAY:allpass_x1*/] = buffer[index2];
+		ratio = max(0, min(1, delta));
+		// Linear interpolation to simulate previous output
+		obj[4/*DELAY:allpass_y1*/] = buffer[index1] + ratio*(buffer[index2] - buffer[index1]);
+		obj[5/*DELAY:allpass_prev_delay*/] = index1;
+	);
+
+	// All-pass
+	a1 = (1 - delta)/(delta + 1);
+	x0 = buffer[index1];
+	y0 = a1*(x0 - obj[4/*DELAY:allpass_y1*/]) + obj[3/*DELAY:allpass_x1*/];
+	obj[3/*DELAY:allpass_x1*/] = x0;
+	obj[4/*DELAY:allpass_y1*/] = y0;
+	y0;
 );

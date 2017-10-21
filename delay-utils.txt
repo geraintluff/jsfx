@@ -45,6 +45,11 @@ function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buff
 	obj[DELAY#interp_samples] = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
 	obj[DELAY#length] = ceil(max_delay_samples + obj[DELAY#interp_samples] + 1);
 	obj[DELAY#index] = 0;
+
+	obj[DELAY#allpass_x1] = 0;
+	obj[DELAY#allpass_y1] = 0;
+	obj[DELAY#allpass_prev_delay] = 1;
+
 	freemem = obj + DELAY#;
 	buffer = obj[DELAY#buffer] = freemem;
 	freemem = obj[DELAY#buffer] + obj[DELAY#length];
@@ -121,14 +126,12 @@ function delay_output_linear(samples) local(index, index1, index2, ratio, i, int
 );
 
 function delay_buffer_output_linear(obj, samples) local(index, index1, index2, ratio, i, interp_buffer, buffer, interp_index, sum) (
-	debug.obj = obj;
 	index = obj[DELAY#index] - max(obj[DELAY#interp_samples], samples + obj[DELAY#interp_offset] - 1);
 	index1 = floor(index);
 	ratio = index - index1;
 	while (index1 < 0) (
 		index1 += obj[DELAY#length];
 	);
-	debug.length = obj[DELAY#length];
 
 	sum = 0;
 	index = index1;
@@ -146,4 +149,34 @@ function delay_buffer_output_linear(obj, samples) local(index, index1, index2, r
 		i += 1;
 	);
 	sum;
+);
+
+function delay_buffer_output_allpass(obj, samples)
+		local(interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1) (
+	buffer = obj[DELAY#buffer];
+	index = obj[DELAY#index] - max(1, samples);
+	index1 = floor(index - 0.1);
+	delta = index - index1;
+	while (index1 < 0) (
+		index1 += obj[DELAY#length];
+	);
+
+	obj[DELAY#allpass_prev_delay] != index1 ? (
+		// Reset the filter
+		index2 = index1 - 1;
+		index2 < 0 ? index2 += obj[DELAY#length];
+		obj[DELAY#allpass_x1] = buffer[index2];
+		ratio = max(0, min(1, delta));
+		// Linear interpolation to simulate previous output
+		obj[DELAY#allpass_y1] = buffer[index1] + ratio*(buffer[index2] - buffer[index1]);
+		obj[DELAY#allpass_prev_delay] = index1;
+	);
+
+	// All-pass
+	a1 = (1 - delta)/(delta + 1);
+	x0 = buffer[index1];
+	y0 = a1*(x0 - obj[DELAY#allpass_y1]) + obj[DELAY#allpass_x1];
+	obj[DELAY#allpass_x1] = x0;
+	obj[DELAY#allpass_y1] = y0;
+	y0;
 );
