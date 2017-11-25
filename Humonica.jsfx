@@ -68,6 +68,10 @@ synth_block();
 
 latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
 
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+pdc_delay = latency_samples;
+
 note = synth_note_first();
 while (note > 0) (
 	note[0/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
