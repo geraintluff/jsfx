@@ -42,12 +42,15 @@ function delay_buffer_size(max_delay_samples) local(length, interp_samples, inte
 );
 
 function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buffer, interp_buffer, freemem) (
+	i = 0;
+	while (i < DELAY#) (
+		obj[i] = 0;
+	);
+
 	obj[DELAY#interp_samples] = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
 	obj[DELAY#length] = ceil(max_delay_samples + obj[DELAY#interp_samples] + 1);
 	obj[DELAY#index] = 0;
 
-	obj[DELAY#allpass_x1] = 0;
-	obj[DELAY#allpass_y1] = 0;
 	obj[DELAY#allpass_prev_delay] = 1;
 
 	freemem = obj + DELAY#;
@@ -152,11 +155,14 @@ function delay_buffer_output_linear(obj, samples) local(index, index1, index2, r
 );
 
 function delay_buffer_output_allpass(obj, samples)
-		local(interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1) (
+		local(interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1, a2, b0, b1, b2) (
 	buffer = obj[DELAY#buffer];
-	index = obj[DELAY#index] - max(1, samples);
-	index1 = floor(index - 0.1);
-	delta = index - index1;
+	index = obj[DELAY#index] - max(3, samples);
+	index1 = ceil(index + 2 + 0.1); // This makes sure Delta is above 2
+	Delta = index1 - index;
+	debug.realDelta = Delta;
+	Delta = 3;
+	debug.delay_samples = samples;
 	while (index1 < 0) (
 		index1 += obj[DELAY#length];
 	);
@@ -172,11 +178,23 @@ function delay_buffer_output_allpass(obj, samples)
 		obj[DELAY#allpass_prev_delay] = index1;
 	);
 
-	// All-pass
-	a1 = (1 - delta)/(delta + 1);
+	// Second-order Thiran
+	a1 = -2*(Delta - 2)/(Delta + 1);
+	a2 = (Delta - 2)*(Delta - 1)/(Delta + 1)/(Delta + 2);
+	b0 = a2;
+	b1 = a1;
+	b2 = 1;
+
+	debug.Delta = Delta;
+	debug.a1 = a1;
+	debug.a2 = a2;
+
 	x0 = buffer[index1];
-	y0 = a1*(x0 - obj[DELAY#allpass_y1]) + obj[DELAY#allpass_x1];
+	y0 = b0*x0 + b1*obj[DELAY#allpass_x1] + b2*obj[DELAY#allpass_x2]
+		- a1*obj[DELAY#allpass_y1] - a2*obj[DELAY#allpass_y2];
+	obj[DELAY#allpass_x2] = obj[DELAY#allpass_x1];
 	obj[DELAY#allpass_x1] = x0;
+	obj[DELAY#allpass_y2] = obj[DELAY#allpass_y1];
 	obj[DELAY#allpass_y1] = y0;
 	y0;
 );

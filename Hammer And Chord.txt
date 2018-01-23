@@ -180,6 +180,8 @@ while (note > 0) (
 		buffer1 = note[NOTE#buffer1];
 		delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
 		delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
+		//delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
+		//delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
 		delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
 		delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
 
