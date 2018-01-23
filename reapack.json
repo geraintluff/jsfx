@@ -20,7 +20,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "2.0.0"
+			"version": "2.0.1"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -37,7 +37,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.3"
+			"version": "1.0.4"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -57,7 +57,7 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.0.5"
+			"version": "1.0.6"
 		},
 		"Spring-Box": {
 			"type": "effect",
@@ -76,7 +76,7 @@
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.0.7"
+			"version": "1.0.8"
 		},
 		"PadSynth": {
 			"type": "effect",
@@ -92,7 +92,7 @@
 			"links": {
 				"screenshot": "PadSynth.png"
 			},
-			"version": "1.1.3"
+			"version": "1.1.4"
 		},
 		"Smooth Limiter": {
 			"type": "effect",
@@ -105,7 +105,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Warble": {
 			"type": "effect",
@@ -124,7 +124,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.7"
+			"version": "1.0.8"
 		},
 		"Panalysis": {
 			"type": "effect",
@@ -137,7 +137,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -153,7 +153,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.5"
+			"version": "1.0.6"
 		},
 		"Hammer And String": {
 			"type": "effect",
@@ -172,7 +172,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Hammer And Chord": {
 			"type": "effect",
@@ -194,7 +194,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.0"
+			"version": "1.2.1"
 		},
 		"MIDI Gate": {
 			"type": "effect",
@@ -210,7 +210,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Humonica": {
 			"type": "effect",
@@ -229,7 +229,7 @@
 					"main": false
 				}
 			},
-			"version": "1.3.0"
+			"version": "1.3.1"
 		},
 		"MIDI Harmony": {
 			"type": "effect",
@@ -244,7 +244,8 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

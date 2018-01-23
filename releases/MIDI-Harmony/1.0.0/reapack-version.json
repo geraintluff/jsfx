@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"files": {
+		"MIDI-Harmony/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"MIDI-Harmony/MIDI Harmony.jsfx": {
+			"main": false
+		},
+		"MIDI-Harmony/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "MIDI Harmony",
+	"time": "2018-01-23T09:36:52.311Z"
+}
