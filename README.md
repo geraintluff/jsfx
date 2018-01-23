@@ -15,8 +15,9 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
 * Hammer And Chord - a polyphonic string resonator/synth ([audio demo](audio-demos/hammer-and-chord.mp3))
 * Hammer And String - a monophonic string resonator/synth with portamento ([audio demo](audio-demos/hammer-and-string.mp3))
-* MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. ([audio demo](audio-demos/midi-gate.mp3))
 * Humonica - harmoniser ([audio demo](audio-demos/humonica.mp3))
+* MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. ([audio demo](audio-demos/midi-gate.mp3))
+* MIDI Harmony - arpeggiator and auto-accompaniment plugin
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -146,6 +147,14 @@ It has two resonators for each note (left and right) and they can be detuned ([a
 
 If your input audio is tonal (e.g. speech) and those frequencies are coming through, the "de-tonal" setting puts a ring-modulator before each resonator to make it atonal. ([audio demo](Hammer And Chord ringmod demo.mp3))
 
+## Humonica
+
+This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. ([audio demo](audio-demos/humonica.mp3))
+
+![screenshot](Humonica.png)
+
+The resynthesised notes can sound very "bare", because they are made up of exact frequencies, however they can be softened with chorus. ([audio demo](audio-demos/humonica-spring-box.mp3) with Spring-Box chorus and reverb)
+
 ## MIDI Gate
 
 This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the "Max Velocity" control. ([audio demo](audio-demos/midi-gate.mp3))
@@ -154,10 +163,14 @@ This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MID
 
 You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. ([audio demo](https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3))
 
-## Humonica
+## MIDI Harmony
 
-This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. ([audio demo](audio-demos/humonica.mp3))
+This effect shifts MIDI notes up or down by octaves, to fit within a target range.  This can be used to fold whatever chord is being played by some other instrument into a particular region (e.g. one octave around Middle C).
 
-![screenshot](Humonica.png)
+It has a single-note and a chord mode.  It also has a built-in sequencer, which can be used as an arpeggiator (so it will play a pattern, but only using octave-shifted notes that you are already holding down).
 
-The resynthesised notes can sound very "bare", because they are made up of exact frequencies, however they can be softened with chorus. ([audio demo](audio-demos/humonica-spring-box.mp3) with Spring-Box chorus and reverb)
+![screenshot](MIDI Harmony.png)
+
+It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. "one octave around Middle C") it is defined by a second input on a different MIDI channel (channel 16 by default).
+
+This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.
