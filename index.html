@@ -235,8 +235,9 @@ a[href] code {
 <li>Learning Sampler - a basic sampler that records incoming audio and plays it back</li>
 <li>Hammer And Chord - a polyphonic string resonator/synth (<a href="audio-demos/hammer-and-chord.mp3">audio demo</a>)</li>
 <li>Hammer And String - a monophonic string resonator/synth with portamento (<a href="audio-demos/hammer-and-string.mp3">audio demo</a>)</li>
-<li>MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</li>
 <li>Humonica - harmoniser (<a href="audio-demos/humonica.mp3">audio demo</a>)</li>
+<li>MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</li>
+<li>MIDI Harmony - arpeggiator and auto-accompaniment plugin</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -308,12 +309,18 @@ a[href] code {
 <p><img src="Hammer And Chord.png" alt="screenshot"></p>
 <p>It has two resonators for each note (left and right) and they can be detuned (<a href="audio-demos/Hammer And Chord detune demo.mp3">audio demo</a>).</p>
 <p>If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. (<a href="Hammer And Chord ringmod demo.mp3">audio demo</a>)</p>
-</div><h2 id="midi-gate">MIDI Gate</h2><div class="section section2">
-<p>This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the &quot;Max Velocity&quot; control. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</p>
-<p><img src="MIDI Gate.png" alt="screenshot"></p>
-<p>You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. (<a href="https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3">audio demo</a>)</p>
 </div><h2 id="humonica">Humonica</h2><div class="section section2">
 <p>This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. (<a href="audio-demos/humonica.mp3">audio demo</a>)</p>
 <p><img src="Humonica.png" alt="screenshot"></p>
 <p>The resynthesised notes can sound very &quot;bare&quot;, because they are made up of exact frequencies, however they can be softened with chorus. (<a href="audio-demos/humonica-spring-box.mp3">audio demo</a> with Spring-Box chorus and reverb)</p>
+</div><h2 id="midi-gate">MIDI Gate</h2><div class="section section2">
+<p>This effect is a simple MIDI-controlled gate.  When a MIDI note is down (any MIDI note), the audio is passed through.  Note velocity controls the amplitude, with the loudest value (unit gain) being determined by the &quot;Max Velocity&quot; control. (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</p>
+<p><img src="MIDI Gate.png" alt="screenshot"></p>
+<p>You can also use it with a fast-paced pattern to produce an effect similar to Bad Connection. (<a href="https://geraintluff.github.io/jsfx/audio-demos/midi-gate-fast.mp3">audio demo</a>)</p>
+</div><h2 id="midi-harmony">MIDI Harmony</h2><div class="section section2">
+<p>This effect shifts MIDI notes up or down by octaves, to fit within a target range.  This can be used to fold whatever chord is being played by some other instrument into a particular region (e.g. one octave around Middle C).</p>
+<p>It has a single-note and a chord mode.  It also has a built-in sequencer, which can be used as an arpeggiator (so it will play a pattern, but only using octave-shifted notes that you are already holding down).</p>
+<p><img src="MIDI Harmony.png" alt="screenshot"></p>
+<p>It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. &quot;one octave around Middle C&quot;) it is defined by a second input on a different MIDI channel (channel 16 by default).</p>
+<p>This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.</p>
 </div></div></div><script></script></body></html>
