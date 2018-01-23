@@ -16,8 +16,8 @@ slider8:timbre_shift_tracking=0<-1,1,0.01>-Timbre key-tracking (relative to midd
 slider9:lowpass_freq_khz=8<1,20,0.1>-Lowpass (kHz)
 slider10:vibrato_tracking=0<0,1,0.01>-Vibrato tracking
 slider11:tonality_limit=0<0,0.5,0.01>-Tonality limit
-slider12:volume_norm=0<0,1,0.01>Volume normalisation
-slider13:timbre_enhance=0<0,1,0.01>Timbre enhance
+slider12:volume_norm=0<0,1,0.01>-Volume normalisation
+slider13:timbre_enhance=0<0,1,0.01>-Timbre enhance
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
