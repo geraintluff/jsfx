@@ -62,9 +62,9 @@ high_freq = 18000;
 function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
 	allocate_reset();
 	bands_N = N ? N : model_N;
-	
+
 	bands_total_energy = 0;
-	
+
 	filter_l_x0 = allocate(bands_N);
 	filter_l_x1 = allocate(bands_N);
 	filter_l_x2 = allocate(bands_N);
@@ -84,21 +84,23 @@ function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
 	filter_b1 = allocate(bands_N);
 	filter_b2 = allocate(bands_N);
 
+	average1_unsharpenedvalue = allocate(bands_N);
+	average1_smoothed = allocate(bands_N);
 	average1_value = allocate(bands_N);
- 
+
 	average2_counter = allocate(bands_N);
 	average2_sum = allocate(bands_N);
-	
+
 	octaves = log(high_freq/low_freq)/log(2);
 	bw = octaves/(bands_N - 1);
-	
+
 	i = 0;
 	while (i < bands_N) (
 		freq = low_freq*exp(log(high_freq/low_freq)*(i + 0.5)/bands_N);
-		
+
 		w0 = 2*$pi*freq/srate;
 		alpha = sin(w0)*sinh(log(2)/2*bw*w0/sin(w0));
-		
+
 		a0 = 1 + alpha;
 		filter_a1[i] = -2*cos(w0)/a0;
 		filter_a2[i] = (1 - alpha)/a0;
@@ -111,10 +113,11 @@ function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
 		filter_r_x0[i] = filter_r_x1[i] = filter_r_x2[i] = 0;
 		filter_r_y0[i] = filter_r_y1[i] = filter_r_y2[i] = 0;
 
+		average1_unsharpenedvalue[i] = 0;
 		average1_value[i] = 0;
 		average2_counter[i] = 0;
 		average2_sum[i] = 0;
-		
+
 		i += 1;
 	);
 
@@ -122,6 +125,11 @@ function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
 	average1_slew = 1 - exp(-1/period/srate);
 	average1_period = period;
 	average2_power = slider2;
+	sum_interval_samples = ceil(period*srate*0.05);
+
+	bands_interconnect_db = -6*octaves/(bands_N - 1);
+	bands_interconnect = pow(10, bands_interconnect_db/10); // power calc
+	bands_subtraction_factor = 3.5/bands_N;
 );
 !bands_N ? reset_bands(model_N);
 
@@ -143,7 +151,7 @@ function copy_to_model() local(i) (
 	model_N = bands_N;
 	model_shortperiod = average1_period;
 	model_longpower = average2_power;
-	
+
 	i = 0;
 	while (i < bands_N) (
 		model_target[i] = pow(average2_sum[i]/average2_counter[i], 1/average2_power);
@@ -188,7 +196,7 @@ function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti,
 	wi = sin(2*$pi*freq/srate);
 	w2r = cos(4*$pi*freq/srate);
 	w2i = sin(4*$pi*freq/srate);
-	
+
 	i = 0;
 	while (i < model_N) (
 		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
@@ -196,7 +204,7 @@ function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti,
 		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
 		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
 		pm2 = pr*pr + pi*pi;
-		
+
 		tr = hr;
 		ti = hi;
 		hr = tr*zr - ti*zi;
@@ -220,7 +228,7 @@ function correction_phase(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, t
 	wi = sin(2*$pi*freq/srate);
 	w2r = cos(4*$pi*freq/srate);
 	w2i = sin(4*$pi*freq/srate);
-	
+
 	i = 0;
 	while (i < model_N) (
 		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
@@ -228,7 +236,7 @@ function correction_phase(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, t
 		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
 		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
 		pm2 = pr*pr + pi*pi;
-		
+
 		tr = hr;
 		ti = hi;
 		hr = tr*zr - ti*zi;
@@ -287,7 +295,7 @@ function calculate_correction() local(i, boundary_freq, prev_amp, amp, Q, A, w0,
 			correction_b1[i] = -2*A*((A - 1) + (A + 1)*cos(w0))/a0;
 			correction_b2[i] = A*((A + 1) + (A - 1)*cos(w0) - sqrtA2alpha)/a0;
 		);
-	
+
 		prev_amp = amp;
 		i += 1;
 	);
@@ -369,13 +377,34 @@ while (i < bands_N) (
 
 	filter_r_x0[i] = x0r = spl1;
 	filter_r_y0[i] = y0r = filter_b0[i]*x0r + filter_b1[i]*filter_r_x1[i] + filter_b2[i]*filter_r_x2[i] - filter_a1[i]*filter_r_y1[i] - filter_a2[i]*filter_r_y2[i];
-	
-	avg = average1_value[i];
-	avg = average1_value[i] += ((y0l*y0l + y0r*y0r)*0.5 - avg)*average1_slew;
-	
-	average2_counter[i] += 1;
-	average2_sum[i] += pow(avg, average2_power);
+
+	average1_unsharpenedvalue[i] += ((y0l*y0l + y0r*y0r)*0.5 - average1_unsharpenedvalue[i])*average1_slew;
+
 	i += 1;
+);
+
+sum_interval_counter += 1;
+sum_interval_counter >= sum_interval_samples ? (
+
+	i = 0;
+	avg = average1_unsharpenedvalue[0]*bands_subtraction_factor;
+	while (i < bands_N) (
+		avg = average1_unsharpenedvalue[i] + (avg - average1_unsharpenedvalue[i])*bands_interconnect;
+
+		average1_smoothed[i] = avg*bands_subtraction_factor;
+		i += 1;
+	);
+	avg *= bands_subtraction_factor;
+	while (i > 0) (
+		i -= 1;
+		avg = average1_smoothed[i] + (avg - average1_smoothed[i])*bands_interconnect;
+		average1_smoothed[i] = avg;
+
+		average1_value[i] = max(0.0, average1_unsharpenedvalue[i] - avg);
+
+		average2_counter[i] += 1;
+		average2_sum[i] += pow(average1_unsharpenedvalue[i], average2_power);
+	);
 );
 
 tmp = filter_l_x2;
@@ -443,17 +472,17 @@ function labelled_dial(value, default, low, high, bias, label, displayvalue, dis
 			value = default;
 		);
 	ui_pop();
-	
+
 	ui_push_below(50);
 		ui_align(0.5, 0);
 		ui_text(label);
 	ui_pop();
-	
+
 	ui_push_above(50);
 		ui_align(0.5, 1);
 		ui_textnumber(displayvalue, displayformat);
 	ui_pop();
-	
+
 	value;
 );
 
@@ -469,7 +498,7 @@ function draw_frequency_grid() local(fi, fmag, freq, xratio) (
 				gfx_y = ui_top();
 				ui_colora(255, 255, 255, 0.3);
 				gfx_lineto(gfx_x, ui_bottom());
-				
+
 				fi == 1 ? (
 					ui_fontsize(10);
 					ui_colora(255, 255, 255, 0.5);
@@ -503,7 +532,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 	ui_colora(255, 255, 255, 0.5);
 	g_y = ui_top() + correction_db_yratio(0)*ui_height();
 	gfx_line(ui_left(), g_y, ui_right(), g_y);
-	
+
 	g_db = 3;
 	while (g_db <= 24) (
 		g_y = ui_top() + correction_db_yratio(g_db)*ui_height();
@@ -516,7 +545,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 
 		g_db *= 2;
 	);
-	
+
 	correction_viable ? (
 		ui_hover() ? (
 			ui_color(255, 255, 255);
@@ -536,20 +565,20 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/bands_N);
 			g_left = ui_left() + (gi/bands_N)*ui_width();
 			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
-			
+
 			g_ratio = model_adjustment(gi);
 			g_db = log(g_ratio)*20/log(10);
 			g_y_ratio = correction_db_yratio(g_db);
 			g_y = ui_top() + g_y_ratio*ui_height();
 			ui_color(255, 0, 0);
 			gfx_line(g_left, g_y, g_right, g_y, 1);
-			
+
 			ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
 				gfx_x = ui_left() + ui_width()/3;
 				gfx_y = ui_top() + ui_texth();
 				gfx_printf("%0.1fdB", g_db);
 			);
-	
+
 			gi += 1;
 		);
 
@@ -560,7 +589,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 				g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
 				g_y = ui_top() + g_y_ratio*ui_height();
 				ui_colora(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
-				
+
 				g_x = ui_left() + gi;
 				gi > 0 ? (
 					gfx_lineto(g_x, g_y);
@@ -568,11 +597,11 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 					gfx_x = g_x;
 					gfx_y = g_y;
 				);
-		
+
 				gi += 1;
 			);
 			gi = 0;
-			
+
 			gi = 0;
 			while (gi < ui_width()) (
 				freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
@@ -581,7 +610,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 				g_y_ratio = correction_db_yratio(g_db);
 				g_y = ui_top() + g_y_ratio*ui_height();
 				ui_color(192, 192, 192);
-				
+
 				g_x = ui_left() + gi;
 				gi > 0 ? (
 					gfx_lineto(g_x, g_y);
@@ -589,30 +618,30 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 					gfx_x = g_x;
 					gfx_y = g_y;
 				);
-		
+
 				gi += 1;
 			);
 			gi = 0;
 		);
-		
+
 		!correction_learning && correction_active ? (
 			gi = 0;
 			while (gi < bands_N) (
 				g_left = ui_left() + (gi/bands_N)*ui_width();
 				g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
-				
+
 				g_ratio = correction_amp[gi];
 				g_db = log(g_ratio)*20/log(10);
 				g_y_ratio = correction_db_yratio(g_db);
 				g_y = ui_top() + g_y_ratio*ui_height();
 				ui_color(64, 192, 256);
 				gfx_line(g_left, g_y, g_right, g_y, 1);
-		
+
 				gi += 1;
 			);
 		);
 	);
-	
+
 	control_finish_enabled(1);
 );
 
@@ -625,25 +654,25 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 	ui_fill();
 
 	draw_frequency_grid();
-	
+
 	g_db = 15;
 	while (g_db > -60) (
 		g_y = ui_top() + averages_db_yratio(g_db)*ui_height();
 		ui_colora(255, 255, 255, 0.15);
 		gfx_line(ui_left(), g_y, ui_right(), g_y);
-		
+
 		gfx_x = ui_left() + ui_texth()*0.5;
 
 		g_db -= 6;
 	);
-	
+
 	gi = 0;
 	while (gi < bands_N) (
 		g_left = ui_left() + (gi/bands_N)*ui_width();
 		g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
-		
+
 		g_avg = bands_N*average1_value[gi];
-		g_avg_db = log(g_avg)*10/log(10);
+		g_avg_db = log(max(g_avg, 0.000000001))*10/log(10);
 		g_y_ratio = averages_db_yratio(g_avg_db);
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(0, 255, 0);
@@ -655,10 +684,10 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(192, 192, 0);
 		gfx_line(g_left, g_y, g_right, g_y, 1);
-		
+
 		gi += 1;
 	);
-	
+
 	gi = 0;
 	while (draw_model && gi < model_N) (
 		g_left = ui_left() + (gi/model_N)*ui_width();
@@ -670,10 +699,10 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 		g_y = ui_top() + g_y_ratio*ui_height();
 		ui_color(64, 192, 256);
 		gfx_line(g_left, g_y, g_right, g_y, 1);
-		
+
 		gi += 1;
 	);
-	
+
 	control_finish_enabled(1);
 );
 
@@ -709,7 +738,7 @@ ui_screen() == "main" ? (
 			ui_split_right(ui_height());
 				slider4 = control_dial(slider4, 0.5, 1.5, 0);
 			ui_pop();
-			
+
 			ui_align(1, 0.5);
 			ui_padright();
 			ui_text("Sharpness (Q)");
@@ -722,23 +751,23 @@ ui_screen() == "main" ? (
 			ui_split_right(ui_height());
 				slider5 = control_dial(slider5, -12, 20, 1);
 			ui_pop();
-			
+
 			ui_align(1, 0.5);
 			ui_padright();
 			ui_text("Safety limit");
 		ui_pop();
 	ui_pop();
-	
+
 	ui_push_above(g_bar_height);
 		draw_correction(1);
 	ui_pop();
-	
+
 	ui_push_below(g_bar_height);
 		draw_averages(1);
 	ui_pop();
 ) : ui_screen() == "learn" ? (
 	control_navbar("Learn Spectrum", -1, -1);
-	
+
 	ui_split_top(130);
 		ui_split_leftratio(0.7);
 			control_group("Analysis");
@@ -763,10 +792,10 @@ ui_screen() == "main" ? (
 				copy_to_model();
 				reset_correction();
 			);
-		ui_pop();          
+		ui_pop();
 	ui_pop();
-	
-	draw_averages(0);     
+
+	draw_averages(0);
 ) : ui_system();
 
 @serialize
