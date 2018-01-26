@@ -117,6 +117,10 @@ It's possible to rotate the field such that hard-left or hard-right inputs will 
 
 ![screenshot](Panalysis 2.png)
 
+It also includes a delay analyser, for when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.
+
+![screenshot](Panalysis-delay.png)
+
 ## Learning Sampler
 
 This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.
