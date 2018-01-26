@@ -198,6 +198,10 @@
 				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.0/Panalysis/Panalysis.jsfx</source>
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.0/Panalysis/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.1.1" time="2018-01-26T19:57:47.226Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.1/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.1/Panalysis/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="MIDI Gate" type="effect">
 			<metadata>
