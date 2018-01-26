@@ -57,7 +57,7 @@ buffer_index >= buffer_length ? (
 
 // Delay analysis
 
-function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase) (
+function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
 	action_delay_analysis_reset ? (
 		i = 0;
 		while (i < delay_bufferlength) (
@@ -88,7 +88,8 @@ function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, 
 			rB = delay_bufferB[2*i];
 			iB = delay_bufferB[2*i + 1];
 			mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
-			factor = 1/(max(mag2, 0.000001))/delay_fftsize;
+			mag = sqrt(mag2);
+			factor = 1/(max(mag, 0.000001))/delay_fftsize;
 			delay_bufferA[2*i] = (rA*rB + iA*iB)*factor;
 			delay_bufferA[2*i + 1] = (-rA*iB + iA*rB)*factor;
 			i += 1;
