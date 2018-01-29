@@ -137,7 +137,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.1"
+			"version": "1.1.2"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -257,7 +257,8 @@
 				"Stereo Alignment Delay.jsfx": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
