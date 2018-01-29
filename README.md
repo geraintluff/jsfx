@@ -12,6 +12,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 * Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ
 * Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible
 * Panalysis - visualise and manipulate the stereo field of the audio
+* Stereo Alignment Delay - two-channel delay and phase/delay analysis
 * Learning Sampler - a basic sampler that records incoming audio and plays it back
 * Hammer And Chord - a polyphonic string resonator/synth ([audio demo](audio-demos/hammer-and-chord.mp3))
 * Hammer And String - a monophonic string resonator/synth with portamento ([audio demo](audio-demos/hammer-and-string.mp3))
@@ -117,9 +118,17 @@ It's possible to rotate the field such that hard-left or hard-right inputs will 
 
 ![screenshot](Panalysis 2.png)
 
-It also includes a delay analyser, for when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.
+## Stereo Alignment Delay
 
-![screenshot](Panalysis-delay.png)
+A tool to make small delays to individual channels, including a delay analyser.
+
+Delay amount can be displayed in ms or samples.  (It is stored in ms, so if you change sample rate then it will preserve delay length regardless of the display format).
+
+![screenshot](Stereo Alignment Delay analysis.png)
+
+The delay analyser detects when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.
+
+![screenshot](Stereo Alignment Delay analysis.png)
 
 ## Learning Sampler
 

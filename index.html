@@ -232,6 +232,7 @@ a[href] code {
 <li>Spectrum Matcher - analyse the difference between an input and a model, and optionally correct with EQ</li>
 <li>Smooth Limiter - a limiter that aims to have the correction curve as smooth as possible</li>
 <li>Panalysis - visualise and manipulate the stereo field of the audio</li>
+<li>Stereo Alignment Delay - two-channel delay and phase/delay analysis</li>
 <li>Learning Sampler - a basic sampler that records incoming audio and plays it back</li>
 <li>Hammer And Chord - a polyphonic string resonator/synth (<a href="audio-demos/hammer-and-chord.mp3">audio demo</a>)</li>
 <li>Hammer And String - a monophonic string resonator/synth with portamento (<a href="audio-demos/hammer-and-string.mp3">audio demo</a>)</li>
@@ -294,8 +295,12 @@ a[href] code {
 <p><img src="Panalysis.png" alt="screenshot"></p>
 <p>It&#39;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:</p>
 <p><img src="Panalysis 2.png" alt="screenshot"></p>
-<p>It also includes a delay analyser, for when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.</p>
-<p><img src="Panalysis-delay.png" alt="screenshot"></p>
+</div><h2 id="stereo-alignment-delay">Stereo Alignment Delay</h2><div class="section section2">
+<p>A tool to make small delays to individual channels, including a delay analyser.</p>
+<p>Delay amount can be displayed in ms or samples.  (It is stored in ms, so if you change sample rate then it will preserve delay length regardless of the display format).</p>
+<p><img src="Stereo Alignment Delay analysis.png" alt="screenshot"></p>
+<p>The delay analyser detects when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.</p>
+<p><img src="Stereo Alignment Delay analysis.png" alt="screenshot"></p>
 </div><h2 id="learning-sampler">Learning Sampler</h2><div class="section section2">
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>
 <p>To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.</p>

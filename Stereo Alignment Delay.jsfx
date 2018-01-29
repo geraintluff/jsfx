@@ -191,7 +191,7 @@ function labelledswitch(value, title, ontext, offtext) (
 control_start("main", "tron");
 
 ui_screen() == "main" ? (
-	control_navbar("Sample Delay", -1, -1);
+	control_navbar("Stereo Alignment Delay", -1, -1);
 
 	ui_pad();
 
@@ -219,7 +219,7 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 ) : ui_screen() == "delay-analysis" ? (
-	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, "correct", "close") == 1 ? (
+	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, "correct", "cancel") == 1 ? (
 		delay_samples >= 0 ? (
 			delay_ms_l = 0;
 			delay_ms_r = delay_samples*1000/srate;
