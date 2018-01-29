@@ -246,6 +246,18 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Stereo Alignment Delay": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Stereo Alignment Delay.jsfx": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

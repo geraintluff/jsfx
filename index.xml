@@ -483,5 +483,9 @@
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.2/Humonica/filter-utils.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Stereo Alignment Delay" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>
