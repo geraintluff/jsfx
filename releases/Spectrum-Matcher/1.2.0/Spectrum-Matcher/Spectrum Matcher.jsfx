@@ -1,0 +1,855 @@
+desc:Spectrum Matcher (by Geraint Luff)
+
+slider1:30<10,50,10>-bands
+slider2:4<1,10,0.1>-peak bias
+slider3:50<10,200>-smoothing period (ms)
+slider4:1<0.5,1.5>-sharpness (Q)
+slider5:6<-12,20>-hard limit (dB)
+slider6:correction_gain_db=0<-24,12,0.1>-correction gain (dB)
+
+import ui-lib.jsfx-inc
+
+@init
+
+MODEL_MAX_N = 100;
+POLE_ZERO_LIMIT = 0.995;
+
+allocated_end = allocated_start = ui_setup(0);
+function allocate(N) local(result) (
+	result = allocated_end;
+	allocated_end += N;
+	result;
+);
+function allocate_reset() (
+	debug.allocate_reset += 1;
+
+	allocated_end = allocated_start;
+	model_target = allocate(MODEL_MAX_N);
+	model_shortperiod = allocate(MODEL_MAX_N);
+	model_longpower = allocate(MODEL_MAX_N);
+
+	correction_amp = allocate(MODEL_MAX_N);
+
+	correction_a1 = allocate(MODEL_MAX_N);
+	correction_a2 = allocate(MODEL_MAX_N);
+	correction_b0 = allocate(MODEL_MAX_N);
+	correction_b1 = allocate(MODEL_MAX_N);
+	correction_b2 = allocate(MODEL_MAX_N);
+
+	correction_x0_l = allocate(MODEL_MAX_N);
+	correction_x1_l = allocate(MODEL_MAX_N);
+	correction_x2_l = allocate(MODEL_MAX_N);
+	correction_y0_l = allocate(MODEL_MAX_N);
+	correction_y1_l = allocate(MODEL_MAX_N);
+	correction_y2_l = allocate(MODEL_MAX_N);
+
+	correction_x0_r = allocate(MODEL_MAX_N);
+	correction_x1_r = allocate(MODEL_MAX_N);
+	correction_x2_r = allocate(MODEL_MAX_N);
+	correction_y0_r = allocate(MODEL_MAX_N);
+	correction_y1_r = allocate(MODEL_MAX_N);
+	correction_y2_r = allocate(MODEL_MAX_N);
+);
+allocate_reset();
+
+function sinh(x) (
+	(exp(x) - exp(-x))*0.5;
+);
+
+low_freq = 20;
+high_freq = 18000;
+
+//bands_N = 0;
+function reset_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0) (
+	allocate_reset();
+	bands_N = N ? N : model_N;
+
+	bands_total_energy = 0;
+
+	filter_l_x0 = allocate(bands_N);
+	filter_l_x1 = allocate(bands_N);
+	filter_l_x2 = allocate(bands_N);
+	filter_l_y0 = allocate(bands_N);
+	filter_l_y1 = allocate(bands_N);
+	filter_l_y2 = allocate(bands_N);
+	filter_r_x0 = allocate(bands_N);
+	filter_r_x1 = allocate(bands_N);
+	filter_r_x2 = allocate(bands_N);
+	filter_r_y0 = allocate(bands_N);
+	filter_r_y1 = allocate(bands_N);
+	filter_r_y2 = allocate(bands_N);
+
+	filter_a1 = allocate(bands_N);
+	filter_a2 = allocate(bands_N);
+	filter_b0 = allocate(bands_N);
+	filter_b1 = allocate(bands_N);
+	filter_b2 = allocate(bands_N);
+
+	average1_unsharpenedvalue = allocate(bands_N);
+	average1_smoothed = allocate(bands_N);
+	average1_value = allocate(bands_N);
+
+	average2_counter = allocate(bands_N);
+	average2_sum = allocate(bands_N);
+
+	octaves = log(high_freq/low_freq)/log(2);
+	bw = octaves/(bands_N - 1);
+
+	i = 0;
+	while (i < bands_N) (
+		freq = low_freq*exp(log(high_freq/low_freq)*(i + 0.5)/bands_N);
+
+		w0 = 2*$pi*freq/srate;
+		alpha = sin(w0)*sinh(log(2)/2*bw*w0/sin(w0));
+
+		a0 = 1 + alpha;
+		filter_a1[i] = -2*cos(w0)/a0;
+		filter_a2[i] = (1 - alpha)/a0;
+		filter_b0[i] = alpha/a0;
+		filter_b1[i] = 0;
+		filter_b2[i] = -alpha/a0;
+
+		filter_l_x0[i] = filter_l_x1[i] = filter_l_x2[i] = 0;
+		filter_l_y0[i] = filter_l_y1[i] = filter_l_y2[i] = 0;
+		filter_r_x0[i] = filter_r_x1[i] = filter_r_x2[i] = 0;
+		filter_r_y0[i] = filter_r_y1[i] = filter_r_y2[i] = 0;
+
+		average1_unsharpenedvalue[i] = 0;
+		average1_value[i] = 0;
+		average2_counter[i] = 0;
+		average2_sum[i] = 0;
+
+		i += 1;
+	);
+
+	period = slider3/1000;
+	average1_slew = 1 - exp(-1/period/srate);
+	average1_period = period;
+	average2_power = slider2;
+	sum_interval_samples = ceil(period*srate*0.05);
+
+	bands_interconnect_db = -6*octaves/(bands_N - 1);
+	bands_interconnect = pow(10, bands_interconnect_db/10); // power calc
+	bands_subtraction_factor = 3.5/bands_N;
+);
+!bands_N ? reset_bands(model_N);
+
+function reset_model(N) local(i, freq) (
+	model_N = N;
+	model_shortperiod = 0.05;
+	model_longpower = 4;
+	i = 0;
+	while (i < model_N) (
+		freq = low_freq*exp(log(high_freq/low_freq)*(i + 0.5)/model_N);
+		model_target[i] = min(1, pow(freq/100, 3))*1/pow(freq, 0);
+		model_target[i] = min(1, pow(freq/50, 4))*min(1, freq/120)/pow(freq, 0.9);
+		i += 1;
+	);
+);
+!model_N ? reset_model(floor(slider1 + 0.5));
+
+function copy_to_model() local(i) (
+	model_N = bands_N;
+	model_shortperiod = average1_period;
+	model_longpower = average2_power;
+
+	i = 0;
+	while (i < bands_N) (
+		model_target[i] = pow(average2_sum[i]/average2_counter[i], 1/average2_power);
+		i += 1;
+	);
+);
+
+function model_adjustment(i) (
+	sqrt(model_target[i]/pow(average2_sum[i]/average2_counter[i], 1/average2_power));
+);
+
+function clear_correction_filters() local(i) (
+	i = 0;
+	while (i < model_N) (
+		correction_x0_l[i] = correction_x1_l[i] = correction_x2_l[i] = 0;
+		correction_y0_l[i] = correction_y1_l[i] = correction_y2_l[i] = 0;
+		correction_x0_r[i] = correction_x1_r[i] = correction_x2_r[i] = 0;
+		correction_y0_r[i] = correction_y1_r[i] = correction_y2_r[i] = 0;
+		i += 1;
+	);
+);
+
+function reset_correction() local(i) (
+	debug.reset_correction += 1;
+	i = 0;
+	while (i < MODEL_MAX_N) (
+		correction_amp[i] = 1;
+		correction_a1[i] = 0;
+		correction_a2[i] = 0;
+		correction_b0[i] = 1;
+		correction_b1[i] = 0;
+		correction_b2[i] = 0;
+		i += 1;
+	);
+	clear_correction_filters();
+);
+
+function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
+	hr = 1;
+	hi = 0;
+	wr = cos(2*$pi*freq/srate);
+	wi = sin(2*$pi*freq/srate);
+	w2r = cos(4*$pi*freq/srate);
+	w2i = sin(4*$pi*freq/srate);
+
+	i = 0;
+	while (i < model_N) (
+		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
+		zi = correction_b1[i]*wi + correction_b2[i]*w2i;
+		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
+		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
+		pm2 = pr*pr + pi*pi;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*zr - ti*zi;
+		hi = tr*zi + ti*zr;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*pr + ti*pi;
+		hi = ti*pr - tr*pi;
+		hr /= pm2;
+		hi /= pm2;
+		i += 1;
+	);
+	sqrt(hr*hr + hi*hi);
+);
+
+function correction_phase(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
+	hr = 1;
+	hi = 0;
+	wr = cos(2*$pi*freq/srate);
+	wi = sin(2*$pi*freq/srate);
+	w2r = cos(4*$pi*freq/srate);
+	w2i = sin(4*$pi*freq/srate);
+
+	i = 0;
+	while (i < model_N) (
+		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
+		zi = correction_b1[i]*wi + correction_b2[i]*w2i;
+		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
+		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
+		pm2 = pr*pr + pi*pi;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*zr - ti*zi;
+		hi = tr*zi + ti*zr;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*pr + ti*pi;
+		hi = ti*pr - tr*pi;
+		hr /= pm2;
+		hi /= pm2;
+		i += 1;
+	);
+	atan2(hi, hr);
+);
+
+function update_correction() local(i) (
+	i = 0;
+	while (i < model_N) (
+		correction_amp[i] = model_adjustment(i);
+		i += 1;
+	);
+);
+
+function calculate_correction() local(i, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, strength) (
+	i = 0;
+	prev_amp = 1;
+	strength = correction_learning ? min(1,  bands_total_energy/0.3) : 1;
+	debug.strength = strength;
+	debug.correction_learning = correction_learning;
+	while (i < model_N) (
+		boundary_freq = low_freq*exp(log(high_freq/low_freq)*i/model_N);
+		debug.i = i;
+		debug.boundary_freq = boundary_freq;
+		amp = correction_amp[i];
+		amp = exp(log(amp)*strength);
+
+		Q = (i == 0) ? 0.71 : slider4;
+		A = sqrt(amp/prev_amp);
+		w0 = 2*$pi*boundary_freq/srate;
+		alpha = sin(w0)/(2*Q);
+		sqrtA2alpha = 2*sqrt(A)*alpha;
+		i == 0 ? (
+			a0 = (1 + alpha);
+			gain = amp/prev_amp;
+			correction_a1[i] = -2*cos(w0)/a0;
+			correction_a2[i] = (1 - alpha)/a0;
+			correction_b0[i] = gain*(1 + cos(w0))/2/a0;
+			correction_b1[i] = -gain*(1 + cos(w0))/a0;
+			correction_b2[i] = gain*(1 + cos(w0))/2/a0;
+		) : (
+			a0 = (A + 1) - (A - 1)*cos(w0) + sqrtA2alpha;
+			correction_a1[i] = 2*((A - 1) - (A + 1)*cos(w0))/a0;
+			correction_a2[i] = (a0 - 2*sqrtA2alpha)/a0;
+			correction_b0[i] = A*((A + 1) + (A - 1)*cos(w0) + sqrtA2alpha)/a0;
+			correction_b1[i] = -2*A*((A - 1) + (A + 1)*cos(w0))/a0;
+			correction_b2[i] = A*((A + 1) + (A - 1)*cos(w0) - sqrtA2alpha)/a0;
+		);
+
+		prev_amp = amp;
+		i += 1;
+	);
+);
+calculate_correction();
+
+last_srate != srate ? (
+	last_srate = srate;
+	calculate_correction();
+	clear_correction_filters();
+);
+
+@block
+
+correction_gain_ratio = pow(10, correction_gain_db/20);
+
+action_recalculate ? (
+	action_recalculate = 0;
+	calculate_correction();
+	debug.action_recalculate += 1;
+);
+
+action_reset ? (
+	action_reset = 0;
+	reset_bands();
+	reset_correction();
+	correction_learning = 0;
+	correction_active = 0;
+);
+
+action_reset_bands ? (
+	action_reset_bands = 0;
+	reset_bands(floor(slider1 + 0.5));
+	reset_correction();
+);
+
+action_start_correcting ? (
+	action_start_correcting = 0;
+	update_correction();
+	clear_correction_filters();
+	correction_active = 1;
+	correction_learning = 1;
+);
+
+action_freeze ? (
+	action_freeze = 0;
+	update_correction();
+	calculate_correction();
+	clear_correction_filters();
+	correction_learning = 0;
+);
+
+correction_viable = model_N == bands_N;
+
+correction_learning && correction_viable ? (
+	update_correction();
+);
+
+slider4 != last_sharpness ? (
+	action_recalculate = 1;
+);
+last_sharpness = slider4;
+
+model_N && (correction_learning || action_recalculate) ? (
+	action_recalculate = 0;
+	calculate_correction();
+);
+
+hard_limit = pow(10, slider5/20);
+
+@sample
+
+spl0 || spl1 ? (
+	bands_total_energy += 1/srate;
+);
+
+i = 0;
+while (i < bands_N) (
+	filter_l_x0[i] = x0l = spl0;
+	filter_l_y0[i] = y0l = filter_b0[i]*x0l + filter_b1[i]*filter_l_x1[i] + filter_b2[i]*filter_l_x2[i] - filter_a1[i]*filter_l_y1[i] - filter_a2[i]*filter_l_y2[i];
+
+	filter_r_x0[i] = x0r = spl1;
+	filter_r_y0[i] = y0r = filter_b0[i]*x0r + filter_b1[i]*filter_r_x1[i] + filter_b2[i]*filter_r_x2[i] - filter_a1[i]*filter_r_y1[i] - filter_a2[i]*filter_r_y2[i];
+
+	average1_unsharpenedvalue[i] += ((y0l*y0l + y0r*y0r)*0.5 - average1_unsharpenedvalue[i])*average1_slew;
+
+	i += 1;
+);
+
+sum_interval_counter += 1;
+sum_interval_counter >= sum_interval_samples ? (
+
+	i = 0;
+	avg = average1_unsharpenedvalue[0]*bands_subtraction_factor;
+	while (i < bands_N) (
+		avg = average1_unsharpenedvalue[i] + (avg - average1_unsharpenedvalue[i])*bands_interconnect;
+
+		average1_smoothed[i] = avg*bands_subtraction_factor;
+		i += 1;
+	);
+	avg *= bands_subtraction_factor;
+	while (i > 0) (
+		i -= 1;
+		avg = average1_smoothed[i] + (avg - average1_smoothed[i])*bands_interconnect;
+		average1_smoothed[i] = avg;
+
+		average1_value[i] = max(0.0, average1_unsharpenedvalue[i] - avg);
+
+		average2_counter[i] += 1;
+		average2_sum[i] += pow(average1_unsharpenedvalue[i], average2_power);
+	);
+);
+
+tmp = filter_l_x2;
+filter_l_x2 = filter_l_x1;
+filter_l_x1 = filter_l_x0;
+filter_l_x0 = tmp;
+
+tmp = filter_l_y2;
+filter_l_y2 = filter_l_y1;
+filter_l_y1 = filter_l_y0;
+filter_l_y0 = tmp;
+
+tmp = filter_r_x2;
+filter_r_x2 = filter_r_x1;
+filter_r_x1 = filter_r_x0;
+filter_r_x0 = tmp;
+
+tmp = filter_r_y2;
+filter_r_y2 = filter_r_y1;
+filter_r_y1 = filter_r_y0;
+filter_r_y0 = tmp;
+
+correction_active ? (
+	i = 0;
+	while (i < bands_N) (
+		correction_x0_l[i] = x0l = spl0;
+		correction_y0_l[i] = spl0 = correction_b0[i]*x0l + correction_b1[i]*correction_x1_l[i] + correction_b2[i]*correction_x2_l[i] - correction_a1[i]*correction_y1_l[i] - correction_a2[i]*correction_y2_l[i];
+
+		correction_x0_r[i] = x0r = spl1;
+		correction_y0_r[i] = spl1 = correction_b0[i]*x0r + correction_b1[i]*correction_x1_r[i] + correction_b2[i]*correction_x2_r[i] - correction_a1[i]*correction_y1_r[i] - correction_a2[i]*correction_y2_r[i];
+
+		i += 1;
+	);
+	spl0 *= correction_gain_ratio;
+	spl1 *= correction_gain_ratio;
+
+	tmp = correction_x2_l;
+	correction_x2_l = correction_x1_l;
+	correction_x1_l = correction_x0_l;
+	correction_x0_l = tmp;
+
+	tmp = correction_y2_l;
+	correction_y2_l = correction_y1_l;
+	correction_y1_l = correction_y0_l;
+	correction_y0_l = tmp;
+
+	tmp = correction_x2_r;
+	correction_x2_r = correction_x1_r;
+	correction_x1_r = correction_x0_r;
+	correction_x0_r = tmp;
+
+	tmp = correction_y2_r;
+	correction_y2_r = correction_y1_r;
+	correction_y1_r = correction_y0_r;
+	correction_y0_r = tmp;
+);
+
+spl0 = max(-hard_limit, min(hard_limit, spl0));
+spl1 = max(-hard_limit, min(hard_limit, spl1));
+
+@gfx 620 450
+
+function labelled_dial(value, default, low, high, bias, label, displayvalue, displayformat) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+		ui_mouse_down() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+
+	ui_push_below(50);
+		ui_align(0.5, 0);
+		ui_text(label);
+	ui_pop();
+
+	ui_push_above(50);
+		ui_align(0.5, 1);
+		ui_textnumber(displayvalue, displayformat);
+	ui_pop();
+
+	value;
+);
+
+function draw_frequency_grid() local(fi, fmag, freq, xratio) (
+	ui_push();
+		fi = 1;
+		fmag = 10;
+		while (fi*fmag < high_freq) (
+			freq = fi*fmag;
+			freq > low_freq ? (
+				xratio = log(freq/low_freq)/log(high_freq/low_freq);
+				gfx_x = ui_left() + xratio*ui_width();
+				gfx_y = ui_top();
+				ui_colora(255, 255, 255, 0.3);
+				gfx_lineto(gfx_x, ui_bottom());
+
+				fi == 1 ? (
+					ui_fontsize(10);
+					ui_colora(255, 255, 255, 0.5);
+					gfx_x += ui_texth()*0.5;
+					gfx_y = ui_bottom() - ui_texth()*1.5;
+					fmag >= 1000 ? (
+						gfx_printf("%ikHz", freq/1000);
+					) : (
+						gfx_printf("%iHz", freq);
+					);
+				);
+			);
+			fi += 1;
+			fi >= 10 ? (
+				fi /= 10;
+				fmag *= 10;
+			);
+		);
+	ui_pop();
+);
+
+function correction_db_yratio(db) (
+	max(0, min(1, (20 - db)/40));
+);
+
+function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
+	ui_color(0, 0, 0);
+	ui_fill();
+
+	draw_frequency_grid();
+	ui_colora(255, 255, 255, 0.5);
+	g_y = ui_top() + correction_db_yratio(0)*ui_height();
+	gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+	g_db = 3;
+	while (g_db <= 24) (
+		g_y = ui_top() + correction_db_yratio(g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_y = ui_top() + correction_db_yratio(-g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_db *= 2;
+	);
+
+	correction_viable ? (
+		ui_hover() ? (
+			ui_color(255, 255, 255);
+			freq = low_freq*exp(log(high_freq/low_freq)*ui_mouse_xratio());
+			gfx_x = ui_left() + ui_texth();
+			gfx_y = ui_top() + ui_texth();
+			gfx_printf("%iHz", freq);
+
+			g_ratio = correction_amp(freq);
+			g_db = log(g_ratio)*20/log(10);
+			gfx_x = ui_left() + ui_width()*2/3;
+			gfx_y = ui_top() + ui_texth();
+			gfx_printf("%0.1fdB", g_db);
+		);
+		gi = 0;
+		while (gi < bands_N) (
+			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/bands_N);
+			g_left = ui_left() + (gi/bands_N)*ui_width();
+			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+			g_ratio = model_adjustment(gi);
+			g_db = log(g_ratio)*20/log(10);
+			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+			g_y = ui_top() + g_y_ratio*ui_height();
+			ui_color(255, 0, 0);
+			gfx_line(g_left, g_y, g_right, g_y, 1);
+
+			ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
+				gfx_x = ui_left() + ui_width()/3;
+				gfx_y = ui_top() + ui_texth();
+				gfx_printf("%0.1fdB", g_db);
+			);
+
+			gi += 1;
+		);
+
+		correction_active ? (
+			gi = 0;
+			while (gi < ui_width()) (
+				freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+				g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
+				g_y = ui_top() + g_y_ratio*ui_height();
+				ui_colora(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
+
+				g_x = ui_left() + gi;
+				gi > 0 ? (
+					gfx_lineto(g_x, g_y);
+				) : (
+					gfx_x = g_x;
+					gfx_y = g_y;
+				);
+
+				gi += 1;
+			);
+			gi = 0;
+
+			gi = 0;
+			while (gi < ui_width()) (
+				freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+				g_ratio = correction_amp(freq);
+				g_db = log(g_ratio)*20/log(10);
+				g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+				g_y = ui_top() + g_y_ratio*ui_height();
+				ui_color(192, 192, 192);
+
+				g_x = ui_left() + gi;
+				gi > 0 ? (
+					gfx_lineto(g_x, g_y);
+				) : (
+					gfx_x = g_x;
+					gfx_y = g_y;
+				);
+
+				gi += 1;
+			);
+			gi = 0;
+		);
+
+		!correction_learning && correction_active ? (
+			gi = 0;
+			while (gi < bands_N) (
+				g_left = ui_left() + (gi/bands_N)*ui_width();
+				g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+				g_ratio = correction_amp[gi];
+				g_db = log(g_ratio)*20/log(10);
+				g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+				g_y = ui_top() + g_y_ratio*ui_height();
+				ui_color(64, 192, 256);
+				gfx_line(g_left, g_y, g_right, g_y, 1);
+
+				gi += 1;
+			);
+		);
+	);
+
+	control_finish_enabled(1);
+);
+
+function averages_db_yratio(db) (
+	max(0, min(1, (15 - db)/60));
+);
+
+function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g_y_ratio, g_y) (
+	ui_color(0, 0, 0);
+	ui_fill();
+
+	draw_frequency_grid();
+
+	g_db = 15;
+	while (g_db > -60) (
+		g_y = ui_top() + averages_db_yratio(g_db)*ui_height();
+		ui_colora(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		gfx_x = ui_left() + ui_texth()*0.5;
+
+		g_db -= 6;
+	);
+
+	gi = 0;
+	while (gi < bands_N) (
+		g_left = ui_left() + (gi/bands_N)*ui_width();
+		g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+		g_avg = bands_N*average1_value[gi];
+		g_avg_db = log(max(g_avg, 0.000000001))*10/log(10);
+		g_y_ratio = averages_db_yratio(g_avg_db);
+		g_y = ui_top() + g_y_ratio*ui_height();
+		ui_color(0, 255, 0);
+		gfx_line(g_left, g_y, g_right, g_y, 1);
+
+		g_avg = bands_N*pow(average2_sum[gi]/average2_counter[gi], 1/average2_power);
+		g_avg_db = log(g_avg)*10/log(10);
+		g_y_ratio = averages_db_yratio(g_avg_db);
+		g_y = ui_top() + g_y_ratio*ui_height();
+		ui_color(192, 192, 0);
+		gfx_line(g_left, g_y, g_right, g_y, 1);
+
+		gi += 1;
+	);
+
+	gi = 0;
+	while (draw_model && gi < model_N) (
+		g_left = ui_left() + (gi/model_N)*ui_width();
+		g_right = ui_left() + ((gi + 1)/model_N)*ui_width();
+
+		g_avg = bands_N*model_target[gi];
+		g_avg_db = log(g_avg)*10/log(10);
+		g_y_ratio = averages_db_yratio(g_avg_db);
+		g_y = ui_top() + g_y_ratio*ui_height();
+		ui_color(64, 192, 256);
+		gfx_line(g_left, g_y, g_right, g_y, 1);
+
+		gi += 1;
+	);
+
+	control_finish_enabled(1);
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+	control_navbar("Spectrum Matcher", "Learn", "learn");
+
+	g_bar_height = ui_push_height(50);
+		ui_split_leftratio(1/3);
+			ui_split_leftratio(1/2);
+				control_button("Reset") ? (
+					action_reset = 1;
+				);
+			ui_split_next();
+				bands_N == model_N && correction_viable && !correction_active ? (
+					control_button("Correct") ? (
+						action_start_correcting = 1;
+					);
+				) : bands_N == model_N && correction_viable && correction_active ? (
+					control_button("Freeze") ? (
+						action_freeze = 1;
+					);
+				) : (
+					control_indicator_button("Correct", 0);
+				);
+			ui_pop();
+		ui_pop();
+
+		ui_fontsize(14);
+
+		ui_split_leftratio(0.4);
+			ui_pad2(0, -1);
+			ui_split_right(30);
+				ui_textnumber(slider4, "%0.1f");
+			ui_pop();
+			ui_split_right(ui_height());
+				slider4 = control_dial(slider4, 0.5, 1.5, 0);
+			ui_pop();
+
+			ui_align(1, 0.5);
+			ui_pad4(0, 0, 2, 0);
+			ui_text("Sharpness (Q)");
+		ui_pop();
+		ui_split_leftratio(1/2);
+			ui_pad2(0, -1);
+			ui_split_right(50);
+				ui_align(0.8, 0.5);
+				ui_textnumber(floor(correction_gain_db*10 + 0.4)*0.1, "%0.1fdB");
+			ui_pop();
+			ui_split_right(ui_height());
+				correction_gain_db = control_dial(correction_gain_db, -24, 12, -1.5);
+				ui_click() && ui_clickcount() == 2 ? (
+					correction_gain_db = 0;
+				);
+			ui_pop();
+
+			ui_align(1, 0.5);
+			ui_pad4(0, 0, 2, 0);
+			ui_text("Gain");
+		ui_split_next();
+			ui_pad2(0, -1);
+			ui_split_right(50);
+				ui_align(0.8, 0.5);
+				ui_textnumber(slider5, "%0.1fdB");
+			ui_pop();
+			ui_split_right(ui_height());
+				slider5 = control_dial(slider5, -12, 20, 1);
+			ui_pop();
+
+			ui_align(1, 0.5);
+			ui_pad4(0, 0, 2, 0);
+			ui_text("Clip");
+		ui_pop();
+	ui_pop();
+
+	ui_push_above(g_bar_height);
+		draw_correction(1);
+	ui_pop();
+
+	ui_push_below(g_bar_height);
+		draw_averages(1);
+	ui_pop();
+) : ui_screen() == "learn" ? (
+	control_navbar("Learn Spectrum", -1, -1);
+
+	ui_split_top(130);
+		ui_split_leftratio(0.7);
+			control_group("Analysis");
+			ui_split_leftratio(1/3);
+				slider1 = labelled_dial(slider1, 30, 10, 50, 0, "Resolution", log(high_freq/low_freq)/log(2)/slider1, "%0.2f octaves");
+			ui_split_next();
+				slider2 = labelled_dial(slider2, 4, 1, 10, 1.2, "Peak bias", slider2, "%0.1f");
+			ui_split_next();
+				slider3 = labelled_dial(slider3, 30, 10, 125, 2.9, "Period", slider3, "%ims");
+			ui_pop();
+		ui_pop();
+
+		ui_split_topratio(0.5);
+			ui_pad();
+			control_button("Reset") ? (
+				reset_correction();
+				action_reset_bands = 1;
+			);
+		ui_split_next();
+			ui_pad();
+			control_button("Save") ? (
+				copy_to_model();
+				reset_correction();
+			);
+		ui_pop();
+	ui_pop();
+
+	draw_averages(0);
+) : ui_system();
+
+@serialize
+
+file_var(0, correction_active);
+file_var(0, low_freq);
+file_var(0, high_freq);
+file_var(0, model_N);
+file_var(0, model_shortperiod);
+file_var(0, model_longpower);
+
+si = 0;
+while (si < model_N) (
+	file_var(0, model_target[si]);
+	si += 1;
+);
+
+si = 0;
+while (si < model_N) (
+	file_var(0, correction_amp[si]);
+	si += 1;
+);
+
+model_N != bands_N || !model_N ? (
+	reset_bands();
+	debug.reset += 1;
+);
+
+file_var(0, correction_learning);
+
+action_recalculate = 1;
