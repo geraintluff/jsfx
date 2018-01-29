@@ -19,12 +19,6 @@ freemem = (buffer0 = freemem) + buffer_length;
 freemem = (buffer1 = freemem) + buffer_length;
 buffer_index = 0;
 
-delay_fftsize = 2048;
-delay_bufferlength = delay_fftsize;
-freemem = (delay_bufferA = freemem) + delay_bufferlength*2;
-freemem = (delay_bufferB = freemem) + delay_bufferlength*2;
-freemem = (delay_bufferSum = freemem) + delay_bufferlength;
-
 DISPLAY_SCREEN = 5;
 ui_reserve_image(DISPLAY_SCREEN);
 
@@ -53,75 +47,6 @@ buffer1[buffer_index] = spl1;
 buffer_index += 1;
 buffer_index >= buffer_length ? (
 	buffer_index = 0;
-);
-
-// Delay analysis
-
-function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
-	action_delay_analysis_reset ? (
-		i = 0;
-		while (i < delay_bufferlength) (
-		  delay_bufferSum[i] = 0;
-		  i += 1;
-		);
-		action_delay_analysis_reset = 0;
-	);
-
-	ratio = (delay_bufferindex/delay_bufferlength);
-	window = 0.5 - 0.5*cos(ratio*2*$pi);
-
-	delay_bufferA[delay_bufferindex*2] = spl0*window;
-	delay_bufferA[delay_bufferindex*2 + 1] = 0;
-	delay_bufferB[delay_bufferindex*2] = spl1*window;
-	delay_bufferB[delay_bufferindex*2 + 1] = 0;
-
-	delay_bufferindex += 1;
-	delay_bufferindex >= delay_bufferlength ? (
-		delay_bufferindex = 0;
-
-		fft(delay_bufferA, delay_fftsize);
-		fft(delay_bufferB, delay_fftsize);
-		i = 0;
-		while (i < delay_bufferlength) (
-			rA = delay_bufferA[2*i];
-			iA = delay_bufferA[2*i + 1];
-			rB = delay_bufferB[2*i];
-			iB = delay_bufferB[2*i + 1];
-			mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
-			mag = sqrt(mag2);
-			factor = 1/(max(mag, 0.000001))/delay_fftsize;
-			delay_bufferA[2*i] = (rA*rB + iA*iB)*factor;
-			delay_bufferA[2*i + 1] = (-rA*iB + iA*rB)*factor;
-			i += 1;
-		);
-		ifft(delay_bufferA, delay_fftsize);
-
-		max_abs = 0;
-		max_phase = 1;
-		max_index = 0;
-
-		i = 0;
-		while (i < delay_bufferlength) (
-			i2 = (i + delay_bufferlength/2)%delay_bufferlength;
-			value = delay_bufferSum[i2] += delay_bufferA[2*i];
-			abs(value) >= max_abs ? (
-				max_abs = abs(delay_bufferSum[i2]);
-				max_index = i;
-				max_phase = delay_bufferSum[i2] < 0 ? -1 : 1;
-			);
-			i += 1;
-		);
-
-		delay_samples = max_index;
-		delay_samples > delay_bufferlength/2 ? (
-			delay_samples -= delay_bufferlength;
-		);
-		delay_phase = max_phase;
-	);
-);
-
-delay_analysis_active ? (
-	perform_delay_analysis();
 );
 
 @gfx 510 660
@@ -229,19 +154,8 @@ function labelled_switch_vertical(value, label, valuestring) (
 
 control_start("main", "tron");
 
-delay_analysis_active = (ui_screen() == "delay-analysis");
-
 ui_screen() == "main" ? (
 	ui_split_top(150);
-		ui_split_righttext("Delay");
-			ui_split_bottomtext();
-				control_button("Delay") ? (
-					ui_screen_open("delay-analysis");
-					action_delay_analysis_reset = 1;
-					g_zoom = 1;
-				);
-			ui_pop();
-		ui_pop();
 		ui_split_rightratio(2/5);
 			control_group("display");
 			ui_split_leftratio(1/2);
@@ -264,51 +178,6 @@ ui_screen() == "main" ? (
 	ui_pop();
 
 	update_display();
-) : ui_screen() == "delay-analysis" ? (
-	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.5, "done", -1);
-
-	/*
-	ui_split_left(60);
-		ui_padright();
-		ui_split_bottom(100);
-			g_zoom = labelled_dial_vertical(g_zoom, 1, 0.01, 0, "Zoom", 0, "", 1, 1);
-		ui_pop();
-	ui_pop();
-	*/
-
-	control_background_technical();
-       ui_graph_step(delay_bufferSum, delay_bufferlength, 1, 0, 0);
-       ui_hover() ? (
-		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*delay_bufferlength);
-		ui_align(1, 1);
-		ui_textnumber(mouse_sample, "%i samples");
-		ui_align(0, 1);
-		ui_textnumber(mouse_sample/srate*1000, "%fms");
-
-		ui_colora(255, 255, 255, 0.5);
-		gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
-       );
-
-	ui_push();
-		ui_color(255, 255, 255);
-		ui_align(delay_samples >= delay_bufferlength*0.1 ? 0 : 1, 0);
-		ui_split_top(gfx_texth);
-			g_ms = delay_samples/srate*1000;
-			g_ms >= 0 ? (
-				ui_textnumber(g_ms, "Ch1 is %fms ahead");
-			) : (
-				ui_textnumber(-g_ms, "Ch0 is %fms ahead");
-			);
-		ui_pop();
-		ui_split_top(gfx_texth);
-			ui_textnumber(delay_samples, "(peak at %i samples)");
-		ui_pop();
-		ui_split_top(gfx_texth);
-			ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
-		ui_pop();
-	ui_pop();
-
-       control_finish_technical();
 ) : control_system();
 
 @serialize
