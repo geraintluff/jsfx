@@ -1,0 +1,374 @@
+desc:Stereo Alignment Delay (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:delay_ms_l=0<-125,125,0.1>-Left delay (ms)
+slider2:delay_ms_r=<-125,125,0.1>-Right delay (ms)
+slider3:delay_linked=0<0,1,1{no,yes}>-Linked
+slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
+slider5:delay_fftsize_1024log2=3<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
+slider6:phase_invert_l=0<0,1,1{normal,invert}>-Left phase
+slider7:phase_invert_r=0<0,1,1{normal,invert}>-Right phase
+
+import ui-lib.jsfx-inc
+
+@init
+
+MAX_DELAY = 0.125;
+MAX_PREDELAY = 0.125;
+
+freemem = ui_setup(0);
+buffer_length = ceil(srate*(MAX_PREDELAY + MAX_PREDELAY) + 100);
+freemem = (buffer0 = freemem) + buffer_length;
+freemem = (buffer1 = freemem) + buffer_length;
+buffer_index = 0;
+
+gain = 0;
+gain_step = 0;
+
+MAX_FFTSIZE = 32768;
+delay_bufferlength = MAX_FFTSIZE;
+freemem = (delay_bufferA = freemem) + delay_bufferlength;
+freemem = (delay_bufferB = freemem) + delay_bufferlength;
+freemem = (fft_bufferA = freemem) + MAX_FFTSIZE*2;
+freemem = (fft_bufferB = freemem) + MAX_FFTSIZE*2;
+freemem = (delay_bufferSum = freemem) + MAX_FFTSIZE;
+
+i = 0;
+while (i < MAX_FFTSIZE) (
+	delay_bufferA[i] = delay_bufferB[i] = 0;
+	i += 1;
+);
+
+@block
+
+new_delay_samples_l = floor(delay_ms_l*srate*0.001 + 0.5);
+new_delay_samples_r = floor(delay_ms_r*srate*0.001 + 0.5);
+predelay_samples = -min(0, min(new_delay_samples_l, new_delay_samples_r));
+new_delay_samples_l += predelay_samples;
+new_delay_samples_r += predelay_samples;
+
+new_polarity_l = phase_invert_l ? -1 : 1;
+new_polarity_r = phase_invert_r ? -1 : 1;
+
+delay_samples_l != new_delay_samples_l
+|| delay_samples_r != new_delay_samples_r
+|| new_polarity_l != polarity_l
+|| new_polarity_r != polarity_r ? (
+	gain <= 0 ? (
+		// We've already faded out - update
+		delay_samples_l = new_delay_samples_l;
+		delay_samples_r = new_delay_samples_r;
+		pdc_delay = predelay_samples;
+		pdc_bot_ch = 0;
+		pdc_top_ch = 2;
+
+		polarity_l = new_polarity_l;
+		polarity_r = new_polarity_r;
+
+		gain_step = 1/samplesblock;
+	) : (
+		gain_step = -1/samplesblock;
+	);
+	gain += gain_step;
+) : (
+	gain_step = (1 - gain)/samplesblock;
+);
+
+@sample
+
+function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
+	delay_fftsize = 1024<<delay_fftsize_1024log2;
+	delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+		old_delay_fftsize = delay_fftsize;
+		i = 0;
+		while (i < delay_fftsize) (
+			delay_bufferSum[i] = 0;
+			i += 1;
+		);
+		i = 0;
+		while (i < delay_bufferlength) (
+			delay_bufferA[i] = delay_bufferB[i] = 0;
+			i += 1;
+		);
+		delay_bufferindex = 0;
+
+		delay_fftinterval = delay_fftsize/4;
+		delay_fftinterval_counter = -delay_fftsize + delay_fftinterval; // First analysis when we've captured a full FFT length
+
+		action_delay_analysis_reset = 0;
+	);
+
+	delay_bufferA[delay_bufferindex] = spl0;
+	delay_bufferB[delay_bufferindex] = spl1;
+	delay_bufferindex += 1;
+	delay_bufferindex >= delay_bufferlength ? (
+		delay_bufferindex = 0;
+	);
+
+	delay_fftinterval_counter += 1;
+	delay_fftinterval_counter >= delay_fftinterval ? (
+		delay_fftinterval_counter = 0;
+
+		i = 0;
+		while (i < delay_fftsize) (
+			ratio = ((i + 0.5)/delay_fftsize);
+			window = 0.5 - 0.5*cos(ratio*2*$pi);
+
+			delay_index = delay_bufferindex - delay_fftsize + i + 1;
+			delay_index < 0 ? delay_index += delay_bufferlength;
+			fft_bufferA[i*2] = delay_bufferA[delay_index]*window;
+			fft_bufferA[i*2 + 1] = 0;
+			fft_bufferB[i*2] = delay_bufferB[delay_index]*window;
+			fft_bufferB[i*2 + 1] = 0;
+			i += 1;
+		);
+
+		fft(fft_bufferA, delay_fftsize);
+		fft(fft_bufferB, delay_fftsize);
+		i = 0;
+		while (i < delay_fftsize) (
+			rA = fft_bufferA[2*i];
+			iA = fft_bufferA[2*i + 1];
+			rB = fft_bufferB[2*i];
+			iB = fft_bufferB[2*i + 1];
+			mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
+			mag = sqrt(mag2);
+			factor = 1/(max(mag, 0.000001))/delay_fftsize;
+			fft_bufferA[2*i] = (rA*rB + iA*iB)*factor;
+			fft_bufferA[2*i + 1] = (-rA*iB + iA*rB)*factor;
+			i += 1;
+		);
+		ifft(fft_bufferA, delay_fftsize);
+
+		max_abs = 0;
+		max_phase = 1;
+		max_index = 0;
+
+		i = 0;
+		while (i < delay_fftsize) (
+			i2 = (i + delay_fftsize/2)%delay_fftsize;
+			value = delay_bufferSum[i2] += fft_bufferA[2*i];
+			abs(value) >= max_abs ? (
+				max_abs = abs(delay_bufferSum[i2]);
+				max_index = i;
+				max_phase = delay_bufferSum[i2] < 0 ? -1 : 1;
+			);
+			i += 1;
+		);
+
+		delay_samples = max_index;
+		delay_samples > delay_fftsize/2 ? (
+			delay_samples -= delay_fftsize;
+		);
+		delay_phase = max_phase;
+	);
+);
+
+delay_analysis_active ? (
+	perform_delay_analysis();
+);
+
+buffer0[buffer_index] = spl0;
+buffer1[buffer_index] = spl1;
+
+delayed_l = buffer_index - delay_samples_l;
+delayed_l < 0 ? delayed_l += buffer_length;
+delayed_r = buffer_index - delay_samples_r;
+delayed_r < 0 ? delayed_r += buffer_length;
+
+spl0 = buffer0[delayed_l]*gain*polarity_l;
+spl1 = buffer1[delayed_r]*gain*polarity_r;
+gain += gain_step;
+
+buffer_index += 1;
+buffer_index >= buffer_length ? buffer_index = 0;
+
+@gfx 490 300
+
+DIAL_HEIGHT = 50;
+
+function doublebiasdial(value, low, centre, high, bias) local(ratio, newratio) (
+	value < centre ? (
+		ratio = -uix_slider_value_to_ratio(value, centre, low, bias);
+	) : (
+		ratio = uix_slider_value_to_ratio(value, centre, high, bias);
+	);
+	newratio = control_dial(ratio, -1, 1, 0);
+	newratio != ratio ? (
+		newratio < 0 ? (
+			value = uix_slider_ratio_to_value(-newratio, centre, low, bias);
+		) : (
+			value = uix_slider_ratio_to_value(newratio, centre, high, bias);
+		);
+	);
+	value;
+);
+
+delay_analysis_active = (ui_screen() == "delay-analysis");
+
+function titleabove(text) (
+	ui_push_above(DIAL_HEIGHT);
+		ui_align(0.5, 0.9);
+		ui_text(text);
+	ui_pop();
+);
+
+function readoutbelow(number, pattern) (
+	ui_push_below(DIAL_HEIGHT);
+		ui_align(0.5, 0.1);
+		ui_textnumber(number, pattern);
+	ui_pop();
+);
+
+function delaydial(delayms, title) local(samples) (
+	titleabove(title);
+
+	ui_push_height(DIAL_HEIGHT);
+		delayms = doublebiasdial(delayms, -MAX_PREDELAY*1000, 0, MAX_DELAY*1000, 6);
+	ui_pop();
+
+	display_units_in_samples ? (
+		samples = floor(delayms*srate*0.001 + 0.5);
+		readoutbelow(samples, "%i");
+	) : (
+		readoutbelow(floor(delayms*100 + 0.5)*0.01, "%.2fms");
+	);
+
+	ui_click() && ui_clickcount() == 2 ? (
+		delayms = 0;
+	);
+
+	delayms;
+);
+
+function labelledswitch(value, title, ontext, offtext) (
+	titleabove(title);
+	ui_push_height(DIAL_HEIGHT*0.7);
+		ui_push_width(DIAL_HEIGHT*1.25);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	readoutbelow(0, value ? ontext : offtext);
+	value;
+);
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	control_navbar("Stereo Alignment Delay", -1, -1);
+
+	ui_split_leftratio(1/3);
+		control_group("Left");
+		ui_split_topratio(1/2);
+			delay_ms_l = delaydial(delay_ms_l, "Delay");
+			delay_linked ? delay_ms_r = delay_ms_l;
+		ui_split_next();
+			phase_invert_l = labelledswitch(phase_invert_l, "Phase", "invert", "normal");
+			delay_linked ? phase_invert_r = phase_invert_l;
+		ui_pop();
+	ui_split_next();
+		control_group("Right");
+		ui_split_topratio(1/2);
+			delay_ms_r = delaydial(delay_ms_r, "Delay");
+			delay_linked ? delay_ms_l = delay_ms_r;
+		ui_split_next();
+			phase_invert_r = labelledswitch(phase_invert_r, "Phase", "invert", "normal");
+			delay_linked ? phase_invert_l = phase_invert_r;
+		ui_pop();
+	ui_split_next();
+		ui_pad();
+		ui_split_bottomtext(-1);
+			control_button("detect") ? (
+				ui_screen_open("delay-analysis");
+				action_delay_analysis_reset = 1;
+			);
+		ui_pop();
+
+		ui_split_topratio(1/2);
+			delay_linked = labelledswitch(delay_linked, "L/R link", "on", "off");
+		ui_split_next();
+			display_units_in_samples = labelledswitch(display_units_in_samples, "Units", "samples", "ms");
+		ui_pop();
+	ui_pop();
+
+	ui_padbottom();
+
+	ui_push_height(160);
+		control_group("");
+
+		ui_split_leftratio(1/4);
+		ui_split_next();
+		ui_pop();
+	ui_pop();
+) : ui_screen() == "delay-analysis" ? (
+	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, "correct", "cancel") == 1 ? (
+		delay_samples >= 0 ? (
+			delay_ms_l = 0;
+			delay_ms_r = delay_samples*1000/srate;
+			phase_invert_l = 0;
+			phase_invert_r = delay_phase < 0;
+		) : (
+			delay_ms_l = -delay_samples*1000/srate;
+			delay_ms_r = 0;
+			phase_invert_l = delay_phase < 0;
+			phase_invert_r = 0;
+		);
+		delay_linked = 0;
+	);
+
+	ui_split_bottomtext(-1);
+		ui_split_righttext("16384 (XYZms)");
+			ms_res = floor((1024<<delay_fftsize_1024log2)*0.15/srate*1000);
+			sprintf(#fftSizeText, "%i (%ims)", 1024<<delay_fftsize_1024log2, ms_res);
+			delay_fftsize_1024log2 = control_selector(delay_fftsize_1024log2, #fftSizeText, min(4, delay_fftsize_1024log2 + 1), max(0, delay_fftsize_1024log2 - 1));
+		ui_pop();
+
+		ui_align(1, 0.5);
+		ui_padright();
+		ui_text("FFT size");
+	ui_pop();
+
+	display_size = delay_fftsize*0.3;
+	control_background_technical();
+       ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
+       ui_hover() ? (
+		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
+		ui_align(1, 1);
+		ui_textnumber(mouse_sample, "%i samples");
+		ui_align(0, 1);
+		ui_textnumber(mouse_sample/srate*1000, "%fms");
+
+		ui_colora(255, 255, 255, 0.5);
+		gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
+       );
+
+	ui_push();
+		ui_color(255, 255, 255);
+		ui_align(delay_samples >= delay_fftsize*0.1 ? 0 : 1, 0);
+		ui_split_top(gfx_texth);
+			g_ms = delay_samples/srate*1000;
+			g_ms >= 0 ? (
+				ui_textnumber(g_ms, "Ch1 is %fms ahead");
+			) : (
+				ui_textnumber(-g_ms, "Ch0 is %fms ahead");
+			);
+		ui_pop();
+		ui_split_top(gfx_texth);
+			ui_textnumber(delay_samples, "(peak at %i samples)");
+		ui_pop();
+		ui_split_top(gfx_texth);
+			ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
+		ui_pop();
+	ui_pop();
+
+       control_finish_technical();
+) : control_system();
+
+@serialize
+
+// Do nothing, but prevent it from zeroing out our memory
+tmp = tmp;
