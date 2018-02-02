@@ -9,6 +9,7 @@ slider1:delay_ms_l=0<0,250,0.1>-Left delay (ms)
 slider2:delay_ms_r=<0,250,0.1>-Right delay (ms)
 slider3:delay_linked=0<0,1,1{no,yes}>-Linked
 slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
+slider5:delay_fftsize_1024log2=1<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
 
 import ui-lib.jsfx-inc
 
@@ -25,14 +26,16 @@ buffer_index = 0;
 gain = 0;
 gain_step = 0;
 
-delay_fftsize = 2048;
-delay_bufferlength = delay_fftsize;
-freemem = (delay_bufferA = freemem) + delay_bufferlength*2;
-freemem = (delay_bufferB = freemem) + delay_bufferlength*2;
-freemem = (delay_bufferSum = freemem) + delay_bufferlength;
+MAX_FFTSIZE = 32768;
+delay_bufferlength = MAX_FFTSIZE;
+freemem = (delay_bufferA = freemem) + delay_bufferlength;
+freemem = (delay_bufferB = freemem) + delay_bufferlength;
+freemem = (fft_bufferA = freemem) + MAX_FFTSIZE*2;
+freemem = (fft_bufferB = freemem) + MAX_FFTSIZE*2;
+freemem = (delay_bufferSum = freemem) + MAX_FFTSIZE;
 
 i = 0;
-while (i < delay_bufferlength) (
+while (i < MAX_FFTSIZE) (
 	delay_bufferA[i] = delay_bufferB[i] = 0;
 	i += 1;
 );
@@ -58,53 +61,78 @@ delay_samples_l != new_delay_samples_l || delay_samples_r != new_delay_samples_r
 
 @sample
 
-function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
-	action_delay_analysis_reset ? (
+function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
+	delay_fftsize = 1024<<delay_fftsize_1024log2;
+	delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+		old_delay_fftsize = delay_fftsize;
+		i = 0;
+		while (i < delay_fftsize) (
+			delay_bufferSum[i] = 0;
+			i += 1;
+		);
 		i = 0;
 		while (i < delay_bufferlength) (
-		  delay_bufferSum[i] = 0;
-		  i += 1;
+			delay_bufferA[i] = delay_bufferB[i] = 0;
+			i += 1;
 		);
+		delay_bufferindex = 0;
+
+		delay_fftinterval = delay_fftsize/4;
+		delay_fftinterval_counter = -delay_fftsize + delay_fftinterval; // First analysis when we've captured a full FFT length
+
 		action_delay_analysis_reset = 0;
 	);
 
-	ratio = (delay_bufferindex/delay_bufferlength);
-	window = 0.5 - 0.5*cos(ratio*2*$pi);
-
-	delay_bufferA[delay_bufferindex*2] = spl0*window;
-	delay_bufferA[delay_bufferindex*2 + 1] = 0;
-	delay_bufferB[delay_bufferindex*2] = spl1*window;
-	delay_bufferB[delay_bufferindex*2 + 1] = 0;
-
+	delay_bufferA[delay_bufferindex] = spl0;
+	delay_bufferB[delay_bufferindex] = spl1;
 	delay_bufferindex += 1;
 	delay_bufferindex >= delay_bufferlength ? (
 		delay_bufferindex = 0;
+	);
 
-		fft(delay_bufferA, delay_fftsize);
-		fft(delay_bufferB, delay_fftsize);
+	delay_fftinterval_counter += 1;
+	delay_fftinterval_counter >= delay_fftinterval ? (
+		delay_fftinterval_counter = 0;
+
 		i = 0;
-		while (i < delay_bufferlength) (
-			rA = delay_bufferA[2*i];
-			iA = delay_bufferA[2*i + 1];
-			rB = delay_bufferB[2*i];
-			iB = delay_bufferB[2*i + 1];
+		while (i < delay_fftsize) (
+			ratio = ((i + 0.5)/delay_fftsize);
+			window = 0.5 - 0.5*cos(ratio*2*$pi);
+
+			delay_index = delay_bufferindex - delay_fftsize + i + 1;
+			delay_index < 0 ? delay_index += delay_bufferlength;
+			fft_bufferA[i*2] = delay_bufferA[delay_index]*window;
+			fft_bufferA[i*2 + 1] = 0;
+			fft_bufferB[i*2] = delay_bufferB[delay_index]*window;
+			fft_bufferB[i*2 + 1] = 0;
+			i += 1;
+		);
+
+		fft(fft_bufferA, delay_fftsize);
+		fft(fft_bufferB, delay_fftsize);
+		i = 0;
+		while (i < delay_fftsize) (
+			rA = fft_bufferA[2*i];
+			iA = fft_bufferA[2*i + 1];
+			rB = fft_bufferB[2*i];
+			iB = fft_bufferB[2*i + 1];
 			mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
 			mag = sqrt(mag2);
 			factor = 1/(max(mag, 0.000001))/delay_fftsize;
-			delay_bufferA[2*i] = (rA*rB + iA*iB)*factor;
-			delay_bufferA[2*i + 1] = (-rA*iB + iA*rB)*factor;
+			fft_bufferA[2*i] = (rA*rB + iA*iB)*factor;
+			fft_bufferA[2*i + 1] = (-rA*iB + iA*rB)*factor;
 			i += 1;
 		);
-		ifft(delay_bufferA, delay_fftsize);
+		ifft(fft_bufferA, delay_fftsize);
 
 		max_abs = 0;
 		max_phase = 1;
 		max_index = 0;
 
 		i = 0;
-		while (i < delay_bufferlength) (
-			i2 = (i + delay_bufferlength/2)%delay_bufferlength;
-			value = delay_bufferSum[i2] += delay_bufferA[2*i];
+		while (i < delay_fftsize) (
+			i2 = (i + delay_fftsize/2)%delay_fftsize;
+			value = delay_bufferSum[i2] += fft_bufferA[2*i];
 			abs(value) >= max_abs ? (
 				max_abs = abs(delay_bufferSum[i2]);
 				max_index = i;
@@ -114,8 +142,8 @@ function perform_delay_analysis() local(i, ratio, window, rA, iA, rB, iB, mag2, 
 		);
 
 		delay_samples = max_index;
-		delay_samples > delay_bufferlength/2 ? (
-			delay_samples -= delay_bufferlength;
+		delay_samples > delay_fftsize/2 ? (
+			delay_samples -= delay_fftsize;
 		);
 		delay_phase = max_phase;
 	);
@@ -230,10 +258,23 @@ ui_screen() == "main" ? (
 		delay_linked = 0;
 	);
 
+	ui_split_bottomtext(-1);
+		ui_split_righttext("16384 (XYZms)");
+			ms_res = floor((1024<<delay_fftsize_1024log2)*0.15/srate*1000);
+			sprintf(#fftSizeText, "%i (%ims)", 1024<<delay_fftsize_1024log2, ms_res);
+			delay_fftsize_1024log2 = control_selector(delay_fftsize_1024log2, #fftSizeText, min(4, delay_fftsize_1024log2 + 1), max(0, delay_fftsize_1024log2 - 1));
+		ui_pop();
+
+		ui_align(1, 0.5);
+		ui_padright();
+		ui_text("FFT size");
+	ui_pop();
+
+	display_size = delay_fftsize*0.3;
 	control_background_technical();
-       ui_graph_step(delay_bufferSum, delay_bufferlength, 1, 0, 0);
+       ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
        ui_hover() ? (
-		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*delay_bufferlength);
+		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
 		ui_align(1, 1);
 		ui_textnumber(mouse_sample, "%i samples");
 		ui_align(0, 1);
@@ -245,7 +286,7 @@ ui_screen() == "main" ? (
 
 	ui_push();
 		ui_color(255, 255, 255);
-		ui_align(delay_samples >= delay_bufferlength*0.1 ? 0 : 1, 0);
+		ui_align(delay_samples >= delay_fftsize*0.1 ? 0 : 1, 0);
 		ui_split_top(gfx_texth);
 			g_ms = delay_samples/srate*1000;
 			g_ms >= 0 ? (
