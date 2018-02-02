@@ -5,8 +5,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:delay_ms_l=0<0,250,0.1>-Left delay (ms)
-slider2:delay_ms_r=<0,250,0.1>-Right delay (ms)
+slider1:delay_ms_l=0<-125,125,0.1>-Left delay (ms)
+slider2:delay_ms_r=<-125,125,0.1>-Right delay (ms)
 slider3:delay_linked=0<0,1,1{no,yes}>-Linked
 slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
 slider5:delay_fftsize_1024log2=3<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
@@ -17,10 +17,11 @@ import ui-lib.jsfx-inc
 
 @init
 
-MAX_DELAY = 0.25;
+MAX_DELAY = 0.125;
+MAX_PREDELAY = 0.125;
 
 freemem = ui_setup(0);
-buffer_length = ceil(srate*MAX_DELAY + 100);
+buffer_length = ceil(srate*(MAX_PREDELAY + MAX_PREDELAY) + 100);
 freemem = (buffer0 = freemem) + buffer_length;
 freemem = (buffer1 = freemem) + buffer_length;
 buffer_index = 0;
@@ -46,6 +47,10 @@ while (i < MAX_FFTSIZE) (
 
 new_delay_samples_l = floor(delay_ms_l*srate*0.001 + 0.5);
 new_delay_samples_r = floor(delay_ms_r*srate*0.001 + 0.5);
+predelay_samples = -min(0, min(new_delay_samples_l, new_delay_samples_r));
+new_delay_samples_l += predelay_samples;
+new_delay_samples_r += predelay_samples;
+
 new_polarity_l = phase_invert_l ? -1 : 1;
 new_polarity_r = phase_invert_r ? -1 : 1;
 
@@ -56,9 +61,14 @@ delay_samples_l != new_delay_samples_l
 	gain <= 0 ? (
 		// We've already faded out - update
 		delay_samples_l = new_delay_samples_l;
-		delay_samples_r = new_Delay_samples_r;
+		delay_samples_r = new_delay_samples_r;
+		pdc_delay = predelay_samples;
+		pdc_bot_ch = 0;
+		pdc_top_ch = 2;
+
 		polarity_l = new_polarity_l;
 		polarity_r = new_polarity_r;
+
 		gain_step = 1/samplesblock;
 	) : (
 		gain_step = -1/samplesblock;
@@ -181,6 +191,23 @@ buffer_index >= buffer_length ? buffer_index = 0;
 
 DIAL_HEIGHT = 50;
 
+function doublebiasdial(value, low, centre, high, bias) local(ratio, newratio) (
+	value < centre ? (
+		ratio = -uix_slider_value_to_ratio(value, centre, low, bias);
+	) : (
+		ratio = uix_slider_value_to_ratio(value, centre, high, bias);
+	);
+	newratio = control_dial(ratio, -1, 1, 0);
+	newratio != ratio ? (
+		newratio < 0 ? (
+			value = uix_slider_ratio_to_value(-newratio, centre, low, bias);
+		) : (
+			value = uix_slider_ratio_to_value(newratio, centre, high, bias);
+		);
+	);
+	value;
+);
+
 delay_analysis_active = (ui_screen() == "delay-analysis");
 
 function titleabove(text) (
@@ -201,14 +228,18 @@ function delaydial(delayms, title) local(samples) (
 	titleabove(title);
 
 	ui_push_height(DIAL_HEIGHT);
-		delayms = control_dial(delayms, 0, MAX_DELAY*1000, 6);
+		delayms = doublebiasdial(delayms, -MAX_PREDELAY*1000, 0, MAX_DELAY*1000, 6);
 	ui_pop();
 
 	display_units_in_samples ? (
 		samples = floor(delayms*srate*0.001 + 0.5);
-		readoutbelow(samples, "%i ");
+		readoutbelow(samples, "%i");
 	) : (
-		readoutbelow(delayms + 0.004, "%.2fms");
+		readoutbelow(floor(delayms*100 + 0.5)*0.01, "%.2fms");
+	);
+
+	ui_click() && ui_clickcount() == 2 ? (
+		delayms = 0;
 	);
 
 	delayms;
