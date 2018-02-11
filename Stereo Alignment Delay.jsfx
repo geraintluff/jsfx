@@ -12,10 +12,26 @@ slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
 slider5:delay_fftsize_1024log2=3<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
 slider6:phase_invert_l=0<0,1,1{normal,invert}>-Left phase
 slider7:phase_invert_r=0<0,1,1{normal,invert}>-Right phase
+slider8:amplitude_mode=0<0,3,1{symmetric,reference left,reference right,sharp}>-Input reference
+
+options:gmem=geraintluffStereoAlignmentDelayComms
 
 import ui-lib.jsfx-inc
 
 @init
+
+send_routing_id == 0 ? send_routing_id = rand()*1048576 + 1;
+send_routing_length = 1*srate; // Maximum supported latency difference
+//send_routing_index = 0;
+_GMEM_SOURCE_ID = 0;
+_GMEM_SOURCE_LENGTH = 1;
+_GMEM_SOURCE_INDEX = 2;
+_GMEM_SOURCE_PLAY_POSITION = 3;
+_GMEM_SOURCE_LAST_ACTIVE_TIME = 4;
+_GMEM_ADJUST_ACTION = 8;
+_GMEM_ADJUST_MS = 9;
+_GMEM_ADJUST_PHASE = 10;
+_GMEM_BUFFER_OFFSET = 16;
 
 MAX_DELAY = 0.125;
 MAX_PREDELAY = 0.125;
@@ -30,9 +46,10 @@ gain = 0;
 gain_step = 0;
 
 MAX_FFTSIZE = 32768;
-delay_bufferlength = MAX_FFTSIZE;
+delay_bufferlength = max(MAX_FFTSIZE, send_routing_length + buffer_length);
 freemem = (delay_bufferA = freemem) + delay_bufferlength;
 freemem = (delay_bufferB = freemem) + delay_bufferlength;
+freemem = 65536*ceil(freemem/65536);
 freemem = (fft_bufferA = freemem) + MAX_FFTSIZE*2;
 freemem = (fft_bufferB = freemem) + MAX_FFTSIZE*2;
 freemem = (delay_bufferSum = freemem) + MAX_FFTSIZE;
@@ -43,26 +60,31 @@ while (i < MAX_FFTSIZE) (
 	i += 1;
 );
 
+force_reset = 1;
+
 @block
 
 new_delay_samples_l = floor(delay_ms_l*srate*0.001 + 0.5);
 new_delay_samples_r = floor(delay_ms_r*srate*0.001 + 0.5);
-predelay_samples = -min(0, min(new_delay_samples_l, new_delay_samples_r));
-new_delay_samples_l += predelay_samples;
-new_delay_samples_r += predelay_samples;
+new_predelay_samples = -min(0, min(new_delay_samples_l, new_delay_samples_r));
+new_delay_samples_l += new_predelay_samples;
+new_delay_samples_r += new_predelay_samples;
 
 new_polarity_l = phase_invert_l ? -1 : 1;
 new_polarity_r = phase_invert_r ? -1 : 1;
 
-delay_samples_l != new_delay_samples_l
+force_reset
+|| delay_samples_l != new_delay_samples_l
 || delay_samples_r != new_delay_samples_r
 || new_polarity_l != polarity_l
-|| new_polarity_r != polarity_r ? (
+|| new_polarity_r != polarity_r
+|| new_predelay_samples != predelay_samples ? (
 	gain <= 0 ? (
+		force_reset = 0;
 		// We've already faded out - update
 		delay_samples_l = new_delay_samples_l;
 		delay_samples_r = new_delay_samples_r;
-		pdc_delay = predelay_samples;
+		pdc_delay = predelay_samples = new_predelay_samples;
 		pdc_bot_ch = 0;
 		pdc_top_ch = 2;
 
@@ -78,11 +100,46 @@ delay_samples_l != new_delay_samples_l
 	gain_step = (1 - gain)/samplesblock;
 );
 
+debug.delay_samples_l = delay_samples_l;
+debug.delay_ms_l = delay_ms_l;
+debug.predelay_samples = predelay_samples;
+
+gmem[0] === send_routing_id ? (
+	gmem[_GMEM_SOURCE_LENGTH] = send_routing_length;
+	gmem[_GMEM_SOURCE_INDEX] = send_routing_index;
+	gmem[_GMEM_SOURCE_PLAY_POSITION] = play_position - predelay_samples/srate;
+	gmem[_GMEM_SOURCE_LAST_ACTIVE_TIME] = time();
+
+	gmem[_GMEM_ADJUST_ACTION] ? (
+		gmem[_GMEM_ADJUST_ACTION] = 0;
+		adjust_ms = gmem[_GMEM_ADJUST_MS];
+		gmem[_GMEM_ADJUST_PHASE] ? (
+			phase_invert_l = !phase_invert_l;
+			phase_invert_r = !phase_invert_r;
+		);
+		debug.local_adjustment += 1;
+		debug.local_adj_ms = adjust_ms;
+		delay_ms_l += adjust_ms;
+		delay_ms_r += adjust_ms;
+	);
+);
+
+delay_analysis_active ? (
+	block_play_position = play_position - predelay_samples/srate;
+	block_delay_bufferindex = delay_bufferindex;
+);
+
 @sample
 
-function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, mag, factor, max_abs, max_index, max_phase) (
+function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase) (
 	delay_fftsize = 1024<<delay_fftsize_1024log2;
-	delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+
+	receive_routing_id = (abs(time() - gmem[_GMEM_SOURCE_LAST_ACTIVE_TIME]) < 5) ? gmem[0] : 0;
+
+	// Reset the analysis if anything has changed
+	prev_receive_routing_id !== receive_routing_id || amplitude_mode !== prev_amplitude_mode || delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+		prev_receive_routing_id = receive_routing_id;
+		prev_amplitude_mode = amplitude_mode;
 		old_delay_fftsize = delay_fftsize;
 		i = 0;
 		while (i < delay_fftsize) (
@@ -113,18 +170,50 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 	delay_fftinterval_counter >= delay_fftinterval ? (
 		delay_fftinterval_counter = 0;
 
-		i = 0;
-		while (i < delay_fftsize) (
-			ratio = ((i + 0.5)/delay_fftsize);
-			window = 0.5 - 0.5*cos(ratio*2*$pi);
+		receive_routing_id ? (
+			// Use local/remote inputs
+			receive_index = gmem[_GMEM_SOURCE_INDEX];
+			receive_length = gmem[_GMEM_SOURCE_LENGTH];
+			// Try to detect latency difference (might be calculating different points)
+			receive_sample_difference = srate*(block_play_position - gmem[_GMEM_SOURCE_PLAY_POSITION]);
+			receive_sample = floor(receive_sample_difference + 0.5);
+			// How to compensate
+			extra_local_delay = max(receive_sample_difference, 0);
+			extra_remote_delay = max(-receive_sample_difference, 0);
 
-			delay_index = delay_bufferindex - delay_fftsize + i + 1;
-			delay_index < 0 ? delay_index += delay_bufferlength;
-			fft_bufferA[i*2] = delay_bufferA[delay_index]*window;
-			fft_bufferA[i*2 + 1] = 0;
-			fft_bufferB[i*2] = delay_bufferB[delay_index]*window;
-			fft_bufferB[i*2 + 1] = 0;
-			i += 1;
+			i = 0;
+			while (i < delay_fftsize) (
+				ratio = ((i + 0.5)/delay_fftsize);
+				window = 0.5 - 0.5*cos(ratio*2*$pi);
+
+				delay_index_l = block_delay_bufferindex - extra_local_delay - delay_samples_l - delay_fftsize + i + 1;
+				delay_index_l < 0 ? delay_index_l += delay_bufferlength;
+				delay_index_r = block_delay_bufferindex - extra_local_delay - delay_samples_r - delay_fftsize + i + 1;
+				delay_index_r < 0 ? delay_index_r += delay_bufferlength;
+				fft_bufferA[i*2] = (delay_bufferA[delay_index_l] + delay_bufferB[delay_index_r])*window;
+				fft_bufferA[i*2 + 1] = 0;
+
+				remote_index = receive_index - extra_remote_delay - delay_fftsize + i + 1;
+				remote_index < 0 ? remote_index += receive_length;
+				fft_bufferB[i*2] = gmem[_GMEM_BUFFER_OFFSET + remote_index]*window;
+				fft_bufferB[i*2 + 1] = 0;
+				i += 1;
+			);
+		) : (
+			// Use left/right inputs
+			i = 0;
+			while (i < delay_fftsize) (
+				ratio = ((i + 0.5)/delay_fftsize);
+				window = 0.5 - 0.5*cos(ratio*2*$pi);
+
+				delay_index = delay_bufferindex - delay_fftsize + i + 1;
+				delay_index < 0 ? delay_index += delay_bufferlength;
+				fft_bufferA[i*2] = delay_bufferA[delay_index]*window;
+				fft_bufferA[i*2 + 1] = 0;
+				fft_bufferB[i*2] = delay_bufferB[delay_index]*window;
+				fft_bufferB[i*2 + 1] = 0;
+				i += 1;
+			);
 		);
 
 		fft(fft_bufferA, delay_fftsize);
@@ -135,7 +224,17 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 			iA = fft_bufferA[2*i + 1];
 			rB = fft_bufferB[2*i];
 			iB = fft_bufferB[2*i + 1];
-			mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
+			// Magnitude by which we divide - A, B or both
+			amplitude_mode === 1 ? (
+				mag2 = (rB*rB + iB*iB);
+			) : amplitude_mode === 2 ? (
+				mag2 = (rA*rA + iA*iA);
+			) : (
+				mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
+				amplitude_mode === 0 ? (
+					mag2 = sqrt(mag2);
+				);
+			);
 			mag = sqrt(mag2);
 			factor = 1/(max(mag, 0.000001))/delay_fftsize;
 			fft_bufferA[2*i] = (rA*rB + iA*iB)*factor;
@@ -174,7 +273,6 @@ delay_analysis_active ? (
 
 buffer0[buffer_index] = spl0;
 buffer1[buffer_index] = spl1;
-
 delayed_l = buffer_index - delay_samples_l;
 delayed_l < 0 ? delayed_l += buffer_length;
 delayed_r = buffer_index - delay_samples_r;
@@ -187,7 +285,18 @@ gain += gain_step;
 buffer_index += 1;
 buffer_index >= buffer_length ? buffer_index = 0;
 
-@gfx 490 300
+gmem[0] === send_routing_id ? (
+	// We're sending - write to the shared buffer
+	// We use the mono signal, assuming that we're aligned already
+	gmem[_GMEM_BUFFER_OFFSET + send_routing_index] = spl0 + spl1;
+
+	send_routing_index += 1;
+	send_routing_index > send_routing_length ? (
+		send_routing_index = 0;
+	);
+);
+
+@gfx 490 330
 
 DIAL_HEIGHT = 50;
 
@@ -258,7 +367,31 @@ function labelledswitch(value, title, ontext, offtext) (
 
 control_start("main", "tron");
 
-ui_screen() == "main" ? (
+gmem[0] === send_routing_id ? (
+	ui_pad();
+	ui_split_bottomtext(-1);
+		control_button("Done") ? (
+			gmem[0] = 0; // Stop routing
+		);
+	ui_pop();
+
+	ui_push();
+		control_background_technical();
+		ui_split_topratio(0.5);
+			gfx_a = 0.5;
+			ui_graph_step(buffer0, buffer_length>>4, 16, 1, -1);
+		ui_split_next();
+			gfx_a = 0.5;
+			ui_graph_step(buffer1, buffer_length>>4, 16, 1, -1);
+		ui_pop();
+		control_finish_technical();
+	ui_pop();
+
+	ui_colora(255, 255, 255, 0.2);
+	ui_texth(min(ui_height()/5, ui_width()/15));
+	ui_fontsize(min(ui_height()/5, ui_width()/15));
+	ui_text("sending...");
+) : ui_screen() == "main" ? (
 	control_navbar("Stereo Alignment Delay", -1, -1);
 
 	ui_split_leftratio(1/3);
@@ -281,6 +414,11 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_split_next();
 		ui_pad();
+		ui_split_bottomtext(-1);
+			control_button("send") ? (
+				gmem[0] = send_routing_id;
+			);
+		ui_pop();
 		ui_split_bottomtext(-1);
 			control_button("detect") ? (
 				ui_screen_open("delay-analysis");
@@ -306,21 +444,46 @@ ui_screen() == "main" ? (
 	ui_pop();
 ) : ui_screen() == "delay-analysis" ? (
 	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, "correct", "cancel") == 1 ? (
-		delay_samples >= 0 ? (
-			delay_ms_l = 0;
-			delay_ms_r = delay_samples*1000/srate;
-			phase_invert_l = 0;
-			phase_invert_r = delay_phase < 0;
+		receive_routing_id ? (
+			// Always correct remote one
+			gmem[_GMEM_ADJUST_MS] = delay_samples*1000/srate;
+			gmem[_GMEM_ADJUST_PHASE] = delay_phase < 0;
+			gmem[_GMEM_ADJUST_ACTION] = 1;
 		) : (
-			delay_ms_l = -delay_samples*1000/srate;
-			delay_ms_r = 0;
-			phase_invert_l = delay_phase < 0;
-			phase_invert_r = 0;
+			amplitude_mode == 1  || (amplitude_mode !== 2 && delay_samples >= 0) ? (
+				delay_ms_l = 0;
+				delay_ms_r = delay_samples*1000/srate;
+				phase_invert_l = 0;
+				phase_invert_r = delay_phase < 0;
+			) : (
+				delay_ms_l = -delay_samples*1000/srate;
+				delay_ms_r = 0;
+				phase_invert_l = delay_phase < 0;
+				phase_invert_r = 0;
+			);
+			delay_linked = 0;
 		);
-		delay_linked = 0;
 	);
 
 	ui_split_bottomtext(-1);
+		ui_split_leftratio(0.3);
+			receive_routing_id ? (
+				control_button("cancel receive") ? (
+					gmem[0] = 0;
+				);
+			) : (
+				ui_align(0, 0.5);
+				amplitude_mode_text = amplitude_mode == 1 ? (
+					"ref: left"
+				) : amplitude_mode == 2 ? (
+					"ref: right"
+				) : amplitude_mode == 3 ? (
+					"sym. sharp"
+				) : "symmetrical";
+				amplitude_mode = control_selector(amplitude_mode, amplitude_mode_text, (amplitude_mode + 1)%4, (amplitude_mode + 3)%4);
+			);
+		ui_pop();
+
 		ui_split_righttext("16384 (XYZms)");
 			ms_res = floor((1024<<delay_fftsize_1024log2)*0.15/srate*1000);
 			sprintf(#fftSizeText, "%i (%ims)", 1024<<delay_fftsize_1024log2, ms_res);
@@ -352,9 +515,33 @@ ui_screen() == "main" ? (
 		ui_split_top(gfx_texth);
 			g_ms = delay_samples/srate*1000;
 			g_ms >= 0 ? (
-				ui_textnumber(g_ms, "Ch1 is %fms ahead");
+				amplitude_mode === 2 ? (
+					receive_routing_id ? (
+						ui_textnumber(g_ms, "Local is %fms behind");
+					) : (
+						ui_textnumber(g_ms, "Ch0 is %fms behind");
+					);
+				) : (
+					receive_routing_id ? (
+						ui_textnumber(g_ms, "Remote is %fms ahead");
+					) : (
+						ui_textnumber(g_ms, "Ch1 is %fms ahead");
+					);
+				);
 			) : (
-				ui_textnumber(-g_ms, "Ch0 is %fms ahead");
+				amplitude_mode === 1 ? (
+					receive_routing_id ? (
+						ui_textnumber(-g_ms, "Remote is %fms behind");
+					) : (
+						ui_textnumber(-g_ms, "Ch1 is %fms behind");
+					);
+				) : (
+					receive_routing_id ? (
+						ui_textnumber(-g_ms, "Local is %fms ahead");
+					) : (
+						ui_textnumber(-g_ms, "Ch0 is %fms ahead");
+					);
+				);
 			);
 		ui_pop();
 		ui_split_top(gfx_texth);
@@ -364,6 +551,14 @@ ui_screen() == "main" ? (
 			ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
 		ui_pop();
 	ui_pop();
+
+	receive_routing_id ? (
+		ui_align(0.5, 0.9);
+		ui_colora(255, 255, 255, 0.2);
+		ui_texth(min(ui_height()/5, ui_width()/15));
+		ui_fontsize(min(ui_height()/5, ui_width()/15));
+		ui_text("receiving...");
+	);
 
        control_finish_technical();
 ) : control_system();
