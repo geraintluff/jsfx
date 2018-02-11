@@ -1,0 +1,15 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Stereo-Alignment-Delay/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx": {
+			"main": false
+		}
+	},
+	"version": "1.2.1",
+	"package": "Stereo Alignment Delay",
+	"time": "2018-02-11T18:44:48.642Z"
+}
