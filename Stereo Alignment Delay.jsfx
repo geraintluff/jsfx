@@ -478,9 +478,9 @@ gmem[0] === send_routing_id ? (
 			) : (
 				ui_align(0, 0.5);
 				amplitude_mode_text = amplitude_mode == 1 ? (
-					"ref: left"
+					"feat: left"
 				) : amplitude_mode == 2 ? (
-					"ref: right"
+					"feat: right"
 				) : amplitude_mode == 3 ? (
 					"sym. sharp"
 				) : "symmetrical";
