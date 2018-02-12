@@ -28,6 +28,7 @@ _GMEM_SOURCE_LENGTH = 1;
 _GMEM_SOURCE_INDEX = 2;
 _GMEM_SOURCE_PLAY_POSITION = 3;
 _GMEM_SOURCE_LAST_ACTIVE_TIME = 4;
+_GMEM_SOURCE_CORRECT_SENDING = 5;
 _GMEM_ADJUST_ACTION = 8;
 _GMEM_ADJUST_MS = 9;
 _GMEM_ADJUST_PHASE = 10;
@@ -140,7 +141,8 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 	receive_routing_id = (abs(time() - gmem[_GMEM_SOURCE_LAST_ACTIVE_TIME]) < 5) ? gmem[0] : 0;
 
 	// Reset the analysis if anything has changed
-	prev_receive_routing_id !== receive_routing_id || amplitude_mode !== prev_amplitude_mode || delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+	gmem[_GMEM_SOURCE_CORRECT_SENDING] != old_correct_sending || prev_receive_routing_id !== receive_routing_id || amplitude_mode !== prev_amplitude_mode || delay_fftsize != old_delay_fftsize || action_delay_analysis_reset ? (
+		old_correct_sending = gmem[_GMEM_SOURCE_CORRECT_SENDING];
 		prev_receive_routing_id = receive_routing_id;
 		prev_amplitude_mode = amplitude_mode;
 		old_delay_fftsize = delay_fftsize;
@@ -193,7 +195,7 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 				delay_index_l < 0 ? delay_index_l += delay_bufferlength;
 				delay_index_r = block_delay_bufferindex - extra_local_delay - delay_samples_r - delay_fftsize + i + 1;
 				delay_index_r < 0 ? delay_index_r += delay_bufferlength;
-				fft_bufferA[i*2] = (delay_bufferA[delay_index_l] + delay_bufferB[delay_index_r])*window;
+				fft_bufferA[i*2] = (delay_bufferA[delay_index_l]*polarity_l + delay_bufferB[delay_index_r]*polarity_r)*window;
 				fft_bufferA[i*2 + 1] = 0;
 
 				remote_index = receive_index - extra_remote_delay - delay_fftsize + i + 1;
@@ -228,10 +230,10 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 			rB = fft_bufferB[2*i];
 			iB = fft_bufferB[2*i + 1];
 			// Magnitude by which we divide - A, B or both
-			amplitude_mode === 2 || receive_routing_id ? (
-				// Always use remote's amplitude if we're receiving
+			// The one being corrected determines the amplitude, so doesn't get divided
+			amplitude_mode === 1 || (receive_routing_id && gmem[_GMEM_SOURCE_CORRECT_SENDING]) ? (
 				mag2 = (rA*rA + iA*iA);
-			) : amplitude_mode === 1 ? (
+			) : amplitude_mode === 2 || (receive_routing_id && !gmem[_GMEM_SOURCE_CORRECT_SENDING]) ? (
 				mag2 = (rB*rB + iB*iB);
 			) : (
 				mag2 = (rA*rA + iA*iA)*(rB*rB + iB*iB);
@@ -373,6 +375,16 @@ control_start("main", "tron");
 
 gmem[0] === send_routing_id ? (
 	ui_pad();
+	ui_split_toptext(-1);
+		ui_split_left(50);
+			ui_pad2(0, 5);
+			gmem[_GMEM_SOURCE_CORRECT_SENDING] = control_switch(gmem[_GMEM_SOURCE_CORRECT_SENDING]);
+		ui_pop();
+		ui_padleft();
+		ui_align(0, 0.5);
+		ui_text(gmem[_GMEM_SOURCE_CORRECT_SENDING] ? "match this instance (receiving is reference)" : "match receiving instance (this is reference)");
+	ui_pop();
+
 	ui_split_bottomtext(-1);
 		control_button("Done") ? (
 			gmem[0] = 0; // Stop routing
@@ -447,12 +459,23 @@ gmem[0] === send_routing_id ? (
 		ui_pop();
 	ui_pop();
 ) : ui_screen() == "delay-analysis" ? (
-	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, receive_routing_id ? "correct remote" : "correct", "cancel") == 1 ? (
+	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, receive_routing_id && gmem[_GMEM_SOURCE_CORRECT_SENDING] ? "correct remote" : "correct", "cancel") == 1 ? (
 		receive_routing_id ? (
-			// Send correction to remote
-			gmem[_GMEM_ADJUST_MS] = delay_samples*1000/srate;
-			gmem[_GMEM_ADJUST_PHASE] = delay_phase < 0;
-			gmem[_GMEM_ADJUST_ACTION] = 1;
+			g_adjust_ms = delay_samples*1000/srate;
+			g_adjust_phase = delay_phase < 0;
+			gmem[_GMEM_SOURCE_CORRECT_SENDING] ? (
+				// Send correction to remote
+				gmem[_GMEM_ADJUST_MS] = g_adjust_ms;
+				gmem[_GMEM_ADJUST_PHASE] = g_adjust_phase;
+				gmem[_GMEM_ADJUST_ACTION] = 1;
+			) : (
+				delay_ms_l -= g_adjust_ms;
+				delay_ms_r -= g_adjust_ms;
+				g_adjust_phase ? (
+					phase_invert_l = !phase_invert_l;
+					phase_invert_r = !phase_invert_r;
+				);
+			);
 		) : (
 			amplitude_mode == 1  || (amplitude_mode !== 2 && delay_samples >= 0) ? (
 				delay_ms_l = 0;
@@ -470,7 +493,7 @@ gmem[0] === send_routing_id ? (
 	);
 
 	ui_split_bottomtext(-1);
-		ui_split_leftratio(0.3);
+		ui_split_leftratio(0.4);
 			receive_routing_id ? (
 				control_button("cancel receive") ? (
 					gmem[0] = 0;
@@ -478,9 +501,9 @@ gmem[0] === send_routing_id ? (
 			) : (
 				ui_align(0, 0.5);
 				amplitude_mode_text = amplitude_mode == 1 ? (
-					"feat: left"
+					"match right to left"
 				) : amplitude_mode == 2 ? (
-					"feat: right"
+					"match left to right"
 				) : amplitude_mode == 3 ? (
 					"sym. sharp"
 				) : "symmetrical";
