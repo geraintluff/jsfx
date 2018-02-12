@@ -136,8 +136,11 @@ delay_analysis_active ? (
 @sample
 
 function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase) (
-	delay_fftsize = 1024<<delay_fftsize_1024log2;
+	action_delay_analysis_reset ? (
+		delay_peak_minsample = delay_peak_maxsample = 0;
+	);
 
+	delay_fftsize = 1024<<delay_fftsize_1024log2;
 	receive_routing_id = (abs(time() - gmem[_GMEM_SOURCE_LAST_ACTIVE_TIME]) < 5) ? gmem[0] : 0;
 
 	// Reset the analysis if anything has changed
@@ -258,17 +261,21 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 			i2 = (i + delay_fftsize/2)%delay_fftsize;
 			value = delay_bufferSum[i2] += fft_bufferA[2*i];
 			abs(value) >= max_abs ? (
-				max_abs = abs(delay_bufferSum[i2]);
-				max_index = i;
-				max_phase = delay_bufferSum[i2] < 0 ? -1 : 1;
+				i_wrapped = (i > delay_fftsize/2) ? i - delay_fftsize : i;
+
+				(delay_peak_minsample == delay_peak_maxsample) || (
+					i_wrapped >= min(delay_peak_minsample, delay_peak_maxsample)
+					&& i_wrapped <= max(delay_peak_minsample, delay_peak_maxsample)
+				) ? (
+					max_abs = abs(delay_bufferSum[i2]);
+					max_index = i_wrapped;
+					max_phase = delay_bufferSum[i2] < 0 ? -1 : 1;
+				);
 			);
 			i += 1;
 		);
 
 		delay_samples = max_index;
-		delay_samples > delay_fftsize/2 ? (
-			delay_samples -= delay_fftsize;
-		);
 		delay_phase = max_phase;
 	);
 );
@@ -524,15 +531,38 @@ gmem[0] === send_routing_id ? (
 
 	display_size = delay_fftsize*0.3;
 	control_background_technical();
+	ui_push();
+		ui_colora(255, 255, 255, 0.15);
+		delay_peak_minsample != delay_peak_maxsample ? (
+			peak_x1 = ui_left() + (0.5 + delay_peak_minsample/display_size)*ui_width() + 0.5;
+			peak_x2 = ui_left() + (0.5 + delay_peak_maxsample/display_size)*ui_width() + 0.5;
+			gfx_rect(min(peak_x1, peak_x2), ui_top(), abs(peak_x2 - peak_x1) + 1, ui_height());
+		);
+
+		ui_colora(255, 255, 255, 0.5);
+		peak_x = ui_left() + (0.5 + delay_samples/display_size)*ui_width() + 0.5;
+		debug.ui_width = ui_width();
+		gfx_line(peak_x, ui_top(), peak_x, ui_bottom() - 1);
+	ui_pop();
+
        ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
        ui_hover() ? (
+		ui_colora(255, 128, 128, 0.8);
 		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
 		ui_align(1, 1);
 		ui_textnumber(mouse_sample, "%i samples");
 		ui_align(0, 1);
 		ui_textnumber(mouse_sample/srate*1000, "%fms");
 
-		ui_colora(255, 255, 255, 0.5);
+		ui_mouse_down() ? (
+			delay_peak_minsample = mouse_sample;
+			delay_peak_maxsample = mouse_sample;
+		);
+		ui_press() ? (
+			delay_peak_maxsample = mouse_sample;
+		);
+
+		ui_colora(255, 128, 128, 0.5);
 		gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
        );
 
