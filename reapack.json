@@ -258,7 +258,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.1"
+			"version": "1.2.2"
 		},
 		"MIDI Controller Control": {
 			"type": "effect",
