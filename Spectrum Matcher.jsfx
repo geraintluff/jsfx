@@ -32,8 +32,9 @@ function allocate_reset() (
 	correction_amp = allocate(MODEL_MAX_N);
 
 	correction_group_num = allocate(MODEL_MAX_N);
-	correction_group_amp = allocate(MODEL_MAX_N);
 	correction_group_size = allocate(MODEL_MAX_N);
+	correction_group_logamp = allocate(MODEL_MAX_N);
+	correction_group_logamp2 = allocate(MODEL_MAX_N);
 
 	correction_a1 = allocate(MODEL_MAX_N);
 	correction_a2 = allocate(MODEL_MAX_N);
@@ -554,7 +555,7 @@ function copy_correction_from_analysis() local(i) (
 	);
 );
 
-function calculate_correction_coefficients() local(i, logMerged, logA, logB, sizeA, sizeB, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, active_bands, merge_score, best_merge_score, best_merge_groupA, best_merge_groupB, best_merge_size, best_merge_amp) (
+function calculate_correction_coefficients() local(i, logMerged, logA, logB, sizeA, sizeB, sizeMerged, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, active_bands, merge_score, best_merge_score, best_merge_groupA, best_merge_groupB, best_merge_size, best_merge_logamp, best_merge_logamp2) (
 	!correction_resolution ? correction_resolution = model_N;
 	correction_resolution = max(1, min(floor(correction_resolution + 0.5), model_N));
 	debug.correction_resolution = correction_resolution;
@@ -562,9 +563,10 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 	// Simplify correction model
 	i = 0;
 	while (i < model_N) (
-		correction_group_amp[i] = correction_amp[i];
 		correction_group_num[i] = i;
 		correction_group_size[i] = 1;
+		correction_group_logamp[i] = log(correction_amp[i]);
+		correction_group_logamp2[i] = correction_group_logamp[i]*correction_group_logamp[i];
 		i += 1;
 	);
 	active_bands = model_N;
@@ -574,17 +576,24 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 		while (i < model_N) (
 			correction_group_num[i] != correction_group_num[i - 1] ? (
 				// Should we merge the bands?
-				logA = log(correction_group_amp[i]);
-				logB = log(correction_group_amp[i - 1]);
+				logA = correction_group_logamp[i];
+				logA2 = correction_group_logamp2[i];
 				sizeA = correction_group_size[i];
+				logB = correction_group_logamp[i - 1];
+				logB2 = correction_group_logamp2[i - 1];
 				sizeB = correction_group_size[i - 1];
-				logMerged = (logA*sizeA + logB*sizeB)/(sizeA + sizeB);
-				merge_score = sizeA*abs(logA - logMerged) + sizeB*abs(logB - logMerged);
+
+				sizeMerged = sizeA + sizeB;
+				logMerged = logA + logB;
+				logMerged2 = logA2 + logB2;
+
+				merge_score = (logMerged2 - logMerged*logMerged/sizeMerged) - (logA2 - logA*logA/sizeA) - (logB2 - logB*logB/sizeB);
 
 				merge_score < best_merge_score ? (
 					best_merge_score = merge_score;
-					best_merge_size = sizeA + sizeB;
-					best_merge_amp = exp(logMerged);
+					best_merge_size = sizeMerged;
+					best_merge_logamp = logMerged;
+					best_merge_logamp2 = logMerged2;
 					best_merge_groupA = correction_group_num[i];
 					best_merge_groupB = correction_group_num[i - 1];
 				);
@@ -593,7 +602,8 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 		);
 		debug.best_merge_score = best_merge_score;
 		debug.best_merge_size = best_merge_size;
-		debug.best_merge_amp = best_merge_amp;
+		debug.best_merge_logamp = best_merge_logamp;
+		debug.best_merge_logamp2 = best_merge_logamp2;
 		debug.best_merge_groupA = best_merge_groupA;
 
 		// Merge the two groups with lowest cost
@@ -601,8 +611,9 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 		while (i < model_N) (
 			correction_group_num[i] == best_merge_groupA || correction_group_num[i] == best_merge_groupB ? (
 				correction_group_num[i] = best_merge_groupA;
-				correction_group_amp[i] = best_merge_amp;
 				correction_group_size[i] = best_merge_size;
+				correction_group_logamp[i] = best_merge_logamp;
+				correction_group_logamp2[i] = best_merge_logamp2;
 			);
 			i += 1;
 		);
@@ -616,7 +627,7 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 	while (i < model_N) (
 		i == 0 || correction_group_num[i] != correction_group_num[i - 1] ? (
 			boundary_freq = low_freq*exp(log(high_freq/low_freq)*i/model_N);
-			amp = correction_group_amp[i];
+			amp = exp(correction_group_logamp[i]/correction_group_size[i]);
 
 			Q = (filter_i == 0) ? 0.71 : slider4;
 			A = sqrt(amp/prev_amp);
