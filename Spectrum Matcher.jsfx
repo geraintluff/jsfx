@@ -2,7 +2,7 @@ desc:Spectrum Matcher (by Geraint Luff)
 
 slider1:30<10,50,10>-bands
 slider2:4<1,10,0.1>-peak bias
-slider3:50<10,200>-smoothing period (ms)
+slider3:40<10,200>-smoothing period (ms)
 slider4:1<0.5,1.5>-sharpness (Q)
 slider5:6<-12,20>-hard limit (dB)
 slider6:correction_gain_db=0<-24,12,0.1>-correction gain (dB)
@@ -927,7 +927,7 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				slider2 = labelled_dial(slider2, 4, 1, 10, 1.2, "Peak bias", slider2, "%0.1f");
 			ui_split_next();
-				slider3 = labelled_dial(slider3, 50, 10, 125, 2.9, "Period", slider3, "%ims");
+				slider3 = labelled_dial(slider3, 40, 10, 125, 2.9, "Period", slider3, "%ims");
 			ui_pop();
 		ui_pop();
 
