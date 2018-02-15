@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"files": {
+		"PadSynth/pad-synth.jsfx": {
+			"main": false
+		},
+		"PadSynth/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "PadSynth.png"
+	},
+	"version": "1.1.5",
+	"package": "PadSynth",
+	"time": "2018-02-15T22:51:02.261Z"
+}

@@ -92,7 +92,7 @@
 			"links": {
 				"screenshot": "PadSynth.png"
 			},
-			"version": "1.1.4"
+			"version": "1.1.5"
 		},
 		"Smooth Limiter": {
 			"type": "effect",
