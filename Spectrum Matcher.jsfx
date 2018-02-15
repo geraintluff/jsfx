@@ -12,6 +12,8 @@ import ui-lib.jsfx-inc
 
 @init
 
+option_show_grouped_correction = 0;
+
 MODEL_MAX_N = 100;
 POLE_ZERO_LIMIT = 0.995;
 
@@ -1958,18 +1960,18 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			ui_color(255, 255, 255);
 			freq = low_freq*exp(log(high_freq/low_freq)*ui_mouse_xratio());
 			gfx_x = ui_left() + ui_texth();
-			gfx_y = ui_top() + ui_texth();
+			gfx_y = ui_top() + ui_texth()*1.5;
 			gfx_printf("%iHz", freq);
 
 			g_ratio = correction_amp(freq);
 			g_db = log(g_ratio)*20/log(10);
-			gfx_x = ui_left() + ui_width()*2/3;
-			gfx_y = ui_top() + ui_texth();
+			gfx_x = ui_left() + ui_texth();
+			gfx_y = ui_top() + ui_texth()*0.5;
 			gfx_printf("%0.1fdB", g_db + correction_gain_db);
 		);
 	);
 
-	!correction_active || correction_learning ? (
+	( // Draw correction bands
 		gi = 0;
 		while (gi < bands_N) (
 			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/bands_N);
@@ -1980,13 +1982,22 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			g_db = log(g_ratio)*20/log(10);
 			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
 			g_y = ui_top() + g_y_ratio*ui_height();
-			ui_color(255, 0, 0);
+
+			(!correction_active || correction_learning) ? ui_color(255, 0, 0) : ui_color(64, 192, 256);
 			gfx_line(g_left, g_y, g_right, g_y, 1);
 
+			(!correction_active || correction_learning) ? ui_color(255, 10, 10) : ui_color(74, 202, 256);
 			correction_viable && ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
-				gfx_x = ui_left() + ui_width()/3;
-				gfx_y = ui_top() + ui_texth();
+				gfx_x = ui_left() + ui_texth();
+				gfx_y = ui_bottom() - ui_texth()*2.5;
 				gfx_printf("%0.1fdB", g_db + correction_gain_db);
+
+				g_freq_low = low_freq*pow(high_freq/low_freq, gi/bands_N);
+				g_freq_high = low_freq*pow(high_freq/low_freq, (gi + 1)/bands_N);
+
+				gfx_x = ui_left() + ui_texth();
+				gfx_y = ui_bottom() - ui_texth()*1.5;
+				gfx_printf("%iHz - %iHz", g_freq_low, g_freq_high);
 			);
 
 			gi += 1;
@@ -2034,37 +2045,13 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 		gi = 0;
 	);
 
-	!correction_learning && correction_active ? (
+	option_show_grouped_correction && !correction_learning && correction_active ? (
 		gi = 0;
 		while (gi < bands_N) (
 			g_left = ui_left() + (gi/bands_N)*ui_width();
 			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
 
-			g_ratio = correction_amp[gi];
-			g_db = log(g_ratio)*20/log(10);
-			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
-			g_y = ui_top() + g_y_ratio*ui_height();
-			ui_color(64, 192, 256);
-			gfx_line(g_left, g_y, g_right, g_y, 1);
-
-			correction_viable && ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
-				gfx_x = ui_left() + ui_width()/3;
-				gfx_y = ui_top() + ui_texth();
-				gfx_printf("%0.1fdB", g_db + correction_gain_db);
-			);
-
-			gi += 1;
-		);
-	);
-
-	/*
-	!correction_learning && correction_active ? (
-		gi = 0;
-		while (gi < bands_N) (
-			g_left = ui_left() + (gi/bands_N)*ui_width();
-			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
-
-			g_ratio = correction_group_amp[gi];
+			g_ratio = exp(correction_group_logamp[gi]/correction_group_size[gi]);
 			g_db = log(g_ratio)*20/log(10);
 			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
 
@@ -2081,7 +2068,6 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			gi += 1;
 		);
 	);
-	*/
 
 	control_finish_enabled(1);
 );
