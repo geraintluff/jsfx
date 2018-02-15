@@ -132,6 +132,10 @@
 				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.4/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.4/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.3.5" author="Geraint Luff" time="2018-02-15T12:34:52.214Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.5/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.5/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
