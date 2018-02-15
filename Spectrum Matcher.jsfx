@@ -1978,7 +1978,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			g_left = ui_left() + (gi/bands_N)*ui_width();
 			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
 
-			g_ratio = model_adjustment(gi);
+			g_ratio = correction_active ? correction_amp[gi] : model_adjustment(gi);
 			g_db = log(g_ratio)*20/log(10);
 			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
 			g_y = ui_top() + g_y_ratio*ui_height();
