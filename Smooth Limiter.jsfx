@@ -39,8 +39,6 @@ function atanh(x) (
 	);
 );
 
-debug.one = atanh(0.5);
-
 writepos = 10;
 delaysamples = 10;
 attacksamples = 10;
@@ -56,8 +54,6 @@ function update() (
 	delaysamples = ceil(attacksamples);
 	limit = pow(10, slider1/20);
 	pregain_factor = pow(10, slider5/20);
-
-	debug.zerobest = 10000000;
 );
 // Starts at 0, goes to 1
 function attackwindow(ratio) (
@@ -149,8 +145,6 @@ peak < limit ? (
 		);
 		i += 1;
 	);
-
-	debug.foundintersection.total += foundintersection;
 
 	foundintersection ? (
 		i = 0;

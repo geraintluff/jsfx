@@ -55,7 +55,7 @@ filter_a2 = 0;
 filter_b0 = 1;
 filter_b1 = 0;
 filter_b2 = 0;
- 
+
 function update() local(alpha, freq, A, w0, cos_w0, filter_gain, bandwidth_octaves) (
 	limit_reference = pow(10, slider1/20);
 	offset = slider2;
@@ -64,7 +64,7 @@ function update() local(alpha, freq, A, w0, cos_w0, filter_gain, bandwidth_octav
 	secondary_gain = pow(10, slider8/20);
 	width = slider4;
 	width_inv = 1/width;
-	
+
 	// Filter coefficients
 	freq = slider5;
 	filter_gain = slider6;
@@ -73,7 +73,7 @@ function update() local(alpha, freq, A, w0, cos_w0, filter_gain, bandwidth_octav
 	cos_w0 = cos(w0);
 	alpha = sin(w0)*sinh(log(2)/2*bandwidth_octaves*w0/sin(w0));
 	A = pow(10, filter_gain/40);
-	
+
 	filter_a0 = 1 + alpha/A;
 	filter_a1 = -2*cos_w0;
 	filter_a2 = 1 - alpha/A;
@@ -196,7 +196,6 @@ function draw_buffer(buffer) local(i, v) (
 		gfx_lineto(index_to_x(i, bufferlength), value_to_y(v));
 		i += 1;
 	);
-	debug.i = i;
 );
 
 control_start("main", "default");
@@ -204,7 +203,7 @@ control_start("main", "default");
 ui_screen() == "main" ? (
 	control_navbar("Amp Distortion", -1, -1);
 	ui_pad1(1);
-	
+
 	ui_split_topratio(1/3);
 		ui_split_leftratio(3/5);
 			control_group("Distortion");
@@ -233,7 +232,7 @@ ui_screen() == "main" ? (
 			slider7 = labelled_default_dial(slider7, 0.5, 4, 0.4, "bandwidth", slider7, "%.1f oct", 2);
 		ui_pop();
 	ui_pop();
-	
+
 	g_barwidth = ui_push_width(50);
 		ui_pad();
 		g_scale = control_vslider(g_scale, 0.5, 10, log(20));

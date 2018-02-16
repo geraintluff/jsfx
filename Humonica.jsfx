@@ -137,7 +137,6 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		i = 1;
 
 		sum1 = sum2 = 0;
-		debug.realpeak = 0;
 		while (i < fft_size) (
 			real = fft_block[i*2];
 			imag = fft_block[i*2 + 1];
@@ -147,17 +146,12 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 			sum2 += mag2;
 
 			fft_block[i*2] = mag/fft_size;
-			debug.realpeak = max(debug.realpeak, mag/fft_size);
 			fft_block[i*2 + 1] = 0;
 			i += 1;
 		);
 		(volume_norm || timbre_enhance) ? (
 			peak = 4*sum2/sum1/fft_size;
-			debug.peak = peak;
-			debug.window_samples = window_samples;
-			debug.fft_size = fft_size;
 			norm_factor = min(100, pow(0.1*window_samples/sqrt(sum2), volume_norm));
-			debug.norm_factor;
 			i = 0;
 			timbre_enhance ? (
 				while (i < fft_size) (

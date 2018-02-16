@@ -101,10 +101,6 @@ force_reset
 	gain_step = (1 - gain)/samplesblock;
 );
 
-debug.delay_samples_l = delay_samples_l;
-debug.delay_ms_l = delay_ms_l;
-debug.predelay_samples = predelay_samples;
-
 gmem[0] === send_routing_id ? (
 	gmem[_GMEM_SOURCE_LENGTH] = send_routing_length;
 	gmem[_GMEM_SOURCE_INDEX] = send_routing_index;
@@ -118,8 +114,6 @@ gmem[0] === send_routing_id ? (
 			phase_invert_l = !phase_invert_l;
 			phase_invert_r = !phase_invert_r;
 		);
-		debug.local_adjustment += 1;
-		debug.local_adj_ms = adjust_ms;
 		delay_ms_l += adjust_ms;
 		delay_ms_r += adjust_ms;
 
@@ -541,7 +535,6 @@ gmem[0] === send_routing_id ? (
 
 		ui_colora(255, 255, 255, 0.5);
 		peak_x = ui_left() + (0.5 + delay_samples/display_size)*ui_width() + 0.5;
-		debug.ui_width = ui_width();
 		gfx_line(peak_x, ui_top(), peak_x, ui_bottom() - 1);
 	ui_pop();
 

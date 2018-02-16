@@ -24,8 +24,6 @@ function allocate(N) local(result) (
 	result;
 );
 function allocate_reset() (
-	debug.allocate_reset += 1;
-
 	allocated_end = allocated_start;
 	model_target = allocate(MODEL_MAX_N);
 	model_shortperiod = allocate(MODEL_MAX_N);
@@ -866,7 +864,6 @@ function copy_correction_from_analysis() local(i) (
 function calculate_correction_coefficients() local(i, logMerged, logA, logB, sizeA, sizeB, sizeMerged, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, active_bands, merge_score, best_merge_score, best_merge_groupA, best_merge_groupB, best_merge_size, best_merge_logamp, best_merge_logamp2) (
 	!correction_resolution ? correction_resolution = model_N;
 	correction_resolution = max(1, min(floor(correction_resolution + 0.5), model_N));
-	debug.correction_resolution = correction_resolution;
 
 	// Simplify correction model
 	i = 0;
@@ -908,11 +905,6 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 			);
 			i += 1;
 		);
-		debug.best_merge_score = best_merge_score;
-		debug.best_merge_size = best_merge_size;
-		debug.best_merge_logamp = best_merge_logamp;
-		debug.best_merge_logamp2 = best_merge_logamp2;
-		debug.best_merge_groupA = best_merge_groupA;
 
 		// Merge the two groups with lowest cost
 		i = 0;
@@ -1193,7 +1185,6 @@ correction_gain_ratio = pow(10, correction_gain_db/20);
 action_recalculate ? (
 	action_recalculate = 0;
 	calculate_correction_coefficients();
-	debug.action_recalculate += 1;
 );
 
 action_reset ? (
@@ -2033,7 +2024,6 @@ while (si < model_N) (
 
 model_N != bands_N || !model_N ? (
 	reset_analysis_bands();
-	debug.reset += 1;
 );
 
 file_var(0, correction_learning);

@@ -161,9 +161,7 @@ function delay_buffer_output_allpass(obj, samples)
 	index = obj[2/*DELAY:index*/] - max(3, samples);
 	index1 = ceil(index + 2 + 0.1); // This makes sure Delta is above 2
 	Delta = index1 - index;
-	debug.realDelta = Delta;
 	Delta = 3;
-	debug.delay_samples = samples;
 	while (index1 < 0) (
 		index1 += obj[1/*DELAY:length*/];
 	);
@@ -185,10 +183,6 @@ function delay_buffer_output_allpass(obj, samples)
 	b0 = a2;
 	b1 = a1;
 	b2 = 1;
-
-	debug.Delta = Delta;
-	debug.a1 = a1;
-	debug.a2 = a2;
 
 	x0 = buffer[index1];
 	y0 = b0*x0 + b1*obj[8/*DELAY:allpass_x1*/] + b2*obj[10/*DELAY:allpass_x2*/]

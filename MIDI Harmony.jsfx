@@ -184,7 +184,6 @@ function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_d
 				midisend(offset, $x80|output_channel, i, 0);
 			);
 
-			debug.note_on_offset = offset;
 			midisend(offset, $x90|output_channel, i, max(1, min(127, ceil(output_notes[i]))));
 		) : output_notes[i] < prev_output_notes[i] ? (
 			!output_notes[i] ? (
