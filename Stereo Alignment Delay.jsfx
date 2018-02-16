@@ -127,6 +127,8 @@ delay_analysis_active ? (
 	block_delay_bufferindex = delay_bufferindex;
 );
 
+currently_sending = (gmem[0] === send_routing_id);
+
 @sample
 
 function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase) (
@@ -292,7 +294,7 @@ gain += gain_step;
 buffer_index += 1;
 buffer_index >= buffer_length ? buffer_index = 0;
 
-gmem[0] === send_routing_id ? (
+currently_sending ? (
 	// We're sending - write to the shared buffer
 	// We use the mono signal, assuming that we're aligned already
 	gmem[_GMEM_BUFFER_OFFSET + send_routing_index] = spl0 + spl1;
