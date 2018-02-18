@@ -87,7 +87,7 @@ function uix_setgfxfont() (
 );
 function uix_click_block() (
 	uix_mouseblocked = 1;
-	uix_click1count = uix_click2count = uix_click3count = 0;
+	uix_click1count = uix_click2count = uix_click64count = 0;
 	uix_click1 = uix_click2 = uix_click64 = 0;
 	uix_unclick1 = uix_unclick2 = uix_unclick64 = 0;
 	uix_click1_x = uix_click1_y = uix_click1_t = 0; // Left
@@ -186,18 +186,18 @@ function uix_unreserved_screen_below(limit) (
 function ui_setup(stackstart) local(uix_screenstack_end, uix_drawconfig_end) (
 	!uix_hassetup || stackstart != uix_screenstack ? (
 		uix_hassetup = 1;
-		
+
 		uix_screenstack = stackstart;
 		uix_screenstack_currentlayer = 0;
 		uix_screenstack_end = stackstart + uix_screenstack_step*uix_screenstack_layercount;
-		
+
 		uix_drawconfig = uix_screenstack_end;
 		uix_drawconfig_end = uix_drawconfig + uix_drawconfig_step*uix_drawconfig_count;
 		uix_reserved_end = uix_drawconfig_end;
-		
+
 		uix_screen_reservations = uix_reserved_end;
 		uix_reserved_end += 128;
-		
+
 		// Stop the pre-processor complaining
 		4/*UI_SPLIT_DIRECTION: TOP, BOTTOM, LEFT, RIGHT*/;
 	);
@@ -224,20 +224,20 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 			);
 			uix_screenstack[0] = defaultScreen;
 		);
-		
+
 		gfx_dest = -1; // Draw to main screen
 		gfx_mode = 0;
 		gfx_a = 1;
 		// Default colours
 		gfx_clear = uix_clearcolor(242, 242, 242);
-		
+
 		uix_drawconfig_current[9/*uix_DRAWCONFIG:CLIP_SCREEN*/] = -1;
 		uix_drawconfig_current[10/*uix_DRAWCONFIG:CLIP_LEFT*/] = 0;
 		uix_drawconfig_current[11/*uix_DRAWCONFIG:CLIP_WIDTH*/] = gfx_w;
 		uix_drawconfig_current[12/*uix_DRAWCONFIG:CLIP_TOP*/] = 0;
 		uix_drawconfig_current[13/*uix_DRAWCONFIG:CLIP_HEIGHT*/] = gfx_h;
 		uix_drawconfig_current[14/*uix_DRAWCONFIG:CLIP_ALPHA*/] = 1;
-		
+
 		uix_drawconfig_current[0/*uix_DRAWCONFIG:RED*/] = 0;
 		uix_drawconfig_current[1/*uix_DRAWCONFIG:GREEN*/] = 0;
 		uix_drawconfig_current[2/*uix_DRAWCONFIG:BLUE*/] = 0;
@@ -251,28 +251,28 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 		uix_drawconfig_current[20/*uix_DRAWCONFIG:VALIGN*/] = 0.5;
 		uix_drawconfig_current[21/*uix_DRAWCONFIG:HPADDING*/] = 10;
 		uix_drawconfig_current[22/*uix_DRAWCONFIG:VPADDING*/] = 8;
-		
+
 		uix_drawconfig_current[6/*uix_DRAWCONFIG:FONTINDEX*/] = 16;
 		uix_drawconfig_current[7/*uix_DRAWCONFIG:FONTFACE*/] = uix_default_fontface;
 		uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/] = uix_default_fontsize;
 		uix_drawconfig_current[4/*uix_DRAWCONFIG:FONTBOLD*/] = 0;
 		uix_drawconfig_current[5/*uix_DRAWCONFIG:FONTITALIC*/] = 0;
-		
+
 		uix_font_dirty = 1;
 		uix_setgfxfont();
-		
+
 		uix_interacted = (!!mouse_cap) || (mouse_cap != uix_mousecap_prev);
-		
+
 		uix_prev_mouse_x = uix_mouse_x;
 		uix_prev_mouse_y = uix_mouse_y;
 		uix_mouse_x = mouse_x;
 		uix_mouse_y = mouse_y;
-		
+
 		uix_scroll_y = mouse_wheel;
 		uix_scroll_x = mouse_hwheel;
 		mouse_wheel = mouse_hwheel = 0;
 		uix_scroll_y || uix_scroll_x ? uix_interacted = 1;
-		
+
 		uix_unclick1 = (!(mouse_cap&1) && uix_mousecap_prev&1);
 		uix_click1 = (mouse_cap&1 && !(uix_mousecap_prev&1)) ? (
 			clickdelta = time_precise() - uix_click1_t;
@@ -285,6 +285,7 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 			) : (
 				uix_click1count = 1;
 			);
+
 		);
 		uix_unclick2 = (!(mouse_cap&2) && uix_mousecap_prev&2);
 		uix_click2 = (mouse_cap&2 && !(uix_mousecap_prev&2)) ? (
@@ -313,17 +314,17 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH) (
 			);
 		);
 		uix_mousecap_prev = mouse_cap;
-		
+
 		uix_mouseblocked ? uix_click_block(); // Must be first, so unclick events get removed too
 		!(mouse_cap&1) && !(mouse_cap&2) && !(mouse_cap&64) ? uix_mouseblocked = 0;
-		
+
 		// Keyboard
 		!uix_latestchar || !uix_char_consumed ? (
 			uix_latestchar = gfx_getchar();
 			uix_latestchar == -1 ? uix_latestchar = 0;
 		);
 		uix_char_consumed = 0;
-		
+
 		uix_latestchar ? uix_interacted = 1;
 	) : (
 		uix_error = "ui_setup() has not been called";
@@ -516,12 +517,12 @@ function ui_text(text) local (text_h, text_w, boxwidth, boxheight, valign, halig
 		uix_setgfxfont();
 		valign = uix_drawconfig_current[20/*uix_DRAWCONFIG:VALIGN*/];
 		halign = uix_drawconfig_current[19/*uix_DRAWCONFIG:HALIGN*/];
-		
+
 		gfx_measurestr(text, text_w, text_h);
-		
+
 		boxwidth = ui_width();
 		boxheight = ui_height();
-		
+
 		fontscale = 1;
 		text_w > boxwidth ? (
 			fontscale = boxwidth/text_w;
@@ -540,12 +541,12 @@ function ui_text(text) local (text_h, text_w, boxwidth, boxheight, valign, halig
 			);
 			gfx_measurestr(text, text_w, text_h);
 		);
-		
+
 		valign = uix_drawconfig_current[20/*uix_DRAWCONFIG:VALIGN*/];
 		halign = uix_drawconfig_current[19/*uix_DRAWCONFIG:HALIGN*/];
 		gfx_x = ui_left() + (boxwidth - text_w)*halign;
 		gfx_y = ui_top() + (boxheight - text_h)*valign;
-		
+
 		gfx_drawstr(text);
 	);
 	text_w;
@@ -592,7 +593,7 @@ function ui_wraptext_height(text) local(text_length, line_start, line_end, width
 	uix_setgfxfont();
 	width = ui_width();
 	height = 0;
-	
+
 	text_length = strlen(text);
 	line_start = 0;
 	while (line_start < text_length) (
@@ -611,11 +612,11 @@ function ui_wraptext(text) local(text_length, line_start, line_end, width, heigh
 
 	halign = uix_drawconfig_current[19/*uix_DRAWCONFIG:HALIGN*/];
 	valign = uix_drawconfig_current[20/*uix_DRAWCONFIG:VALIGN*/];
-	
+
 	gfx_y = valign ? (
 		ui_top() + (ui_height() - ui_wraptext_height(text))*valign;
 	) : ui_top();
-	
+
 	text_length = strlen(text);
 	line_start = 0;
 	while (line_start < text_length) (
@@ -692,7 +693,7 @@ function ui_pop() local(prev) (
 	uix_drawconfig_currentindex > 0 ? (
 		uix_drawconfig_currentindex -= 1;
 		uix_drawconfig_current = uix_drawconfig + uix_drawconfig_currentindex*uix_drawconfig_step;
-		
+
 		prev[6/*uix_DRAWCONFIG:FONTINDEX*/] != uix_drawconfig_current[6/*uix_DRAWCONFIG:FONTINDEX*/] ? uix_font_dirty = 1;
 		prev[7/*uix_DRAWCONFIG:FONTFACE*/] != uix_drawconfig_current[7/*uix_DRAWCONFIG:FONTFACE*/] ? uix_font_dirty = 1;
 		prev[8/*uix_DRAWCONFIG:FONTSIZE*/] != uix_drawconfig_current[8/*uix_DRAWCONFIG:FONTSIZE*/] ? uix_font_dirty = 1;
@@ -713,11 +714,11 @@ function uix_push_screen() local(oldscreen, newscreen) (
 	oldscreen = uix_drawconfig_current[9/*uix_DRAWCONFIG:CLIP_SCREEN*/];
 	newscreen = uix_unreserved_screen_below(oldscreen);
 	gfx_setimgdim(newscreen, gfx_w, gfx_h);
-	
+
 	ui_push();
 	uix_drawconfig_current[14/*uix_DRAWCONFIG:CLIP_ALPHA*/] = 1;
 	gfx_dest = uix_drawconfig_current[9/*uix_DRAWCONFIG:CLIP_SCREEN*/] = newscreen;
-
+	-
 	gfx_a = 1;
 	gfx_x = prev[10/*uix_DRAWCONFIG:CLIP_LEFT*/];
 	gfx_y = prev[12/*uix_DRAWCONFIG:CLIP_TOP*/];
@@ -1054,14 +1055,14 @@ function ui_drag(i) local(dragtime) (
 
 function ui_drag_x(i) (
 	!i ? i = 1;
-	mouse_cap&i && uix_clickwasinside() ? (
+	mouse_cap&i && uix_clickwasinside(i) ? (
 		mouse_x - uix_click_x(i);
 	) : 0;
 );
 
 function ui_drag_y(i) (
 	!i ? i = 1;
-	mouse_cap&i && uix_clickwasinside() ? (
+	mouse_cap&i && uix_clickwasinside(i) ? (
 		mouse_y - uix_click_y(i);
 	) : 0;
 );
@@ -1069,6 +1070,7 @@ function ui_drag_y(i) (
 function ui_mouse_dx() (
 	mouse_x - uix_prev_mouse_x;
 );
+
 
 function ui_mouse_dy() (
 	mouse_y - uix_prev_mouse_y;
@@ -1132,7 +1134,7 @@ function ui_graph_step(buffer, length, step, low, high) local(i, v, x, y, mid, t
 		low = min(low, 2*mid - high);
 		high = max(high, 2*mid - low);
 	);
-	
+
 	top = ui_top() + 0.5;
 	bottom = ui_bottom() - 0.5;
 	i = 0;
@@ -1165,7 +1167,7 @@ function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner
 	oldX = gfx_x;
 	oldY = gfx_y;
 	oldFont = gfx_getfont();
-	
+
 	gfx_setfont(0);
 	gfx_a = 0.6;
 
@@ -1198,7 +1200,7 @@ function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner
 			gfx_r = max(0, min(1, 0.5 + sin(hue)))*0.6;
 			gfx_g = max(0, min(1, 0.5 + sin(hue + $pi*2/3)))*0.6;
 			gfx_b = max(0, min(1, 0.5 + sin(hue + $pi*4/3)))*0.6;
-			
+
 			gfx_x = textX;
 			gfx_y = textY;
 			gfx_drawstr(#uix_debug_text);
@@ -1209,10 +1211,10 @@ function ui_debug() local(oldR, oldG, oldB, oldA, oldX, oldY, oldFont, i, corner
 		gfx_line(right, top, right, bottom);
 		gfx_line(right, bottom, left, bottom);
 		gfx_line(left, bottom, left, top);
-		
+
 		i += 1;
 	);
-	
+
 	gfx_r = oldR;
 	gfx_g = oldG;
 	gfx_b = oldB;
@@ -1238,7 +1240,7 @@ function control_start(defaultPage, theme) local(reset, i) (
 	uix_control_theme_prev = theme;
 	uix_control_width_prev = gfx_w;
 	uix_control_height_prev = gfx_h;
-	
+
 	theme == "black" ? (
 		uix_control_theme = 1/*uix_THEME:BLACK_AND_WHITE*/;
 		gfx_clear = 0;
@@ -1307,7 +1309,7 @@ function uix_gloss(strength) local(width, height, topalpha, bottomalpha) (
 		0, 0, 0, 0,
 		0, 0, 0, (bottomalpha - topalpha)/height
 	);
-	
+
 	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
 		// Left fade
 		width = min(ui_width()*0.3, 5);
@@ -1348,7 +1350,7 @@ function uix_circle_shade(x, y, r, angle, shadowstrength) (
 		gfx_arc(x, y - 1, r, -0.8 + angle, 0.8 + angle, 1);
 		gfx_a = 0.15;
 		//gfx_arc(x, y - 2, r, -0.5 + angle, 0.5 + angle, 1);
-		
+
 		ui_colora(0, 0, 0, 0.1);
 		gfx_circle(x, y, r, 0, 1);
 	ui_pop();
@@ -1362,7 +1364,7 @@ function uix_dotted_line(x1, y1, x2, y2, drawlength, skiplength) local(distance,
 	y1 = floor(y1) + 0.5;
 	x2 = floor(x2) + 0.5;
 	y2 = floor(y2) + 0.5;
-	
+
 	drawR = (drawlength - 1)/(drawlength + skiplength);
 	i = 0;
 	while (i < steps) (
@@ -1406,7 +1408,7 @@ function control_background_enabled(state) local(shade) (
 function control_background_enabled_circle(x, y, r, state) local(shade) (
 	state = state ? state : control_state();
 	shade = (state == "press") ? 0.5 : (state == "hover") ? 0.75 : (state == "drag") ? 0.75 : 1;
-	
+
 	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 		ui_color(255*shade, 255*shade, 255*shade);
 		gfx_circle(x, y, r, 1, 1);
@@ -1498,10 +1500,8 @@ function control_finish_passive(state) (
 
 function control_background_disabled(state) (
 	uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-		ui_color(64, 64, 64);
 		ui_color(0, 0, 0);
 		ui_fill();
-		ui_color(0, 0, 0);
 		ui_color(255, 255, 255);
 	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
 		ui_color(96, 96, 96);
@@ -1517,8 +1517,6 @@ function control_background_disabled(state) (
 function control_finish_disabled(state) (
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			//ui_color(127, 127, 127);
-			//ui_border();
 			ui_color(255, 255, 255);
 			uix_dotted_line(ui_left(), ui_top(), ui_right(), ui_top(), 1, 3);
 			uix_dotted_line(ui_right(), ui_top(), ui_right(), ui_bottom(), 1, 3);
@@ -1669,7 +1667,7 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 			) : (
 				ui_fontsize(16);
 			);
-			
+
 			texth = textw = 0;
 			uix_setgfxfont();
 			textw = texth = 0;
@@ -1682,7 +1680,7 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 			) : (
 				ui_colora(102, 102, 102, 0.5);
 			);
-			
+
 			ui_pad2(ui_hpadding()/2, 0);
 			ui_split_top(texth);
 				ui_padleft();
@@ -1692,7 +1690,7 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 				) : (
 					ui_align(0, 0.5);
 				);
-				
+
 				ui_push_width(textw + ui_hpadding());
 					textl = ui_left();
 					textr = ui_right();
@@ -1746,7 +1744,7 @@ function control_indicator_button(text, status) local(click) (
 		status ? control_background_enabled() : control_background_disabled();
 		ui_text(text);
 		status ? control_finish_enabled() : control_finish_disabled();
-		
+
 		click = ui_click();
 	ui_pop();
 	click;
@@ -1777,7 +1775,7 @@ function control_arrow(direction) local(size, tmp, centerx, centery, point1x, po
 	size = min(size, ui_texth());
 	size *= 0.5;
 	angle = direction*$pi/2;
-	
+
 	// Draw facing upwards to start
 	point1x = 0;
 	point1y = 0.5*size*(direction >= 2 ? 1 : -1);
@@ -1806,7 +1804,7 @@ function control_selector(value, text, next_value, prev_value) local(buttonwidth
 	ui_push();
 		control_background_inset();
 		buttonwidth = min(ui_height()/2, ui_width()/2);
-		
+
 		ui_halign() <= 0.5 ? ui_split_left(buttonwidth) : ui_split_right(buttonwidth);
 			ui_colora(255, 255, 255, 0.8);
 			ui_split_topratio(0.5);
@@ -1821,7 +1819,7 @@ function control_selector(value, text, next_value, prev_value) local(buttonwidth
 				ui_click() ? value = prev_value;
 			ui_pop();
 		ui_pop();
-		
+
 		ui_push();
 			ui_padleft();
 			ui_padright();
@@ -2002,7 +2000,7 @@ function control_dial(value, range_low, range_high, curve_bias)  local(valuerati
 	lowangle = -2.3;
 	highangle = 2.3;
 	angle = lowangle + (highangle - lowangle)*(screenratio*0.98 + 0.01);
-	
+
 	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
 		ui_color(162, 228, 255);
 		ui_color(131, 184, 206);
@@ -2037,11 +2035,11 @@ function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius,
 	x2 = centrex + sin(angle)*inner_radius;
 	y2 = centrey - cos(angle)*inner_radius;
 	uix_thick_line(x1, y1, x2, y2);
-	
+
 	ui_pad1(5);
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
-	
+
 	angle = uix_control_dragvalue(angle, -0.1, 2*$pi + 0.1, 0);
 	angle < 0 ? angle += 2*$pi;
 	angle >= 2*$pi ? angle -= 2*$pi;
@@ -2050,7 +2048,7 @@ function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius,
 
 function control_dialog(title, width, height, doneText, cancelText) local(accepted) (
 	accepted = 0;
-	
+
 	ui_push();
 		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 			ui_color(0, 0, 0);
@@ -2066,9 +2064,9 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 
 	!width ? width = ui_width()*0.8;
 	!height ? height = ui_height()*0.8;
-	
+
 	title >= 0 ? height += ui_text_height(title) + ui_vpadding()*2;
-	
+
 	width = min(width + ui_hpadding()*2, ui_width());
 	height = min(height + ui_vpadding()*2, ui_height());
 	ui_pad2((ui_width() - width)/2, (ui_height() - height)/2);
@@ -2097,7 +2095,7 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 				control_background_disabled();
 				ui_text(cancelText);
 				control_finish_enabled();
-				
+
 				ui_click() ? accepted = -1;
 			) : cancelText >= 0 ? (
 				ui_push();
@@ -2107,7 +2105,7 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 						control_background_disabled();
 						ui_text(cancelText);
 						control_finish_enabled();
-						
+
 						ui_click() ? accepted = -1;
 					ui_pop();
 				ui_pop();
@@ -2116,7 +2114,7 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 			);
 		ui_pop();
 	);
-	
+
 	title >= 0 ? (
 		ui_split_toptext(title);
 			control_background_passive();
@@ -2124,7 +2122,7 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 			control_finish_passive();
 		ui_pop();
 	);
-	
+
 	ui_pad();
 	accepted ? ui_screen_close();
 	accepted;
@@ -2147,7 +2145,7 @@ function control_switch(value) local(state) (
 function uix_control_closest_substring_width(text, targetwidth) local(text_length, best_index, best_width, i, candidatewidth) (
 	best_index = 0;
 	best_width = 0;
-	
+
 	i = 0;
 	text_length = strlen(text);
 	while (i <= text_length) (
@@ -2177,9 +2175,9 @@ function control_textinput_hasfocus(prompt_selectpacked) (
 function control_textinput_focus(prompt_selectpacked) (
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
-	
+
 	prompt_selecttrail = (prompt_selectcursor < 0) ? 0 : prompt_selectcursor;
-	
+
 	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
 	prompt_selectpacked;
 );
@@ -2187,9 +2185,9 @@ function control_textinput_focus(prompt_selectpacked) (
 function control_textinput_unfocus(prompt_selectpacked) (
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
-	
+
 	prompt_selecttrail = -1;
-	
+
 	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
 	prompt_selectpacked;
 );
@@ -2204,7 +2202,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 	);
 	prompt_selectcursor = min(text_length, prompt_selectcursor);
 	prompt_selecttrail = max(-1, min(text_length, prompt_selecttrail));
-	
+
 	prompt_selecthigh = max(prompt_selectcursor, prompt_selecttrail);
 	prompt_selectlow = prompt_selecttrail >= 0 ? min(prompt_selectcursor, prompt_selecttrail) : prompt_selecthigh;
 	prompt_selectcursor < 0 ? (
@@ -2237,7 +2235,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 			while (prompt_selecthigh < text_length && uix_autoselect_char(str_getchar(text, prompt_selecthigh))) (
 				prompt_selecthigh += 1;
 			);
-			
+
 			ui_click() ? (
 				ui_click_clear();
 				prompt_selectcursor = prompt_selectlow;
@@ -2248,7 +2246,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 			prompt_selectcursor = text_length;
 			prompt_selecttrail = -1; // No cursor
 		);
-		
+
 		ui_push();
 			ui_pad();
 			ui_font_refresh();
@@ -2259,11 +2257,11 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 
 			strcpy_substr(#control_tmp1, text, 0, prompt_selectlow);
 			gfx_drawstr(#control_tmp1);
-			
+
 			prompt_selecthigh > prompt_selectlow ? (
 				strcpy_substr(#control_tmp1, text, prompt_selectlow, prompt_selecthigh - prompt_selectlow);
 				selectw = ui_text_width(#control_tmp1);
-				
+
 				uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 					select_padding = 1;
 				) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
@@ -2288,9 +2286,9 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 			strcpy_from(#control_tmp1, text, max(prompt_selectlow, prompt_selecthigh));
 			gfx_drawstr(#control_tmp1);
 		ui_pop();
-		
+
 		control_finish_inset(1);
-		
+
 		prompt_selecttrail >= 0 ? (
 			keyinterested = prompt_selecttrail >= 0;
 			while (keyinterested && ui_key()) (
@@ -2301,7 +2299,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 					strcpy_from(#control_tmp2, text, prompt_selecthigh);
 					strcat(#control_tmp1, #control_tmp2);
 					strcpy(text, #control_tmp1);
-					
+
 					prompt_selectcursor += 1;
 					prompt_selecttrail = prompt_selectcursor;
 					text_length = strlen(text);
@@ -2311,7 +2309,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 							prompt_selectlow = max(prompt_selectlow - 1, 0);
 						) : (
 							prompt_selecthigh = min(text_length, prompt_selecthigh + 1);
-						);								
+						);
 					);
 					strcpy_substr(#control_tmp1, text, 0, prompt_selectlow);
 					strcpy_from(#control_tmp2, text, prompt_selecthigh);
