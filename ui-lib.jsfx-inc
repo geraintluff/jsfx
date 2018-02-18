@@ -557,6 +557,34 @@ function ui_textnumber(number, format) local(text) (
 	ui_text(#uix_textnumber);
 );
 
+function ui_parsenumber(text, default) local(text_length, i, char, result, digit, hadDigit, hadDecimal, decimalFactor) (
+	text_length = strlen(text);
+	i = 0;
+	result = 0;
+	sign = 1;
+	hadDigit = hadDecimal = 0;
+	decimalFactor = 1;
+	while (i < text_length) (
+		char = str_getchar(text, i, 'cu');
+		char == 45 && !hadDigit && !hadDecimal ? (
+			sign = -1;
+		) : char >= 48 && char <= 57 ? ( // 0-9
+			hadDigit = 1;
+			digit = char - 48;
+			result = digit + 10*result;
+			hadDecimal ? decimalFactor *= 10;
+		) : char == 46 && !hadDecimal ? (
+			hadDecimal = 1;
+		) : char == 32 || char == 9 ? (
+			0; // Whitespace - ignore
+		) : (
+			i = text_length; // stop on first invalid character
+		);
+		i += 1;
+	);
+	hadDigit ? sign*result/decimalFactor : default;
+);
+
 function uix_fitline(text, start, text_end, width) local(i, result, line, line_end, char, hadspace, overflowed, text_w, text_h) (
 	line = #;
 	strcpy(line, "");
@@ -2166,13 +2194,16 @@ function uix_autoselect_char(char) (
 		|| (char >= 192 && char <= 255);
 );
 
-function control_textinput_hasfocus(prompt_selectpacked) (
+function control_textinput_hasfocus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
+	// TODO: have version with and without text, so we can do this properly
+	text_length = text ? strlen(text) : 0;
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
 	prompt_selecttrail >= 0;
 );
 
-function control_textinput_focus(prompt_selectpacked) (
+function control_textinput_focus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
+	text_length = text ? strlen(text) : 0;
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
 
@@ -2182,7 +2213,8 @@ function control_textinput_focus(prompt_selectpacked) (
 	prompt_selectpacked;
 );
 
-function control_textinput_unfocus(prompt_selectpacked) (
+function control_textinput_unfocus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
+	text_length = text ? strlen(text) : 0;
 	prompt_selectcursor = floor(prompt_selectpacked) - 1;
 	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
 
@@ -2370,6 +2402,29 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 
 	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
 	prompt_selectpacked;
+);
+
+uix_control_textnumber_active_x =uix_control_textnumber_active_y = -1;
+uix_control_textnumber_state;
+function control_textnumber(actualnumber, number, format) local(i) (
+	uix_control_textnumber_active_x == ui_left() && uix_control_textnumber_active_y == ui_top() ? (
+		ui_key() == 27 || ui_key() == 13 || ui_mouse_down_outside(1) || ui_mouse_down_outside(2) || ui_mouse_down_outside(64) ? (
+			actualnumber = ui_parsenumber(#uix_control_textnumber, $pi);
+			ui_key() != 27 ? (
+				uix_control_textnumber_active_x = uix_control_textnumber_active_y = -1;
+			);
+		);
+		uix_control_textnumber_state = control_textinput(#uix_control_textnumber, uix_control_textnumber_state);
+	) : (
+		ui_textnumber(number, format);
+		ui_click(2) || (ui_click() && ui_clickcount() == 3) ? ( // Right-click
+			sprintf(#uix_control_textnumber, format ? format : "%f", number);
+			uix_control_textnumber_active_x = ui_left();
+			uix_control_textnumber_active_y = ui_top();
+			uix_control_textnumber_state = control_textinput_focus(0);
+		);
+	);
+	actualnumber;
 );
 
 function control_system() local(prompt_title, prompt_text, prompt_init, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, OK) (

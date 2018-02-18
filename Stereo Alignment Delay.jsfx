@@ -342,6 +342,14 @@ function readoutbelow(number, pattern) (
 	ui_pop();
 );
 
+function readout_entry_below(actual, number, pattern) (
+	ui_push_below(DIAL_HEIGHT);
+		ui_align(0.5, 0.1);
+		number = control_textnumber(actual, number, pattern);
+	ui_pop();
+	number;
+);
+
 function delaydial(delayms, title) local(samples) (
 	titleabove(title);
 
@@ -351,10 +359,14 @@ function delaydial(delayms, title) local(samples) (
 
 	display_units_in_samples ? (
 		samples = floor(delayms*srate*0.001 + 0.5);
-		readoutbelow(samples, "%i");
+		newsamples = readout_entry_below(samples, samples, "%i");
+		newsamples !== samples ? (
+			delayms = newsamples*1000/srate;
+		);
 	) : (
-		readoutbelow(floor(delayms*100 + 0.5)*0.01, "%.2fms");
+		delayms = readout_entry_below(delayms, floor(delayms*100 + 0.5)*0.01 + (delayms >= 0 ? 0.004 : -0.004), "%.2fms");
 	);
+	delayms = max(-MAX_PREDELAY*1000, min(MAX_DELAY*1000, delayms));
 
 	ui_click() && ui_clickcount() == 2 ? (
 		delayms = 0;
