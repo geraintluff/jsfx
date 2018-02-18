@@ -1829,7 +1829,7 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 		g_left = ui_left() + (gi/bands_N)*ui_width();
 		g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
 
-		correction_learning ? (
+		!correction_active || correction_learning ? (
 			g_avg = bands_N*average1_value[gi];
 			g_avg_db = log(max(g_avg, 0.000000001))*10/log(10);
 			g_y_ratio = averages_db_yratio(g_avg_db);
