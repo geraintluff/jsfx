@@ -1636,12 +1636,12 @@ function draw_frequency_grid() local(fi, fmag, freq, xratio) (
 				xratio = log(freq/low_freq)/log(high_freq/low_freq);
 				gfx_x = ui_left() + xratio*ui_width();
 				gfx_y = ui_top();
-				ui_colora(255, 255, 255, 0.3);
+				ui_color(255, 255, 255, 0.3);
 				gfx_lineto(gfx_x, ui_bottom());
 
 				fi == 1 ? (
 					ui_fontsize(10);
-					ui_colora(255, 255, 255, 0.5);
+					ui_color(255, 255, 255, 0.5);
 					gfx_x += ui_texth()*0.5;
 					gfx_y = ui_bottom() - ui_texth()*1.5;
 					fmag >= 1000 ? (
@@ -1669,18 +1669,18 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 	ui_fill();
 
 	draw_frequency_grid();
-	ui_colora(255, 255, 255, 0.5);
+	ui_color(255, 255, 255, 0.5);
 	g_y = ui_top() + correction_db_yratio(0)*ui_height();
 	gfx_line(ui_left(), g_y, ui_right(), g_y);
 
 	g_db = 3;
 	while (g_db <= 24) (
 		g_y = ui_top() + correction_db_yratio(g_db)*ui_height();
-		ui_colora(255, 255, 255, 0.15);
+		ui_color(255, 255, 255, 0.15);
 		gfx_line(ui_left(), g_y, ui_right(), g_y);
 
 		g_y = ui_top() + correction_db_yratio(-g_db)*ui_height();
-		ui_colora(255, 255, 255, 0.15);
+		ui_color(255, 255, 255, 0.15);
 		gfx_line(ui_left(), g_y, ui_right(), g_y);
 
 		g_db *= 2;
@@ -1741,7 +1741,7 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
 			g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
 			g_y = ui_top() + g_y_ratio*ui_height();
-			ui_colora(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
+			ui_color(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
 
 			g_x = ui_left() + gi;
 			gi > 0 ? (
@@ -1816,7 +1816,7 @@ function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g
 	g_db = 15;
 	while (g_db > -60) (
 		g_y = ui_top() + averages_db_yratio(g_db)*ui_height();
-		ui_colora(255, 255, 255, 0.15);
+		ui_color(255, 255, 255, 0.15);
 		gfx_line(ui_left(), g_y, ui_right(), g_y);
 
 		gfx_x = ui_left() + ui_texth()*0.5;
@@ -1891,7 +1891,7 @@ ui_screen() == "main" ? (
 					) : (
 						ui_fontsize(14);
 						ui_padleft();
-						ui_pad2(0, -1);
+						ui_pad(0, -1);
 						ui_split_right(30);
 							ui_textnumber(correction_resolution, "%i");
 						ui_pop();
@@ -1906,18 +1906,18 @@ ui_screen() == "main" ? (
 						ui_pop();
 
 						ui_align(1, 0.5);
-						ui_pad4(0, 0, 2, 0);
+						ui_pad(0, 0, 2, 0);
 						ui_text("Bands");
 					);
 				) : (
-					control_indicator_button("Correct", 0);
+					control_button("Correct", 0);
 				);
 			ui_pop();
 		ui_pop();
 
 		ui_fontsize(14);
 		ui_split_leftratio(0.3);
-			ui_pad2(0, -1);
+			ui_pad(0, -1);
 			ui_split_right(30);
 				ui_textnumber(slider4, "%0.1f");
 			ui_pop();
@@ -1926,11 +1926,11 @@ ui_screen() == "main" ? (
 			ui_pop();
 
 			ui_align(1, 0.5);
-			ui_pad4(0, 0, 2, 0);
+			ui_pad(0, 0, 2, 0);
 			ui_text("Q");
 		ui_pop();
 		ui_split_leftratio(1/2);
-			ui_pad2(0, -1);
+			ui_pad(0, -1);
 			ui_split_right(50);
 				ui_align(0.8, 0.5);
 				ui_textnumber(floor(correction_gain_db*10 + 0.4)*0.1, "%0.1fdB");
@@ -1943,10 +1943,10 @@ ui_screen() == "main" ? (
 			ui_pop();
 
 			ui_align(1, 0.5);
-			ui_pad4(0, 0, 2, 0);
+			ui_pad(0, 0, 2, 0);
 			ui_text("Gain");
 		ui_split_next();
-			ui_pad2(0, -1);
+			ui_pad(0, -1);
 			ui_split_right(50);
 				ui_textnumber(slider5, "%0.1fdB");
 			ui_pop();
@@ -1955,7 +1955,7 @@ ui_screen() == "main" ? (
 			ui_pop();
 
 			ui_align(1, 0.5);
-			ui_pad4(0, 0, 2, 0);
+			ui_pad(0, 0, 2, 0);
 			ui_text("Clip");
 		ui_pop();
 	ui_pop();
@@ -1993,7 +1993,7 @@ ui_screen() == "main" ? (
 			control_button("Save") ? (
 				copy_to_model();
 				reset_correction_coefficients();
-				ui_screen_close_id("learn");
+				ui_screen_close();
 			);
 		ui_pop();
 	ui_pop();
