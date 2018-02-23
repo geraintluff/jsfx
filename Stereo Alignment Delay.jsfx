@@ -345,7 +345,7 @@ function readoutbelow(number, pattern) (
 function readout_entry_below(actual, number, pattern) (
 	ui_push_below(DIAL_HEIGHT);
 		ui_align(0.5, 0.1);
-		number = control_textnumber(actual, number, pattern);
+		number = control_hidden_textnumber(actual, number, pattern);
 	ui_pop();
 	number;
 );
@@ -392,7 +392,7 @@ gmem[0] === send_routing_id ? (
 	ui_pad();
 	ui_split_toptext(-1);
 		ui_split_left(50);
-			ui_pad2(0, 5);
+			ui_pad(0, 5);
 			gmem[_GMEM_SOURCE_CORRECT_SENDING] = control_switch(gmem[_GMEM_SOURCE_CORRECT_SENDING]);
 		ui_pop();
 		ui_padleft();
@@ -418,7 +418,7 @@ gmem[0] === send_routing_id ? (
 		control_finish_technical();
 	ui_pop();
 
-	ui_colora(255, 255, 255, 0.2);
+	ui_color(255, 255, 255, 0.2);
 	ui_texth(min(ui_height()/5, ui_width()/15));
 	ui_fontsize(min(ui_height()/5, ui_width()/15));
 	ui_text("sending...");
@@ -540,21 +540,21 @@ gmem[0] === send_routing_id ? (
 	display_size = delay_fftsize*0.3;
 	control_background_technical();
 	ui_push();
-		ui_colora(255, 255, 255, 0.15);
+		ui_color(255, 255, 255, 0.15);
 		delay_peak_minsample != delay_peak_maxsample ? (
 			peak_x1 = ui_left() + (0.5 + delay_peak_minsample/display_size)*ui_width() + 0.5;
 			peak_x2 = ui_left() + (0.5 + delay_peak_maxsample/display_size)*ui_width() + 0.5;
 			gfx_rect(min(peak_x1, peak_x2), ui_top(), abs(peak_x2 - peak_x1) + 1, ui_height());
 		);
 
-		ui_colora(255, 255, 255, 0.5);
+		ui_color(255, 255, 255, 0.5);
 		peak_x = ui_left() + (0.5 + delay_samples/display_size)*ui_width() + 0.5;
 		gfx_line(peak_x, ui_top(), peak_x, ui_bottom() - 1);
 	ui_pop();
 
        ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
        ui_hover() ? (
-		ui_colora(255, 128, 128, 0.8);
+		ui_color(255, 128, 128, 0.8);
 		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
 		ui_align(1, 1);
 		ui_textnumber(mouse_sample, "%i samples");
@@ -569,7 +569,7 @@ gmem[0] === send_routing_id ? (
 			delay_peak_maxsample = mouse_sample;
 		);
 
-		ui_colora(255, 128, 128, 0.5);
+		ui_color(255, 128, 128, 0.5);
 		gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
        );
 
@@ -618,7 +618,7 @@ gmem[0] === send_routing_id ? (
 
 	receive_routing_id ? (
 		ui_align(0.5, 0.9);
-		ui_colora(255, 255, 255, 0.2);
+		ui_color(255, 255, 255, 0.2);
 		ui_texth(min(ui_height()/5, ui_width()/15));
 		ui_fontsize(min(ui_height()/5, ui_width()/15));
 		ui_text("receiving...");

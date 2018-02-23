@@ -2105,28 +2105,15 @@ function uix_control_dial(value, range_low, range_high, curve_bias, hasDefault, 
 	angle = lowangle + (highangle - lowangle)*(screenratio*0.98 + 0.01);
 
 	uix_control_theme == 2/*uix_THEME:TRON*/ || !linkToLeft ? (
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(0, 0, 0);
-			x1 = centrex + sin(lowangle)*inner_radius;
-			y1 = centrey - cos(lowangle)*inner_radius;
-			x2 = centrex + sin(highangle)*inner_radius;
-			y2 = centrey - cos(highangle)*inner_radius;
-			gfx_circle(x1, y1, 1, 1, 1);
-			gfx_circle(x2, y2, 1, 1, 1);
-		) : (
-			ui_color(131, 184, 206);
-			uix_thick_arc(centrex, centrey, inner_radius, lowangle, highangle);
-		);
+		ui_color(162, 228, 255);
+		ui_color(131, 184, 206);
+		uix_thick_arc(centrex, centrey, inner_radius, lowangle, highangle);
 
 		x1 = centrex + sin(angle)*inner_radius*0.5;
 		y1 = centrey - cos(angle)*inner_radius*0.5;
 		x2 = centrex + sin(angle)*inner_radius;
 		y2 = centrey - cos(angle)*inner_radius;
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(0, 0, 0);
-		) : (
-			ui_color(255, 255, 255);
-		);
+		ui_color(255, 255, 255);
 		uix_thick_line(x1, y1, x2, y2);
 	) : (
 		gfx_a = 1;

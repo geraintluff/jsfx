@@ -1990,7 +1990,7 @@ function control_slider_x(value, range_low, range_high) (
 	control_slider_x(value, range_low, range_high, 0);
 );
 
-function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefault, defaultValue, linkToBottom) local(valueratio, screenratio, state, barheight, 	handlesize) (
+function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefault, default, linkToTop) local(valueratio, screenratio, state, barheight, 	handlesize) (
 	// We calculate screenratio first (before updating value) because then any rounding/limiting applied to the value is reflected in the UI
 	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 
@@ -2005,11 +2005,11 @@ function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefau
 		state = control_state();
 
 		ui_push();
-			linkToBottom ? (
+			linkToLeft ? (
 				barheight = floor((ui_height() - 1)*screenratio + 1.5);
 				ui_split_bottom(barheight);
 			) : (
-				ui_align(0.5, 1 - screenratio);
+				ui_align(0.5, screenratio);
 				ui_push_height(handlesize);
 			);
 				uix_control_theme == 2/*uix_THEME:TRON*/ ? (
@@ -2029,7 +2029,7 @@ function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefau
 	ui_pop();
 
 	ui_mouse_down() || ui_drag() ? (
-		screenratio = linkToBottom ? (
+		screenratio = linkToLeft ? (
 			1 - ui_mouse_yratio()
 		) : (
 			(ui_height() - ui_mouse_y() - handlesize*0.5)/(ui_height() - handlesize);
@@ -2040,9 +2040,6 @@ function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefau
 		valueratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 		valueratio += ui_scroll_y()/uix_scroll_scale;
 		value = uix_slider_ratio_to_value(valueratio, range_low, range_high, curve_bias);
-	);
-	hasDefault && ui_click() && ui_clickcount() == 2 ? (
-		value = defaultValue;
 	);
 	value;
 );
@@ -2090,7 +2087,7 @@ function uix_thick_line(x1, y1, x2, y2) (
 	gfx_line(x1, y1 - 1, x2, y2 - 1, 1);
 );
 
-function uix_control_dial(value, range_low, range_high, curve_bias, hasDefault, defaultValue, linkToLeft)  local(valueratio, screenratio, centrex, centrey, radius, inner_radius, highangle, lowangle, angle, x1, x2, y1, y2) (
+function uix_control_dial(value, range_low, range_high, curve_bias, hasDefault, default, linkToLeft)  local(valueratio, screenratio, centrex, centrey, radius, inner_radius, highangle, lowangle, angle, x1, x2, y1, y2) (
 	screenratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 
 	radius = min(min(ui_width(), ui_height())/2 - 1, 70);
@@ -2105,28 +2102,15 @@ function uix_control_dial(value, range_low, range_high, curve_bias, hasDefault, 
 	angle = lowangle + (highangle - lowangle)*(screenratio*0.98 + 0.01);
 
 	uix_control_theme == 2/*uix_THEME:TRON*/ || !linkToLeft ? (
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(0, 0, 0);
-			x1 = centrex + sin(lowangle)*inner_radius;
-			y1 = centrey - cos(lowangle)*inner_radius;
-			x2 = centrex + sin(highangle)*inner_radius;
-			y2 = centrey - cos(highangle)*inner_radius;
-			gfx_circle(x1, y1, 1, 1, 1);
-			gfx_circle(x2, y2, 1, 1, 1);
-		) : (
-			ui_color(131, 184, 206);
-			uix_thick_arc(centrex, centrey, inner_radius, lowangle, highangle);
-		);
+		ui_color(162, 228, 255);
+		ui_color(131, 184, 206);
+		uix_thick_arc(centrex, centrey, inner_radius, lowangle, highangle);
 
 		x1 = centrex + sin(angle)*inner_radius*0.5;
 		y1 = centrey - cos(angle)*inner_radius*0.5;
 		x2 = centrex + sin(angle)*inner_radius;
 		y2 = centrey - cos(angle)*inner_radius;
-		uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-			ui_color(0, 0, 0);
-		) : (
-			ui_color(255, 255, 255);
-		);
+		ui_color(255, 255, 255);
 		uix_thick_line(x1, y1, x2, y2);
 	) : (
 		gfx_a = 1;
@@ -2136,9 +2120,6 @@ function uix_control_dial(value, range_low, range_high, curve_bias, hasDefault, 
 
 	control_finish_enabled_circle(centrex, centrey, radius, 0);
 
-	hasDefault && ui_click() && ui_clickcount() == 2 ? (
-		value = defaultValue;
-	);
 	uix_control_dragvalue(value, range_low, range_high, curve_bias);
 );
 function control_dial_left(value, range_low, range_high, curve_bias, default) (

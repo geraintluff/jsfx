@@ -100,7 +100,7 @@ function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, ma
 		cx += ui_left();
 		cy += ui_top();
 		ui_push();
-			ui_colora(64, 192, 256, 0.7*min(1, 0.4 + slider1/0.2));
+			ui_color(64, 192, 256, 0.7*min(1, 0.4 + slider1/0.2));
 			gfx_line(cx + 2*cr*slider1*rot_cos, cy + 2*cr*slider1*rot_sin, cx - 2*cr*rot_sin, cy + 2*cr*rot_cos);
 			gfx_line(cx - 2*cr*slider1*rot_cos, cy - 2*cr*slider1*rot_sin, cx - 2*cr*rot_sin, cy + 2*cr*rot_cos);
 			gfx_line(cx - 2*cr*slider1*rot_cos, cy - 2*cr*slider1*rot_sin, cx + 2*cr*rot_sin, cy - 2*cr*rot_cos);
@@ -108,10 +108,10 @@ function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, ma
 		ui_pop();
 
 		ui_push();
-			ui_colora(255, 255, 255, 0.75);
+			ui_color(255, 255, 255, 0.75);
 			gfx_line(cx - 2*cr, cy, cx, cy - 2*cr);
 			gfx_line(cx + 2*cr, cy, cx, cy + 2*cr);
-			ui_colora(256, 64, 64, 1);
+			ui_color(256, 64, 64, 1);
 			gfx_line(cx + 2*cr, cy, cx, cy - 2*cr);
 			gfx_line(cx - 2*cr, cy, cx, cy + 2*cr);
 		ui_pop();

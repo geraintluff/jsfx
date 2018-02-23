@@ -43,6 +43,11 @@
 				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.1/Bad-Connection/ui-lib.jsfx-inc</source>
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.1/Bad-Connection/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="2.0.2" author="Geraint Luff" time="2018-02-23T08:46:21.631Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.2/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.2/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.2/Bad-Connection/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -67,6 +72,10 @@
 			<version name="1.0.4" author="Geraint Luff" time="2018-01-23T09:36:50.321Z">
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.4/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
 				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.4/Sandwich-Amp/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.5" author="Geraint Luff" time="2018-02-23T09:13:53.659Z">
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.5/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
+				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.5/Sandwich-Amp/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -394,6 +403,11 @@
 				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.6/Learning-Sampler/ui-lib.jsfx-inc</source>
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.6/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
+			<version name="1.0.7" time="2018-02-23T08:53:43.750Z">
+				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.7/Learning-Sampler/Learning%20Sampler.jsfx</source>
+				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.7/Learning-Sampler/ui-lib.jsfx-inc</source>
+				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.7/Learning-Sampler/synth-framework.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Hammer And String" type="effect">
 			<metadata>
@@ -525,6 +539,12 @@
 				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.2/Humonica/synth-framework.jsfx-inc</source>
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.2/Humonica/ui-lib.jsfx-inc</source>
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.2/Humonica/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="1.3.3" time="2018-02-23T08:51:48.793Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.3/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.3/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.3/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/1.3.3/Humonica/filter-utils.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">

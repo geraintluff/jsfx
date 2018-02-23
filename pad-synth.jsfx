@@ -14,8 +14,8 @@ slider6:0<-1,1,0.01>-Slider 6
 slider7:0<-1,1,0.01>-Slider 7
 slider8:0<-1,1,0.01>-Slider 8
 
-// v1.0.0 or above
 import ui-lib.jsfx-inc
+import ui-lib-compat.jsfx-inc
 
 @init
 

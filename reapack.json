@@ -20,7 +20,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "2.0.1"
+			"version": "2.0.2"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -37,7 +37,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.4"
+			"version": "1.0.5"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -86,6 +86,9 @@
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"ui-lib-compat.jsfx-inc": {
 					"main": false
 				}
 			},
@@ -153,7 +156,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.6"
+			"version": "1.0.7"
 		},
 		"Hammer And String": {
 			"type": "effect",
@@ -229,7 +232,7 @@
 					"main": false
 				}
 			},
-			"version": "1.3.2"
+			"version": "1.3.3"
 		},
 		"MIDI Harmony": {
 			"type": "effect",

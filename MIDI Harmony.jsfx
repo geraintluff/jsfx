@@ -350,7 +350,7 @@ function labelled_dial(value, low, high, bias, label, number_format) (
 function labelled_switch(value, label, text) (
 	push_labelled(label, 0, text);
 		ui_push_heighttext(-1);
-			ui_pad2(-1, 0);
+			ui_pad(-1, 0);
 			value = control_switch(value);
 		ui_pop();
 	ui_pop();
@@ -360,7 +360,7 @@ function labelled_switch(value, label, text) (
 function labelled_selector(value, value_text, up_value, down_value, label, text) (
 	push_labelled(label, 0, text);
 		ui_push_heighttext(-1);
-			ui_pad2(-1, 0);
+			ui_pad(-1, 0);
 			value = control_selector(value, value_text, up_value, down_value);
 		ui_pop();
 	ui_pop();
@@ -373,7 +373,7 @@ ui_screen() == "main" ? (
 	ui_split_top(50);
 		control_background_technical();
 		ui_graph_step(output_notes, 128, 1, 0, 127);
-		ui_colora(255, 255, 255, 0.2);
+		ui_color(255, 255, 255, 0.2);
 		ui_graph_step(allowed_notes, 128, 1, 0, 127);
 		input_source ? (
 			ui_color(64, 128, 192);
@@ -431,7 +431,7 @@ ui_screen() == "main" ? (
 			ui_split_leftratio(1/3);
 				push_labelled("Interval", 0, "");
 					ui_push_heighttext(-1);
-						ui_pad2(-1, 0);
+						ui_pad(-1, 0);
 						sprintf(#sequence_interval, "1/%i", 4<<sequence_interval_pow2);
 						sequence_interval_pow2 = control_selector(sequence_interval_pow2, #sequence_interval, min(3, sequence_interval_pow2 + 1), max(0, sequence_interval_pow2 - 1));
 					ui_pop();
@@ -439,7 +439,7 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				push_labelled("Length", 0, "");
 					ui_push_heighttext(-1);
-						ui_pad2(-1, 0);
+						ui_pad(-1, 0);
 						sprintf(#sequence_length, "%i", sequence_length);
 						sequence_length = control_selector(sequence_length, #sequence_length, min(64, sequence_length + 1), max(3, sequence_length - 1));
 					ui_pop();
@@ -447,7 +447,7 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				push_labelled("Sync", 0, free_mode ? "note-on" : "beats");
 					ui_push_heighttext(-1);
-						ui_pad2(-1, 0);
+						ui_pad(-1, 0);
 						free_mode = control_switch(free_mode);
 					ui_pop();
 				ui_pop();

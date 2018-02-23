@@ -285,7 +285,7 @@ function labelled_dial(value, low, high, bias, label, formatvalue, format, defau
 	ui_push();
 		ui_align(0.6, 0.5);
 		ui_push_width(40);
-			value = control_dial(value, low, high, bias);
+			value = control_dial_left(value, low, high, bias);
 		ui_pop();
 		ui_push_leftof(50);
 			ui_align(1, 0.5);
