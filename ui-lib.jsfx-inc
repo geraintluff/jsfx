@@ -1529,7 +1529,7 @@ function control_finish_enabled(state) (
 			gfx_blit(uix_control_theme_buffer, 1, 0, 340, 20, 120, 60, ui_left(), ui_top(), ui_width(), ui_height());
 			uix_control_color_from_theme(471, 30);
 		);
-	) ? (
+	) : (
 		ui_push();
 			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 				ui_color(255, 255, 255);
@@ -1908,7 +1908,7 @@ function control_arrow(direction) local(size, tmp, centerx, centery, point1x, po
 );
 
 function control_selector(value, text, next_value, prev_value) local(buttonwidth) (
-	ui_push();
+	ui_push_height(ui_texth() + 2*ui_padding_y());
 		control_background_inset();
 		buttonwidth = min(ui_height()/2, ui_width()/2);
 
@@ -2380,6 +2380,25 @@ function control_switch(value) local(state) (
 				control_background_enabled(state);
 				control_finish_enabled(state);
 			ui_pop();
+		ui_pop();
+	ui_pop();
+	value;
+);
+
+function control_radio(value, option_value) local(state) (
+	ui_click() ? value = option_value;
+
+	ui_push_height(ui_texth());
+		ui_push_width(ui_texth());
+
+			control_background_inset();
+			control_finish_inset();
+
+			value == option_value ? (
+				ui_pad(2, 2);
+				control_background_enabled(state);
+				control_finish_enabled(state);
+			);
 		ui_pop();
 	ui_pop();
 	value;

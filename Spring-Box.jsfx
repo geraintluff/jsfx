@@ -227,7 +227,7 @@ spl1 = spl1*dry + right*wet;
 writepos += 1;
 writepos >= buffersize ? writepos = 0;
 
-@gfx 510 360
+@gfx 500 350
 
 function labelled_dial(value, low, high, bias, label, number_format) (
 	ui_push_height(60);
@@ -253,16 +253,20 @@ ui_screen() == "main" ? (
 	ui_split_rightratio(0.7);
 		ui_split_topratio(0.55);
 			control_group("Delay");
-			ui_split_bottomratio(0.3);
-				ui_split_right(150);
-					ui_pad();
-					ui_push_heighttext(-1);
-						slider6 = control_selector(slider6, slider6 ? "clustered" : "smooth", 1 - slider6, 1 - slider6);
+			ui_split_bottomratio(0.25);
+				ui_split_leftratio(1/2);
+					ui_split_right(50);
+						slider6 = control_radio(slider6, 1);
 					ui_pop();
+					ui_align(1, 0.5);
+					ui_text("clustered");
+				ui_split_next();
+					ui_split_right(50);
+						slider6 = control_radio(slider6, 0);
+					ui_pop();
+					ui_align(1, 0.5);
+					ui_text("smooth");
 				ui_pop();
-
-				ui_align(1, 0.5);
-				ui_text("echoes:");
 			ui_pop();
 
 			ui_split_leftratio(1/3);
