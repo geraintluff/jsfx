@@ -71,12 +71,15 @@
 				},
 				"delay-utils.jsfx-inc": {
 					"main": false
+				},
+				"themes/bitmap-simple/theme-cyan.png": {
+					"main": false
 				}
 			},
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.0.8"
+			"version": "1.1.0"
 		},
 		"PadSynth": {
 			"type": "effect",
