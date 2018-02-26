@@ -1140,7 +1140,7 @@ function ui_key_next() (
 
 //////// Fancy graphics ////////
 
-function ui_graph_step_circular(buffer, length, step, offset, low, high) local(i, i2, v, x, y, mid, top, bottom) (
+function ui_graph_circular(buffer, length, step, offset, modulo_length, low, high) local(i, i2, v, x, y, mid, top, bottom) (
 	low == high ? (
 		i = 0;
 		mid = low;
@@ -1160,8 +1160,8 @@ function ui_graph_step_circular(buffer, length, step, offset, low, high) local(i
 	i = 0;
 	while (i < length) (
 		i2 = i + offset;
-		while (i2 < 0) (i2 += length);
-		while (i2 >= length) (i2 -= length);
+		while (i2 < 0) (i2 += modulo_length);
+		while (i2 >= modulo_length) (i2 -= modulo_length);
 
 		v = buffer[i2*step];
 		x = ui_left() + i/(length - 1)*(ui_width() - 1);
@@ -1176,8 +1176,11 @@ function ui_graph_step_circular(buffer, length, step, offset, low, high) local(i
 	);
 	(high - low)/2;
 );
+function ui_graph_circular(buffer, length, step, offset, low, high) (
+	ui_graph_circular(buffer, length, step, offset, length, low, high);
+);
 function ui_graph_step(buffer, length, step, low, high) (
-	ui_graph_step_circular(buffer, length, step, 0, low, high);
+	ui_graph_circular(buffer, length, step, 0, low, high);
 );
 function ui_graph(buffer, length, low, high) (
 	ui_graph_step(buffer, length, 1, low, high);
