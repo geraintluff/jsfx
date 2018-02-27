@@ -22,13 +22,25 @@ slider13:vib_mode=1<0,1,1{tracking,LFO}>-Vib mode
 slider14:vib_lfo_scale_cents=10<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
-slider17:stereo_width=1<0,1,0>-Stereo Width
+slider17:stereo_width=0.5<0,1,0>-Stereo Width
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
 import filter-utils.jsfx-inc
 
 @init
+
+// TODO: why do we need this?
+// On init (playback), the UI flashes an "unknown screen" error briefly
+// The @gfx code runs in a different thread, so this could be a race condition interacting with the shuffling of ui_setup() around.
+// We already had to introduce a minimum for srate because otherwise certain important lengths == 0, which caused infinite loops.
+!srate ? srate = max(last_srate, 8000);
+last_srate = srate;
+
+debug.init_count += 1;
+debug.init_srate3 = debug.init_srate2;
+debug.init_srate2 = debug.init_srate;
+debug.init_srate = srate;
 
 volume_norm = timbre_enhance = 0;
 
@@ -43,7 +55,7 @@ freemem = (kernelA0 = freemem) + kernel_length;
 freemem = (kernelA1 = freemem) + kernel_length;
 freemem = (kernelB0 = freemem) + kernel_length;
 freemem = (kernelB1 = freemem) + kernel_length;
-input_buffer_length = MAX_WINDOW_SAMPLES;
+input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
 
@@ -90,7 +102,7 @@ crossover_percent = 100 - 50/crossover_ratio;
 
 attack_samples = srate*attack_ms*0.001;
 release_samples = srate*release_ms*0.001;
-window_samples = srate*window_ms*0.001;
+window_samples = max(srate, 8000)*window_ms*0.001;
 interval_samples = window_samples*(1 - crossover_percent/100);
 fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
 abs(timbre_shift_semitones) > 0.1 ? (
@@ -99,8 +111,8 @@ abs(timbre_shift_semitones) > 0.1 ? (
 	timbre_shift_factor = 1;
 );
 
-input_buffer0[input_index] = spl0;
-input_buffer1[input_index] = spl1;
+input_buffer0[input_index] = 0;
+input_buffer1[input_index] = 0;
 
 any_notes_active = synth_block();
 
@@ -379,6 +391,7 @@ while (note > 0) (
 				: 1;
 			);
 			wavelength_r = note[5/*NOTE:WAVELENGTH_R*/] = srate/synth_freq(note)*vibrato_factor/lr_detune_factor;
+
 			while (index_r >= wavelength_r) (
 				index_r -= wavelength_r;
 			);
@@ -500,7 +513,7 @@ ui_screen() == "main" ? (
 
 	ui_split_bottomratio(0.15);
 		control_background_technical();
-		//ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
+		ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
 		control_finish_technical();
 	ui_pop();
 
@@ -537,7 +550,7 @@ ui_screen() == "main" ? (
 		ui_split_leftratio(1/2);
 			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 5);
 		ui_split_next();
-			stereo_width = labelled_dial(stereo_width, 0, 1, 0, "Width", "", 1);
+			stereo_width = labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5);
 		ui_pop();
 	ui_pop();
 
