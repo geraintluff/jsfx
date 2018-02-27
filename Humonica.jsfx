@@ -6,8 +6,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:attack_ms=1<0,100,1>-Attack (ms)
-slider2:release_ms=10<1,300,1>-Release (ms)
+slider1:attack_ms=5<0,1000,1>-Attack (ms)
+slider2:release_ms=10<1,2000,1>-Release (ms)
 slider3:window_ms=30<20,150,1>-Window (ms)
 slider4:crossover_ratio=1.25<1,10,0.25>-Window crossover factor
 slider5:latency_switch=0<0,1,1{on,off}>-Latency compensation
@@ -22,6 +22,7 @@ slider13:vib_mode=1<0,1,1{tracking,LFO}>-Vib mode
 slider14:vib_lfo_scale_cents=10<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
+slider17:stereo_width=1<0,1,0>-Stereo Width
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -45,6 +46,13 @@ freemem = (kernelB1 = freemem) + kernel_length;
 input_buffer_length = MAX_WINDOW_SAMPLES;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
+
+// Wipe all buffers
+i = 0;
+while (i < freemem) (
+	i[] = 0;
+	i += 1;
+);
 
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, 9/*NOTE: TIMBRE_FACTOR, WAVELENGTH_L, INDEX_L, LFO_PHASE_L, LFO_FREQ_DIFF_L, WAVELENGTH_R, INDEX_R, LFO_PHASE_R, LFO_FREQ_DIFF_R*/);
@@ -442,6 +450,12 @@ while (note > 0) (
 spl0 = filter_buffer_sample(filter_left, spl0);
 spl1 = filter_buffer_sample(filter_right, spl1);
 
+splm = (spl0 + spl1)*0.5;
+spls = (spl0 - spl1)*0.5*stereo_width;
+
+spl0 = splm + spls;
+spl1 = splm - spls;
+
 @gfx 645 400
 
 function labelled_dial(value, low, high, bias, label, number_format, default) (
@@ -484,13 +498,14 @@ ui_screen() == "main" ? (
 
 	ui_split_bottomratio(0.15);
 		control_background_technical();
-		ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
+		//ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
 		control_finish_technical();
 	ui_pop();
 
 	ui_split_topratio(0.5);
 		ui_split_leftratio(4/7);
 			control_group("Analysis");
+			ui_pad(-1, 0);
 			ui_split_leftratio(1/4);
 				window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims", 30);
 			ui_split_next();
@@ -504,6 +519,7 @@ ui_screen() == "main" ? (
 
 		ui_split_leftratio(3/3);
 			control_group("Timbre");
+			ui_pad(-1, 0);
 			ui_split_leftratio(1/3);
 				timbre_shift_semitones = labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0);
 			ui_split_next();
@@ -514,11 +530,18 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(5/7);
-		control_group("Pitch & Vibrato");
-		ui_split_leftratio(1/5);
-			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "L/R Detune", "%i cents", 5);
+	ui_split_leftratio(2/8);
+		control_group("Stereo");
+		ui_split_leftratio(1/2);
+			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 5);
 		ui_split_next();
+			stereo_width = labelled_dial(stereo_width, 0, 1, 0, "Width", "", 1);
+		ui_pop();
+	ui_pop();
+
+	ui_split_leftratio(4/6);
+		control_group("Vibrato");
+		ui_split_leftratio(1/4);
 			vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
 		ui_split_next();
 			vib_mode ? (
@@ -544,9 +567,9 @@ ui_screen() == "main" ? (
 	ui_split_leftratio(2/2);
 		control_group("Envelope");
 		ui_split_leftratio(1/2);
-			attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims", 1);
+			attack_ms = labelled_dial(attack_ms, 0, 1000, 5, "Attack", "%ims", 5);
 		ui_split_next();
-			release_ms = labelled_dial(release_ms, 0, 300, 3, "Release", "%ims", 10);
+			release_ms = labelled_dial(release_ms, 0, 2000, 5, "Release", "%ims", 10);
 		ui_pop();
 	ui_pop();
 
