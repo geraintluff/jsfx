@@ -17,9 +17,9 @@ slider8:timbre_shift_tracking=0<-1,1,0.01>-Timbre key-tracking (relative to midd
 slider9:lowpass_freq_khz=8<1,20,0.1>-Lowpass (kHz)
 slider10:vibrato_tracking=0<0,1,0.01>-Vibrato tracking
 slider11:tonality_limit=0<0,0.5,0.01>-Tonality limit
-slider12:lr_detune_cents=5<0,100,1>-L/R detune
+slider12:lr_detune_cents=3<0,100,1>-L/R detune
 slider13:vib_mode=1<0,1,1{tracking,LFO}>-Vib mode
-slider14:vib_lfo_scale_cents=10<0,100,1>-Vib LFO cents
+slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
@@ -86,6 +86,7 @@ function check_for_old_presets() (
 
 		// Emulate pre-v2 behaviour
 		lr_detune_cents = 0; // Detuning didn't exist
+		stereo_width = 1; // Didn't have stereo width control
 		vibrato_tracking || tonality_limit ? (
 			vib_mode = 0; // tracking mode used to be the only option
 		) : (
@@ -548,7 +549,7 @@ ui_screen() == "main" ? (
 	ui_split_leftratio(2/8);
 		control_group("Stereo");
 		ui_split_leftratio(1/2);
-			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 5);
+			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3);
 		ui_split_next();
 			stereo_width = labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5);
 		ui_pop();
@@ -560,7 +561,7 @@ ui_screen() == "main" ? (
 			vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
 		ui_split_next();
 			vib_mode ? (
-				vib_lfo_scale_cents = labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 10);
+				vib_lfo_scale_cents = labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 5);
 			) : (
 				vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Tracking", "strength", 0));
 			);
