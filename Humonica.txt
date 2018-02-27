@@ -101,7 +101,7 @@ abs(timbre_shift_semitones) > 0.1 ? (
 input_buffer0[input_index] = spl0;
 input_buffer1[input_index] = spl1;
 
-synth_block();
+any_notes_active = synth_block();
 
 latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
 
@@ -232,65 +232,67 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 );
 
 interval_index += 1;
-interval_index >= interval_samples ? (
-	interval_index = 0;
+any_notes_active ? (
+	interval_index >= interval_samples ? (
+		interval_index = 0;
 
-	// Swap kernels
-	tmp = kernelA0;
-	kernelA0 = kernelB0;
-	kernelB0 = tmp;
-	tmp = kernelA1;
-	kernelA1 = kernelB1;
-	kernelB1 = tmp;
+		// Swap kernels
+		tmp = kernelA0;
+		kernelA0 = kernelB0;
+		kernelB0 = tmp;
+		tmp = kernelA1;
+		kernelA1 = kernelB1;
+		kernelB1 = tmp;
 
-	stereo_switch ? (
-		fill_kernel(kernelB0, input_buffer0, -1);
-		fill_kernel(kernelB1, input_buffer1, -1);
-	) : (
-		fill_kernel(kernelB0, input_buffer0, input_buffer1);
-		i = 0;
-		while (i < kernel_length) (
-			kernelB1[i] = kernelB0[i];
-			i += 1;
-		);
-	);
-
-	vibrato_tracking || tonality_limit ? (
-		lowest_value = 0;
-		highest_value = 0;
-		highest_index = 0;
-		i = 0;
-		while (i < kernel_length/2) (
-			value = (kernelB0[i] + kernelB1[i]);
-			value < lowest_value ? (
-				highest_value = highest_index = 0;
-				lowest_value = value;
-			) : value > highest_value ? (
-				highest_value = value;
-				highest_index = i;
-			);
-			i += 1;
-		);
-		highest_index ? (
-			target_wavelength = highest_index;
-		);
-
-		tonality_limit ? (
-			first_value = (kernelB0[0] + kernelB1[0]);
-			tonality = first_value ? highest_value/first_value : 0;
-			factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
-			tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
-
+		stereo_switch ? (
+			fill_kernel(kernelB0, input_buffer0, -1);
+			fill_kernel(kernelB1, input_buffer1, -1);
+		) : (
+			fill_kernel(kernelB0, input_buffer0, input_buffer1);
 			i = 0;
 			while (i < kernel_length) (
-				kernelB0[i] *= tonality_factor;
-				kernelB1[i] *= tonality_factor;
+				kernelB1[i] = kernelB0[i];
 				i += 1;
 			);
 		);
+
+		vibrato_tracking || tonality_limit ? (
+			lowest_value = 0;
+			highest_value = 0;
+			highest_index = 0;
+			i = 0;
+			while (i < kernel_length/2) (
+				value = (kernelB0[i] + kernelB1[i]);
+				value < lowest_value ? (
+					highest_value = highest_index = 0;
+					lowest_value = value;
+				) : value > highest_value ? (
+					highest_value = value;
+					highest_index = i;
+				);
+				i += 1;
+			);
+			highest_index ? (
+				target_wavelength = highest_index;
+			);
+
+			tonality_limit ? (
+				first_value = (kernelB0[0] + kernelB1[0]);
+				tonality = first_value ? highest_value/first_value : 0;
+				factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
+				tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
+
+				i = 0;
+				while (i < kernel_length) (
+					kernelB0[i] *= tonality_factor;
+					kernelB1[i] *= tonality_factor;
+					i += 1;
+				);
+			);
+		);
 	);
+	kernel_crossfade = interval_index/interval_samples;
 );
-kernel_crossfade = interval_index/interval_samples;
 
 vibrato_tracking ? (
 	low_factor = 0.98;

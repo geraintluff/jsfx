@@ -142,20 +142,22 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			synthx_pitchbend_ratio = pow(2, synthx_pitchbend_range/12*synthx_pitchbend/8192);
 		);
 	);
-	synthx_max_active_note = 0;
+	synthx_max_active_note = -1;
 	i = 0;
+	note = synthx_notestack;
 	while (i < synthx_polyphony) (
-		note = synthx_notestack + synthx_step*i;
 		note[NOTE#ACTIVE] ? (
 			synthx_max_active_note = i;
 		);
 		i += 1;
+		note += synthx_step;
 	);
+	synthx_max_active_note + 1;
 );
 
-function synth_sample() local(i, note) (
+function synth_sample() local(i, note, have_active) (
 	i = 0;
-	while (i < synthx_polyphony) (
+	while (i <= synthx_max_active_note) (
 		note = synthx_notestack + synthx_step*i;
 		note[NOTE#ACTIVE] ? (
 			note[NOTE#SAMPLES_FROM_ATTACK] += 1;
@@ -176,7 +178,7 @@ function synth_note_next(note) local(selected_note, index, note) (
 		index += 1;
 	);
 	selected_note = -1;
-	while (index < synthx_polyphony && selected_note < 0) (
+	while (index <= synthx_max_active_note && selected_note < 0) (
 		note = synthx_notestack + synthx_step*index;
 		note[NOTE#ACTIVE] && note[NOTE#SAMPLES_FROM_ATTACK] >= 0 ? (
 			selected_note = note + synthx_custom_offset;
