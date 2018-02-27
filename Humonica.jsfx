@@ -238,7 +238,7 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		);
 	) : (
 		i = 0;
-		i < kernel_length ? (
+		while (i < kernel_length) (
 			kernel[i] = 0;
 			i += 1;
 		);
