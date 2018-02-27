@@ -513,7 +513,7 @@ ui_screen() == "main" ? (
 			ui_split_next();
 				crossover_ratio = labelled_dial(crossover_ratio, 1, 10, 3, "Overlap", "x%.2f", 1.25);
 			ui_split_next();
-				latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero");
+				latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero (live)");
 			ui_split_next();
 				stereo_switch = labelled_switch(stereo_switch, "Stereo", stereo_switch ? "separate" : "joined");
 			ui_pop();
