@@ -570,6 +570,12 @@
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.2/Humonica/ui-lib.jsfx-inc</source>
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.2/Humonica/filter-utils.jsfx-inc</source>
 			</version>
+			<version name="2.0.3" time="2018-02-27T01:56:31.062Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.3/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.3/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.3/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.3/Humonica/filter-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">
 			<metadata>
