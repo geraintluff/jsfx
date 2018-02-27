@@ -270,7 +270,7 @@ any_notes_active ? (
 			);
 		);
 
-		vibrato_tracking || tonality_limit ? (
+		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
 			lowest_value = 0;
 			highest_value = 0;
 			highest_index = 0;
