@@ -159,7 +159,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.7"
+			"version": "1.0.8"
 		},
 		"Hammer And String": {
 			"type": "effect",
@@ -200,7 +200,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.1"
+			"version": "1.2.2"
 		},
 		"MIDI Gate": {
 			"type": "effect",
@@ -216,7 +216,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Humonica": {
 			"type": "effect",

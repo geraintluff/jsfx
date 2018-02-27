@@ -270,6 +270,11 @@
 				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/synth-framework.jsfx-inc</source>
 				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.0.3" time="2018-02-27T01:58:44.639Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="MIDI Harmony" type="effect">
 			<metadata>
@@ -414,6 +419,11 @@
 				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.7/Learning-Sampler/ui-lib.jsfx-inc</source>
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.7/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
+			<version name="1.0.8" time="2018-02-27T01:59:02.377Z">
+				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.8/Learning-Sampler/Learning%20Sampler.jsfx</source>
+				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.8/Learning-Sampler/ui-lib.jsfx-inc</source>
+				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.8/Learning-Sampler/synth-framework.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Hammer And String" type="effect">
 			<metadata>
@@ -495,6 +505,13 @@
 				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.1/Hammer-And-Chord/ui-lib.jsfx-inc</source>
 				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.1/Hammer-And-Chord/synth-framework.jsfx-inc</source>
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.1/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="1.2.2" time="2018-02-27T01:58:02.013Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/synth-framework.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
