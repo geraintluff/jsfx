@@ -23,7 +23,7 @@ slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
-slider18:interp_quality=0<0,1,1{low,high}>Interp quality
+slider18:interp_quality=1<0,1,1{low,high}>-Interp quality
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -158,6 +158,10 @@ execution_time = 0;
 @sample
 execution_start = time_precise();
 
+function smooth_fade(phase) (
+	phase*phase*(3 - 2*phase);
+);
+
 input_buffer0[input_index] = spl0;
 input_buffer1[input_index] = spl1;
 input_index += 1;
@@ -230,11 +234,8 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		ifft(fft_block, fft_size);
 
 		// Zero out kernel
-		i = 0;
-		while (i < kernel_length) (
-			kernel[i] = 0;
-			i += 1;
-		);
+		memset(kernel, 0, kernel_length);
+
 		// Place result in kernel
 		i = 0;
 		window_value = (secondary_buffer >= 0) ? sqrt(0.5) : 1;
@@ -245,11 +246,8 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 			i += 1;
 		);
 	) : (
-		i = 0;
-		while (i < kernel_length) (
-			kernel[i] = 0;
-			i += 1;
-		);
+		// Zero out kernel
+		memset(kernel, 0, kernel_length);
 	);
 );
 
@@ -271,11 +269,7 @@ any_notes_active ? (
 			fill_kernel(kernelB1, input_buffer1, -1);
 		) : (
 			fill_kernel(kernelB0, input_buffer0, input_buffer1);
-			i = 0;
-			while (i < kernel_length) (
-				kernelB1[i] = kernelB0[i];
-				i += 1;
-			);
+			memcpy(kernelB1, kernelB0, kernel_length);
 		);
 
 		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
@@ -314,6 +308,7 @@ any_notes_active ? (
 		);
 	);
 	kernel_crossfade = interval_index/interval_samples;
+	interp_quality ? kernel_crossfade = smooth_fade(kernel_crossfade);
 );
 
 vibrato_tracking ? (
@@ -335,9 +330,9 @@ spl0 = spl1 = 0;
 
 synth_sample();
 
-function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2) (
+function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB) (
 	phase = index/wavelength;
-	interp_quality ? phase = 0.5 - 0.5*cos($pi*phase);
+	interp_quality ? phase = smooth_fade(phase);
 
 	indexA = min(index*timbre_factor, half_kernel_length_minus_one);
 	indexB = max(half_kernel_length, kernel_length + (index - wavelength)*timbre_factor);
@@ -353,17 +348,14 @@ function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase,
 	valueA += (kernelA[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelA[floor_indexB];
 	valueB += (kernelA[floor_indexB2] - valueB)*ratioB;
-	value = valueA + (valueB - valueA)*phase;
-	result = value;
+	result = valueA + (valueB - valueA)*phase;
 
 	valueA = kernelB[floor_indexA];
 	valueA += (kernelB[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelB[floor_indexB];
 	valueB += (kernelB[floor_indexB2] - valueB)*ratioB;
 	value = valueA + (valueB - valueA)*phase;
-	result += (value - result)*kernel_crossfade;
-
-	result;
+	result + (value - result)*kernel_crossfade;
 );
 
 note = synth_note_first();
