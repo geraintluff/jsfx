@@ -52,9 +52,13 @@ freemem = 0;
 freemem = (fft_block = freemem) + FFT_MAX_SIZE*2;
 kernel_length = MAX_WINDOW_SAMPLES;
 freemem = (kernelA0 = freemem) + kernel_length;
+freemem = (kernelA0_dc = freemem) + kernel_length;
 freemem = (kernelA1 = freemem) + kernel_length;
+freemem = (kernelA1_d = freemem) + kernel_length;
 freemem = (kernelB0 = freemem) + kernel_length;
+freemem = (kernelB0_dc = freemem) + kernel_length;
 freemem = (kernelB1 = freemem) + kernel_length;
+freemem = (kernelB1_dc = freemem) + kernel_length;
 input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
@@ -168,7 +172,7 @@ input_index >= input_buffer_length ? (
 	input_index = 0;
 );
 
-function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, mag2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
+function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, mag2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
 	i = 0;
 	max_abs = 0;
 	// Fill with input
@@ -201,6 +205,8 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		fft_block[0] = fft_block[1] = 0;
 		i = 1;
 
+		// TODO: remove sum1, sum2 and mag2, if we're not doing volume_norm/timbre_enhance
+		// Also remove volume_norm and timbre_enhance :p
 		sum1 = sum2 = 0;
 		while (i < fft_size) (
 			real = fft_block[i*2];
@@ -244,6 +250,24 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 			kernel[i2] = kernel[i];
 			i += 1;
 		);
+
+		// Sum
+		i = 0;
+		sum1 = 0;
+		while (i < half_kernel_length) (
+			sum1 += kernel[i];
+			kernel_dc[i] = sum1;
+			i += 1;
+		);
+
+		i = 0;
+		sum1 = 0;
+		while (i < half_kernel_length) (
+			sum1 += kernel_dc[i];
+			sum2 = (i + 1)*(i + 2)*0.5;
+			kernel_dc[i] = sum1/sum2;
+			i += 1;
+		);
 	) : (
 		// Zero out kernel
 		memset(kernel, 0, kernel_length);
@@ -262,13 +286,21 @@ any_notes_active ? (
 		tmp = kernelA1;
 		kernelA1 = kernelB1;
 		kernelB1 = tmp;
+		tmp = kernelA0_dc;
+		kernelA0_dc = kernelB0_dc;
+		kernelB0_dc = tmp;
+		tmp = kernelA1_dc;
+		kernelA1 = kernelB1_dc;
+		kernelB1_dc = tmp;
 
 		stereo_switch ? (
-			fill_kernel(kernelB0, input_buffer0, -1);
-			fill_kernel(kernelB1, input_buffer1, -1);
+			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, -1);
+			fill_kernel(kernelB1, kernelB1_dc, input_buffer1, -1);
 		) : (
-			fill_kernel(kernelB0, input_buffer0, input_buffer1);
+			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, input_buffer1);
+			// TODO: have "true" slot, and instead of copying, point kernel?1 to kernel?0.
 			memcpy(kernelB1, kernelB0, kernel_length);
+			memcpy(kernelB1_dc, kernelB0_dc, half_kernel_length);
 		);
 
 		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
@@ -329,7 +361,7 @@ spl0 = spl1 = 0;
 
 synth_sample();
 
-function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB) (
+function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB, dcA, dcB) (
 	phase = index/wavelength;
 	interp_quality ? phase = smooth_fade(phase);
 
@@ -347,19 +379,20 @@ function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase,
 	valueA += (kernelA[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelA[floor_indexB];
 	valueB += (kernelA[floor_indexB2] - valueB)*ratioB;
-	result = valueA + (valueB - valueA)*phase;
+	result = valueA + (valueB - valueA)*phase - dcA;
 
 	valueA = kernelB[floor_indexA];
 	valueA += (kernelB[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelB[floor_indexB];
 	valueB += (kernelB[floor_indexB2] - valueB)*ratioB;
-	value = valueA + (valueB - valueA)*phase;
+	value = valueA + (valueB - valueA)*phase - dcB;
 	result + (value - result)*kernel_crossfade;
 );
 
 note = synth_note_first();
 while (note > 0) (
 	synth_needs_init(note) ? (
+		note[NOTE#WAVELENGTH_FLOOR] = floor(srate/synth_freq(note));
 		note[NOTE#WAVELENGTH_L] = srate/synth_freq(note);
 		note[NOTE#INDEX_L] = floor(rand()*note[NOTE#WAVELENGTH_L]);
 		note[NOTE#LFO_PHASE_L] = rand();
@@ -432,8 +465,9 @@ while (note > 0) (
 		timbre_factor = timbre_shift_factor*note[NOTE#TIMBRE_FACTOR];
 
 		// Left
-		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0);
-		right = interp_sample(index_r, wavelength_r, kernelA1, kernelB1);
+		wavelength_floor = note[NOTE#WAVELENGTH_FLOOR];
+		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0, kernelA0_dc[wavelength_floor], kernelB0_dc[wavelength_floor]);
+		right = interp_sample(index_r, wavelength_r, kernelA1, kernelB1, kernelA1_dc[wavelength_floor], kernelB1_dc[wavelength_floor]);
 
 		spl0 += left*amp;
 		spl1 += right*amp;
