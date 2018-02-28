@@ -1,4 +1,4 @@
-desc:Humonica - Harmoniser/Harmonizer (by Geraint Luff)
+half_kernel_lengthdesc:Humonica - Harmoniser/Harmonizer (by Geraint Luff)
 
 in_pin:Left
 in_pin:Right
@@ -22,6 +22,7 @@ slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
+slider18:interp_quality=0<0,1,1{low,high}>Interp quality
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -147,7 +148,14 @@ vib_lfo_scale_factor = pow(2, vib_lfo_scale_cents/1200) - 1;
 vib_lfo_attack_samples = srate*vib_lfo_attack_ms/1000;
 vib_lfo_wavelength_samples = srate/vib_lfo_hz;
 
+half_kernel_length = kernel_length >> 1;
+half_kernel_length_minus_one = half_kernel_length - 1;
+
+execution_time_average += (execution_time - execution_time_average)*0.01;
+execution_time = 0;
+
 @sample
+execution_start = time_precise();
 
 input_buffer0[input_index] = spl0;
 input_buffer1[input_index] = spl1;
@@ -229,7 +237,7 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		// Place result in kernel
 		i = 0;
 		window_value = (secondary_buffer >= 0) ? sqrt(0.5) : 1;
-		while (i < fft_size*0.5 && i < kernel_length*0.5) (
+		while (i < fft_size*0.5 && i < half_kernel_length) (
 			i2 = i ? (kernel_length - i) : 0;
 			kernel[i] = fft_block[i*2]*window_value;
 			kernel[i2] = kernel[i];
@@ -326,6 +334,37 @@ spl0 = spl1 = 0;
 
 synth_sample();
 
+function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2) (
+	phase = index/wavelength;
+	interp_quality ? phase = 0.5 - 0.5*cos($pi*phase);
+
+	indexA = min(index*timbre_factor, half_kernel_length_minus_one);
+	indexB = max(half_kernel_length, kernel_length + (index - wavelength)*timbre_factor);
+	floor_indexA = floor(indexA);
+	floor_indexB = floor(indexB);
+	floor_indexA2 = floor_indexA + 1;
+	floor_indexB2 = floor_indexB + 1;
+	floor_indexB2 >= kernel_length ? floor_indexB2 = 0;
+	ratioA = indexA - floor_indexA;
+	ratioB = indexB - floor_indexB;
+
+	valueA = kernelA[floor_indexA];
+	valueA += (kernelA[floor_indexA2] - valueA)*ratioA;
+	valueB = kernelA[floor_indexB];
+	valueB += (kernelA[floor_indexB2] - valueB)*ratioB;
+	value = valueA + (valueB - valueA)*phase;
+	result = value;
+
+	valueA = kernelB[floor_indexA];
+	valueA += (kernelB[floor_indexA2] - valueA)*ratioA;
+	valueB = kernelB[floor_indexB];
+	valueB += (kernelB[floor_indexB2] - valueB)*ratioB;
+	value = valueA + (valueB - valueA)*phase;
+	result += (value - result)*kernel_crossfade;
+
+	result;
+);
+
 note = synth_note_first();
 while (note > 0) (
 	synth_needs_init(note) ? (
@@ -401,59 +440,8 @@ while (note > 0) (
 		timbre_factor = timbre_shift_factor*note[NOTE#TIMBRE_FACTOR];
 
 		// Left
-		phase = index_l/wavelength_l;
-		indexA = min(index_l*timbre_factor, kernel_length*0.5 - 1);
-		indexB = max(kernel_length*0.5, kernel_length - wavelength_l*timbre_factor + indexA);
-		floor_indexA = floor(indexA);
-		floor_indexB = floor(indexB);
-		floor_indexA2 = floor_indexA + 1;
-		floor_indexA2 >= kernel_length ? floor_indexA2 -= kernel_length;
-		floor_indexB2 = floor_indexB + 1;
-		floor_indexB2 >= kernel_length ? floor_indexB2 -= kernel_length;
-		ratioA = indexA - floor_indexA;
-		ratioB = indexB - floor_indexB;
-
-		valueA = kernelA0[floor_indexA];
-		valueA += (kernelA0[floor_indexA2] - valueA)*ratioA;
-		valueB = kernelA0[floor_indexB];
-		valueB += (kernelA0[floor_indexB2] - valueB)*ratioB;
-		value = valueA + (valueB - valueA)*phase;
-		left = value;
-
-		valueA = kernelB0[floor_indexA];
-		valueA += (kernelB0[floor_indexA2] - valueA)*ratioA;
-		valueB = kernelB0[floor_indexB];
-		valueB += (kernelB0[floor_indexB2] - valueB)*ratioB;
-		value = valueA + (valueB - valueA)*phase;
-		left += (value - left)*kernel_crossfade;
-
-		// Right
-		// TODO: if vib_mode == 1 && lr_detune_cents == 0, do we even need this?
-		phase = index_r/wavelength_r;
-		indexA = min(index_r*timbre_factor, kernel_length*0.5 - 1);
-		indexB = max(kernel_length*0.5, kernel_length - wavelength_r*timbre_factor + indexA);
-		floor_indexA = floor(indexA);
-		floor_indexB = floor(indexB);
-		floor_indexA2 = floor_indexA + 1;
-		floor_indexA2 >= kernel_length ? floor_indexA2 -= kernel_length;
-		floor_indexB2 = floor_indexB + 1;
-		floor_indexB2 >= kernel_length ? floor_indexB2 -= kernel_length;
-		ratioA = indexA - floor_indexA;
-		ratioB = indexB - floor_indexB;
-
-		valueA = kernelA1[floor_indexA];
-		valueA += (kernelA1[floor_indexA2] - valueA)*ratioA;
-		valueB = kernelA1[floor_indexB];
-		valueB += (kernelA1[floor_indexB2] - valueB)*ratioB;
-		value = valueA + (valueB - valueA)*phase;
-		right = value;
-
-		valueA = kernelB1[floor_indexA];
-		valueA += (kernelB1[floor_indexA2] - valueA)*ratioA;
-		valueB = kernelB1[floor_indexB];
-		valueB += (kernelB1[floor_indexB2] - valueB)*ratioB;
-		value = valueA + (valueB - valueA)*phase;
-		right += (value - right)*kernel_crossfade;
+		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0);
+		right = interp_sample(index_r, wavelength_r, kernelA1, kernelB1);
 
 		spl0 += left*amp;
 		spl1 += right*amp;
@@ -470,6 +458,8 @@ spls = (spl0 - spl1)*0.5*stereo_width;
 
 spl0 = splm + spls;
 spl1 = splm - spls;
+
+execution_time += time_precise() - execution_start;
 
 @gfx 645 400
 
@@ -515,6 +505,8 @@ ui_screen() == "main" ? (
 		control_background_technical();
 		ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
 		control_finish_technical();
+
+		ui_textnumber(execution_time_average);
 	ui_pop();
 
 	ui_split_topratio(0.5);
