@@ -51,7 +51,7 @@ kernel_length = MAX_WINDOW_SAMPLES;
 freemem = (kernelA0 = freemem) + kernel_length;
 freemem = (kernelA0_dc = freemem) + kernel_length;
 freemem = (kernelA1 = freemem) + kernel_length;
-freemem = (kernelA1_d = freemem) + kernel_length;
+freemem = (kernelA1_dc = freemem) + kernel_length;
 freemem = (kernelB0 = freemem) + kernel_length;
 freemem = (kernelB0_dc = freemem) + kernel_length;
 freemem = (kernelB1 = freemem) + kernel_length;
@@ -266,7 +266,7 @@ any_notes_active ? (
 		kernelA0_dc = kernelB0_dc;
 		kernelB0_dc = tmp;
 		tmp = kernelA1_dc;
-		kernelA1 = kernelB1_dc;
+		kernelA1_dc = kernelB1_dc;
 		kernelB1_dc = tmp;
 
 		stereo_switch ? (
