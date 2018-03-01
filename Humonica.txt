@@ -22,7 +22,6 @@ slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
-slider18:interp_quality=1<0,1,1{low,high}>-Interp quality
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -41,8 +40,6 @@ debug.init_count += 1;
 debug.init_srate3 = debug.init_srate2;
 debug.init_srate2 = debug.init_srate;
 debug.init_srate = srate;
-
-volume_norm = timbre_enhance = 0;
 
 FFT_MAX_SIZE = 32768;
 MAX_WINDOW_MS = 200;
@@ -172,7 +169,7 @@ input_index >= input_buffer_length ? (
 	input_index = 0;
 );
 
-function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, mag2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
+function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
 	i = 0;
 	max_abs = 0;
 	// Fill with input
@@ -205,36 +202,15 @@ function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, no
 		fft_block[0] = fft_block[1] = 0;
 		i = 1;
 
-		// TODO: remove sum1, sum2 and mag2, if we're not doing volume_norm/timbre_enhance
-		// Also remove volume_norm and timbre_enhance :p
-		sum1 = sum2 = 0;
 		while (i < fft_size) (
 			real = fft_block[i*2];
 			imag = fft_block[i*2 + 1];
 			mag2 = real*real + imag*imag;
 			mag = sqrt(mag2);
-			sum1 += mag;
-			sum2 += mag2;
 
 			fft_block[i*2] = mag/fft_size;
 			fft_block[i*2 + 1] = 0;
 			i += 1;
-		);
-		(volume_norm || timbre_enhance) ? (
-			peak = 4*sum2/sum1/fft_size;
-			norm_factor = min(100, pow(0.1*window_samples/sqrt(sum2), volume_norm));
-			i = 0;
-			timbre_enhance ? (
-				while (i < fft_size) (
-					fft_block[i*2] = norm_factor*peak*pow(fft_block[i*2]/peak, timbre_enhance + 1);
-					i += 1;
-				);
-			) : (
-				while (i < fft_size) (
-					fft_block[i*2] *= norm_factor;
-					i += 1;
-				);
-			);
 		);
 		ifft(fft_block, fft_size);
 
@@ -338,8 +314,7 @@ any_notes_active ? (
 			);
 		);
 	);
-	kernel_crossfade = interval_index/interval_samples;
-	interp_quality ? kernel_crossfade = smooth_fade(kernel_crossfade);
+	kernel_crossfade = smooth_fade(interval_index/interval_samples);
 );
 
 vibrato_tracking ? (
@@ -361,9 +336,8 @@ spl0 = spl1 = 0;
 
 synth_sample();
 
-function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB, dcA, dcB) (
-	phase = index/wavelength;
-	interp_quality ? phase = smooth_fade(phase);
+function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB) (
+	phase = smooth_fade(index/wavelength);
 
 	indexA = min(index*timbre_factor, half_kernel_length_minus_one);
 	indexB = max(half_kernel_length, kernel_length + (index - wavelength)*timbre_factor);
