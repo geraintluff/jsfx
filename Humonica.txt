@@ -50,12 +50,12 @@ freemem = (fft_block = freemem) + FFT_MAX_SIZE*2;
 kernel_length = MAX_WINDOW_SAMPLES;
 freemem = (kernelA0 = freemem) + kernel_length;
 freemem = (kernelA0_dc = freemem) + kernel_length;
-freemem = (kernelA1 = freemem) + kernel_length;
-freemem = (kernelA1_dc = freemem) + kernel_length;
+freemem = (kernelA1_read = kernelA1 = freemem) + kernel_length;
+freemem = (kernelA1_read_dc = kernelA1_dc = freemem) + kernel_length;
 freemem = (kernelB0 = freemem) + kernel_length;
 freemem = (kernelB0_dc = freemem) + kernel_length;
-freemem = (kernelB1 = freemem) + kernel_length;
-freemem = (kernelB1_dc = freemem) + kernel_length;
+freemem = (kernelB1_read = kernelB1 = freemem) + kernel_length;
+freemem = (kernelB1_read_dc = kernelB1_dc = freemem) + kernel_length;
 input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
@@ -262,21 +262,31 @@ any_notes_active ? (
 		tmp = kernelA1;
 		kernelA1 = kernelB1;
 		kernelB1 = tmp;
+		tmp = kernelA1_read;
+		kernelA1_read = kernelB1_read;
+		kernelB1_read = tmp;
 		tmp = kernelA0_dc;
 		kernelA0_dc = kernelB0_dc;
 		kernelB0_dc = tmp;
 		tmp = kernelA1_dc;
 		kernelA1_dc = kernelB1_dc;
 		kernelB1_dc = tmp;
+		tmp = kernelA1_read_dc;
+		kernelA1_read_dc = kernelB1_read_dc;
+		kernelB1_read_dc = tmp;
 
 		stereo_switch ? (
 			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, -1);
 			fill_kernel(kernelB1, kernelB1_dc, input_buffer1, -1);
+			kernelB1_read = kernelB1;
+			kernelB1_read_dc = kernelB1_dc;
 		) : (
 			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, input_buffer1);
 			// TODO: have "true" slot, and instead of copying, point kernel?1 to kernel?0.
-			memcpy(kernelB1, kernelB0, kernel_length);
-			memcpy(kernelB1_dc, kernelB0_dc, half_kernel_length);
+			kernelB1_read = kernelB0;
+			kernelB1_read_dc = kernelB0_dc;
+			//memcpy(kernelB1, kernelB0, kernel_length);
+			//memcpy(kernelB1_dc, kernelB0_dc, half_kernel_length);
 		);
 
 		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
@@ -285,7 +295,7 @@ any_notes_active ? (
 			highest_index = 0;
 			i = 0;
 			while (i < kernel_length/2) (
-				value = (kernelB0[i] + kernelB1[i]);
+				value = (kernelB0[i] + kernelB1_read[i]);
 				value < lowest_value ? (
 					highest_value = highest_index = 0;
 					lowest_value = value;
@@ -300,7 +310,7 @@ any_notes_active ? (
 			);
 
 			tonality_limit ? (
-				first_value = (kernelB0[0] + kernelB1[0]);
+				first_value = (kernelB0[0] + kernelB1_read[0]);
 				tonality = first_value ? highest_value/first_value : 0;
 				factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
 				tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
@@ -308,7 +318,7 @@ any_notes_active ? (
 				i = 0;
 				while (i < kernel_length) (
 					kernelB0[i] *= tonality_factor;
-					kernelB1[i] *= tonality_factor;
+					kernelB1_read[i] *= tonality_factor;
 					i += 1;
 				);
 			);
@@ -441,7 +451,7 @@ while (note > 0) (
 		// Left
 		wavelength_floor = note[NOTE#WAVELENGTH_FLOOR];
 		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0, kernelA0_dc[wavelength_floor], kernelB0_dc[wavelength_floor]);
-		right = interp_sample(index_r, wavelength_r, kernelA1, kernelB1, kernelA1_dc[wavelength_floor], kernelB1_dc[wavelength_floor]);
+		right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read, kernelA1_read_dc[wavelength_floor], kernelB1_read_dc[wavelength_floor]);
 
 		spl0 += left*amp;
 		spl1 += right*amp;
