@@ -1,0 +1,22 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Humonica/Humonica.jsfx": {
+			"main": false
+		},
+		"Humonica/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/filter-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "2.0.9",
+	"package": "Humonica",
+	"time": "2018-03-01T19:02:08.121Z",
+	"changeLog": "Remove debugging display"
+}

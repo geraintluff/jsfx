@@ -152,11 +152,7 @@ vib_lfo_wavelength_samples = srate/vib_lfo_hz;
 half_kernel_length = kernel_length >> 1;
 half_kernel_length_minus_one = half_kernel_length - 1;
 
-execution_time_average += (execution_time - execution_time_average)*0.01;
-execution_time = 0;
-
 @sample
-execution_start = time_precise();
 
 function smooth_fade(phase) (
 	phase*phase*(3 - 2*phase);
@@ -469,8 +465,6 @@ spls = (spl0 - spl1)*0.5*stereo_width;
 spl0 = splm + spls;
 spl1 = splm - spls;
 
-execution_time += time_precise() - execution_start;
-
 @gfx 645 400
 
 function labelled_dial(value, low, high, bias, label, number_format, default) (
@@ -515,8 +509,6 @@ ui_screen() == "main" ? (
 		control_background_technical();
 		ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
 		control_finish_technical();
-
-		ui_textnumber(execution_time_average);
 	ui_pop();
 
 	ui_split_topratio(0.5);
