@@ -1,0 +1,22 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Humonica/Humonica.jsfx": {
+			"main": false
+		},
+		"Humonica/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/filter-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "2.0.8",
+	"package": "Humonica",
+	"time": "2018-03-01T00:46:31.455Z",
+	"changeLog": "Compensate for DC offset (takes a bit of CPU, but made some performance improvements to balance it out)"
+}
