@@ -1,0 +1,137 @@
+desc:MIDI Gate (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:attack_ms=1<0,100,1>-Attack (ms)
+slider2:release_ms=10<0,300,1>-Release (ms)
+slider3:max_vel=127<1,127,1>-Maximum velocity
+slider4:upside_down=0<0,1,1{gate-on,gate-off}>-Default state
+slider5:channel_filter=0<0,16,1{all,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-MIDI Channel
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = synth_setup(freemem, 1); // Request one slot to keep the phase in
+freemem = ui_setup(freemem);
+
+// Two-stage smoothing for the envelope
+env = 0;
+
+@block
+
+channel_filter_enabled = !!channel_filter;
+channel_filter_channel = channel_filter - 1;
+
+synth_block();
+
+attack_samples = attack_ms*0.001*srate;
+attack_ratio = attack_samples ? 1 - exp(-1/attack_samples) : 1;
+release_samples = release_ms*0.001*srate;
+release_ratio = release_samples ? 1 - exp(-1/release_samples) : 1;
+
+@sample
+
+synth_sample();
+
+// Iterate over the active notes
+total_vel = 0;
+note = synth_note_first();
+while (note > 0) (
+	channel_filter_enabled && synth_channel(note) != channel_filter_channel ? (
+		synth_stop(note);
+	) : (
+		synth_release(note) > 0 ? (
+			synth_stop(note);
+		);
+		total_vel += synth_velocity(note)/max_vel;
+	);
+	note = synth_note_next(note);
+);
+total_vel = min(1, total_vel);
+
+env < total_vel ? (
+	env += (total_vel - env)*attack_ratio;
+) : (
+	env += (total_vel - env)*release_ratio;
+);
+upside_down ? (
+	spl0 *= (1 - env);
+	spl1 *= (1 - env);
+) : (
+	spl0 *= env;
+	spl1 *= env;
+);
+
+@gfx 550 200
+
+function labelled_dial(value, low, high, bias, label, format) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(value, format);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, valueText) (
+	ui_push_height(35);
+		ui_push_width(60);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_text(valueText);
+	ui_pop();
+	value;
+);
+
+function labelled_selector(value, label, valueText, next, prev) (
+	ui_push_heighttext(-1);
+		ui_pad(-1, 0);
+		value = control_selector(value, valueText, next, prev);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	value;
+);
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	control_navbar("MIDI Gate", -1, -1);
+	ui_pad();
+	ui_push_height(150);
+		control_group("");
+		ui_split_leftratio(1/5);
+			attack_ms = labelled_dial(attack_ms, 0, 100, 3, "Attack", "%ims");
+		ui_split_next();
+			release_ms = labelled_dial(release_ms, 0, 300, 3, "Release", "%ims");
+		ui_split_next();
+			max_vel = labelled_dial(max_vel, 1, 127, 0, "Max Velocity", "%i");
+			max_vel = max(1, floor(max_vel + 0.5));
+		ui_split_next();
+			upside_down = labelled_switch(upside_down, "Mode", upside_down ? "mute" : "gate");
+		ui_split_next();
+			channel_filter > 0 ? (
+				sprintf(#channel_text, "%i", channel_filter);
+			) : (
+				strcpy(#channel_text, "all");
+			);
+			channel_filter = labelled_selector(channel_filter, "Channel", #channel_text, (channel_filter + 1)%17, (channel_filter + 16)%17);
+		ui_pop();
+	ui_pop();
+) : control_system();
