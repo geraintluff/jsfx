@@ -372,7 +372,6 @@ function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(resu
 note = synth_note_first();
 while (note > 0) (
 	synth_needs_init(note) ? (
-		note[NOTE#WAVELENGTH_FLOOR] = floor(srate/synth_freq(note));
 		note[NOTE#WAVELENGTH_L] = srate/synth_freq(note);
 		note[NOTE#INDEX_L] = floor(rand()*note[NOTE#WAVELENGTH_L]);
 		note[NOTE#LFO_PHASE_L] = rand();
@@ -445,7 +444,7 @@ while (note > 0) (
 		timbre_factor = timbre_shift_factor*note[NOTE#TIMBRE_FACTOR];
 
 		// Left
-		wavelength_floor = note[NOTE#WAVELENGTH_FLOOR];
+		wavelength_floor = floor(note[NOTE#WAVELENGTH_R]*timbre_factor);
 		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0, kernelA0_dc[wavelength_floor], kernelB0_dc[wavelength_floor]);
 		right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read, kernelA1_read_dc[wavelength_floor], kernelB1_read_dc[wavelength_floor]);
 

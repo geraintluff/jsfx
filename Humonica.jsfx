@@ -69,7 +69,7 @@ while (i < freemem) (
 );
 
 freemem = ui_setup(freemem);
-freemem = synth_setup(freemem, 10/*NOTE: TIMBRE_FACTOR, WAVELENGTH_FLOOR, WAVELENGTH_L, INDEX_L, LFO_PHASE_L, LFO_FREQ_DIFF_L, WAVELENGTH_R, INDEX_R, LFO_PHASE_R, LFO_FREQ_DIFF_R*/);
+freemem = synth_setup(freemem, 9/*NOTE: TIMBRE_FACTOR, WAVELENGTH_L, INDEX_L, LFO_PHASE_L, LFO_FREQ_DIFF_L, WAVELENGTH_R, INDEX_R, LFO_PHASE_R, LFO_FREQ_DIFF_R*/);
 
 freemem = filter_buffer_init(filter_left = freemem);
 freemem = filter_buffer_init(filter_right = freemem);
@@ -373,15 +373,14 @@ function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(resu
 note = synth_note_first();
 while (note > 0) (
 	synth_needs_init(note) ? (
-		note[1/*NOTE:WAVELENGTH_FLOOR*/] = floor(srate/synth_freq(note));
-		note[2/*NOTE:WAVELENGTH_L*/] = srate/synth_freq(note);
-		note[3/*NOTE:INDEX_L*/] = floor(rand()*note[2/*NOTE:WAVELENGTH_L*/]);
-		note[4/*NOTE:LFO_PHASE_L*/] = rand();
-		note[5/*NOTE:LFO_FREQ_DIFF_L*/] = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
-		note[6/*NOTE:WAVELENGTH_R*/] = srate/synth_freq(note);
-		note[7/*NOTE:INDEX_R*/] = lr_detune_cents > 0 ? floor(rand()*note[6/*NOTE:WAVELENGTH_R*/]) : note[3/*NOTE:INDEX_L*/];
-		note[8/*NOTE:LFO_PHASE_R*/] = lr_detune_cents > 0 ? rand() : note[4/*NOTE:LFO_PHASE_L*/];
-		note[9/*NOTE:LFO_FREQ_DIFF_R*/] = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
+		note[1/*NOTE:WAVELENGTH_L*/] = srate/synth_freq(note);
+		note[2/*NOTE:INDEX_L*/] = floor(rand()*note[1/*NOTE:WAVELENGTH_L*/]);
+		note[3/*NOTE:LFO_PHASE_L*/] = rand();
+		note[4/*NOTE:LFO_FREQ_DIFF_L*/] = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
+		note[5/*NOTE:WAVELENGTH_R*/] = srate/synth_freq(note);
+		note[6/*NOTE:INDEX_R*/] = lr_detune_cents > 0 ? floor(rand()*note[5/*NOTE:WAVELENGTH_R*/]) : note[2/*NOTE:INDEX_L*/];
+		note[7/*NOTE:LFO_PHASE_R*/] = lr_detune_cents > 0 ? rand() : note[3/*NOTE:LFO_PHASE_L*/];
+		note[8/*NOTE:LFO_FREQ_DIFF_R*/] = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
 		note[0/*NOTE:TIMBRE_FACTOR*/] = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
 	);
 
@@ -401,52 +400,52 @@ while (note > 0) (
 			);
 		);
 
-		index_l = (note[3/*NOTE:INDEX_L*/] += 1);
-		wavelength_l = note[2/*NOTE:WAVELENGTH_L*/];
+		index_l = (note[2/*NOTE:INDEX_L*/] += 1);
+		wavelength_l = note[1/*NOTE:WAVELENGTH_L*/];
 		index_l >= wavelength_l ? (
 			while (index_l >= wavelength_l) (
 				index_l -= wavelength_l;
 			);
 			vibrato_factor = vib_mode ? (
-				phase = (attack/vib_lfo_wavelength_samples + note[4/*NOTE:LFO_PHASE_L*/])*note[5/*NOTE:LFO_FREQ_DIFF_L*/];
+				phase = (attack/vib_lfo_wavelength_samples + note[3/*NOTE:LFO_PHASE_L*/])*note[4/*NOTE:LFO_FREQ_DIFF_L*/];
 				1 + sin(phase*2*$pi)*vib_lfo_scale_factor*min(1, attack/vib_lfo_attack_samples);
 			) : (
 				vibrato_tracking ?
 					pow(freq_factor, min(1, attack/(0.3*srate))*vibrato_tracking)
 				: 1;
 			);
-			wavelength_l = note[2/*NOTE:WAVELENGTH_L*/] = srate/synth_freq(note)*vibrato_factor*lr_detune_factor;
+			wavelength_l = note[1/*NOTE:WAVELENGTH_L*/] = srate/synth_freq(note)*vibrato_factor*lr_detune_factor;
 			while (index_l >= wavelength_l) (
 				index_l -= wavelength_l;
 			);
-			note[3/*NOTE:INDEX_L*/] = index_l;
+			note[2/*NOTE:INDEX_L*/] = index_l;
 		);
-		index_r = (note[7/*NOTE:INDEX_R*/] += 1);
-		wavelength_r = note[6/*NOTE:WAVELENGTH_R*/];
+		index_r = (note[6/*NOTE:INDEX_R*/] += 1);
+		wavelength_r = note[5/*NOTE:WAVELENGTH_R*/];
 		index_r >= wavelength_r ? (
 			while (index_r >= wavelength_r) (
 				index_r -= wavelength_r;
 			);
 			vibrato_factor = vib_mode ? (
-				phase = (attack/vib_lfo_wavelength_samples + note[8/*NOTE:LFO_PHASE_R*/])*note[9/*NOTE:LFO_FREQ_DIFF_R*/];
+				phase = (attack/vib_lfo_wavelength_samples + note[7/*NOTE:LFO_PHASE_R*/])*note[8/*NOTE:LFO_FREQ_DIFF_R*/];
 				1 + sin(phase*2*$pi)*vib_lfo_scale_factor*min(1, attack/vib_lfo_attack_samples);
 			) : (
 				vibrato_tracking ?
 					pow(freq_factor, min(1, attack/(0.3*srate))*vibrato_tracking)
 				: 1;
 			);
-			wavelength_r = note[6/*NOTE:WAVELENGTH_R*/] = srate/synth_freq(note)*vibrato_factor/lr_detune_factor;
+			wavelength_r = note[5/*NOTE:WAVELENGTH_R*/] = srate/synth_freq(note)*vibrato_factor/lr_detune_factor;
 
 			while (index_r >= wavelength_r) (
 				index_r -= wavelength_r;
 			);
-			note[7/*NOTE:INDEX_R*/] = index_r;
+			note[6/*NOTE:INDEX_R*/] = index_r;
 		);
 
 		timbre_factor = timbre_shift_factor*note[0/*NOTE:TIMBRE_FACTOR*/];
 
 		// Left
-		wavelength_floor = note[1/*NOTE:WAVELENGTH_FLOOR*/];
+		wavelength_floor = floor(note[5/*NOTE:WAVELENGTH_R*/]*timbre_factor);
 		left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0, kernelA0_dc[wavelength_floor], kernelB0_dc[wavelength_floor]);
 		right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read, kernelA1_read_dc[wavelength_floor], kernelB1_read_dc[wavelength_floor]);
 
