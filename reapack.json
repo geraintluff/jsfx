@@ -115,7 +115,7 @@
 		},
 		"Warble": {
 			"type": "effect",
-			"category": "Utility",
+			"category": "Pitch Correction",
 			"files": {
 				"pitch-detection.jsfx-inc": {
 					"main": false
@@ -204,7 +204,7 @@
 		},
 		"MIDI Gate": {
 			"type": "effect",
-			"category": "Utility",
+			"category": "MIDI",
 			"files": {
 				"MIDI Gate.jsfx": {
 					"main": false
