@@ -14,6 +14,7 @@ slider6:0<0,1,1{even,long}>-room shape
 slider7:8000<100,20000,1>-filter (lowpass Hz)
 slider8:10<0,100,1>-detuning (cents)
 slider9:2.5<0.1,10,0.1>-chorus speed (Hz)
+slider10:chorus_alignment=0<0,1,1{independent,linked}>-chorus phase
 
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
@@ -73,10 +74,15 @@ function update() local(delay, chorus, chorusfactor) (
 	delaysamples4i = ceil(delaysamples4);
 
 	chorus = slider9*2*$pi/srate;
-	chorusphasespeed1 = chorus*exp(-0.15);
-	chorusphasespeed2 = chorus*exp(-0.05);
-	chorusphasespeed3 = chorus*exp(0.05);
-	chorusphasespeed4 = chorus*exp(0.15);
+	chorus_alignment ? (
+		chorusphasespeed1 = chorusphasespeed2 = chorusphasespeed3 = chorusphasespeed4 = chorus;
+	) : (
+		chorusphasespeed1 = chorus*exp(-0.15);
+		chorusphasespeed2 = chorus*exp(-0.05);
+		chorusphasespeed3 = chorus*exp(0.05);
+		chorusphasespeed4 = chorus*exp(0.15);
+	);
+
 	chorusfactor = pow(2, slider8/1200) - 1;
 	chorussamples = chorusfactor*srate/(slider9*2*$pi);
 
@@ -142,14 +148,23 @@ update();
 
 @sample
 
-chorusphase1 += chorusphasespeed1;
-chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
-chorusphase2 += chorusphasespeed2;
-chorusphase2 > 2*$pi ? chorusphase2 -= 2*$pi;
-chorusphase3 += chorusphasespeed3;
-chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
-chorusphase4 += chorusphasespeed4;
-chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
+chorus_alignment ? (
+	chorusphase1 += chorusphasespeed1;
+	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
+
+	chorusphase2 = chorusphase1 + 0.5*$pi;
+	chorusphase3 = chorusphase1 + $pi;
+	chorusphase4 = chorusphase1 + 1.5*$pi;
+) : (
+	chorusphase1 += chorusphasespeed1;
+	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
+	chorusphase2 += chorusphasespeed2;
+	chorusphase2 > 2*$pi ? chorusphase2 -= 2*$pi;
+	chorusphase3 += chorusphasespeed3;
+	chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
+	chorusphase4 += chorusphasespeed4;
+	chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
+);
 
 d = delaysamples1 + (1 + sin(chorusphase1))*0.5*chorussamples;
 echo1a = delay1a.delay_output_linear(d - 1);
@@ -289,13 +304,34 @@ ui_screen() == "main" ? (
 	ui_split_next();
 		control_group("Chorus");
 		ui_split_leftratio(1);
-			ui_split_topratio(1/2);
+			ui_split_topratio(0.42);
 				slider8 = labelled_dial(slider8, 0, 100, 2, "detuning", "%i cents");
 			ui_split_next();
-				slider9 = labelled_dial(slider9, 0.1, 10, 0, "chorus speed", "%.1fHz");
+				slider9 = labelled_dial(slider9, 0.1, 10, 0, "speed", "%.1fHz");
+			ui_pop();
+
+			ui_split_topratio(1/2);
+				ui_align(0.5, 1);
+				ui_split_right(35);
+					chorus_alignment = control_radio(chorus_alignment, 1);
+				ui_pop();
+				ui_align(1, -1);
+				ui_text("balanced");
+			ui_split_next();
+				ui_align(0.5, 0);
+				ui_split_right(35);
+					chorus_alignment = control_radio(chorus_alignment, 0);
+				ui_pop();
+				ui_align(1, -1);
+				ui_text("independent");
 			ui_pop();
 		ui_pop();
 	ui_pop();
 ) : control_system();
 
 ui_interacted() ? update();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);
