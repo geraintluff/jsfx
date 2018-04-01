@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"files": {
+		"Echo-Cycles/Echo-Cycles.jsfx": {
+			"main": false
+		},
+		"Echo-Cycles/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png": {
+			"main": false
+		},
+		"Echo-Cycles/delay-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Echo-Cycles",
+	"time": "2018-04-01T21:20:55.768Z"
+}
