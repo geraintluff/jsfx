@@ -19,7 +19,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 * Humonica - harmoniser ([audio demo](audio-demos/humonica.mp3))
 * MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in "mute" mode). ([audio demo](audio-demos/midi-gate.mp3))
 * MIDI Harmony - arpeggiator and auto-accompaniment plugin
-* Echo Cycles - a delay effect where the echoes bounce around or sweep through the stereo field
+* Echo Cycles - a delay effect where the feedback system moves echoes through the stereo field ([audio demo](https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3))
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 
@@ -192,3 +192,11 @@ It has a single-note and a chord mode.  It also has a built-in sequencer, which 
 It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. "one octave around Middle C") it is defined by a second input on a different MIDI channel (channel 16 by default).
 
 This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.
+
+## Echo Cycles
+
+This is a feedback delay effect where the echoes move through the stereo space.  ([audio demo](https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3))
+
+This is not done using an LFO, it uses a feedback structure with three delay lines for two channels - this means that the stereo position of the echoes is independent, which is good for building up textures.
+
+![screenshot](docs/images/Echo-cycles.png)

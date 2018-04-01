@@ -239,6 +239,7 @@ a[href] code {
 <li>Humonica - harmoniser (<a href="audio-demos/humonica.mp3">audio demo</a>)</li>
 <li>MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode). (<a href="audio-demos/midi-gate.mp3">audio demo</a>)</li>
 <li>MIDI Harmony - arpeggiator and auto-accompaniment plugin</li>
+<li>Echo Cycles - a delay effect where the feedback system moves echoes through the stereo field (<a href="https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3">audio demo</a>)</li>
 </ul>
 <p>Presets (RPL) for these effects can be downloaded from GitHub.</p>
 <h2 id="padsynth">PadSynth</h2><div class="section section2">
@@ -332,4 +333,8 @@ a[href] code {
 <p><img src="MIDI Harmony.png" alt="screenshot"></p>
 <p>It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. &quot;one octave around Middle C&quot;) it is defined by a second input on a different MIDI channel (channel 16 by default).</p>
 <p>This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.</p>
+</div><h2 id="echo-cycles">Echo Cycles</h2><div class="section section2">
+<p>This is a feedback delay effect where the echoes move through the stereo space.  (<a href="https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3">audio demo</a>)</p>
+<p>This is not done using an LFO, it uses a feedback structure with three delay lines for two channels - this means that the stereo position of the echoes is independent, which is good for building up textures.</p>
+<p><img src="docs/images/Echo-cycles.png" alt="screenshot"></p>
 </div></div></div><script></script></body></html>
