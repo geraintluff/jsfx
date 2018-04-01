@@ -1,0 +1,194 @@
+desc:Learning Sampler (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:50<0,127,1>-Learning switch controller
+slider2:1<0,1,1{passthrough,mute}>-Learning audio mode
+
+import ui-lib.jsfx-inc
+import synth-framework.jsfx-inc
+
+@init
+
+gfx_ext_retina = 1;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem, 1 /* we need one slot for the "learning" flag */);
+
+freemem = (sampler_starts = freemem) + 127;
+freemem = (sampler_durations = freemem) + 127;
+freemem = (sampler_ref_vel = freemem) + 127;
+freemem = (sampler_ref_srate = freemem) + 127;
+
+sampler_buffer = freemem;
+sampler_writepos = 0;
+
+attack_samples = 0*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_block();
+
+@sample
+
+synth_sample();
+
+learning = (synth_controller(slider1) >= 64);
+learning_notes = 0;
+
+// Iterate through the active notes
+note = synth_note_first();
+while (note > 0) (
+	index = synth_midinote(note);
+	synth_needs_init(note) ? (
+		// This is the first time we've seen the note - set the "learning" flag at index 0 (see the call to synth_setup() above)
+		note[0] = learning;
+		learning ? (
+			sampler_starts[index] = sampler_writepos;
+			sampler_durations[index] = 0;
+			sampler_ref_vel[index] = synth_velocity(note);
+			sampler_ref_srate[index] = srate; // Rate at which this sample was recorded
+		);
+	);
+
+	note[0] ? (
+		// Learning
+		synth_release(note) > 0 ? (
+			// We're done - don't process this note any more
+			synth_stop(note);
+		) : (
+			learning_notes += 1;
+			// update duration to be the number of samples since the beginning of the note
+			sampler_durations[index] = synth_attack(note);
+		);
+	) : (
+		// Playback
+		synth_release(note) > release_samples || synth_attack(note) > sampler_durations[index] ? (
+			synth_stop(note);
+		) : (
+			amp = synth_velocity(note)/sampler_ref_vel[index];
+			attack_samples && synth_attack(note) < attack_samples ? (
+				amp *= synth_attack(note)/attack_samples;
+			);
+			release_samples && synth_release(note) > 0 ? (
+				amp *= (1 - synth_release(note)/release_samples);
+			);
+			// TODO: pay attention to sampler_ref_srate[index], to vary playback speed
+			spl0 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2];
+			spl1 += amp*sampler_buffer[(sampler_starts[index] + synth_attack(note))*2 + 1];
+		);
+	);
+	note = synth_note_next(note);
+);
+
+learning || learning_notes > 0 ? (
+	learning_notes > 0 ? (
+		// Only bother writing to the buffer if there are notes actively learning right now
+		sampler_buffer[sampler_writepos*2] = spl0;
+		sampler_buffer[sampler_writepos*2 + 1] = spl1;
+		sampler_writepos += 1;
+	);
+	slider2 ? (
+		spl0 = spl1 = 0;
+	);
+) : (
+	sampler_writepos = 0;
+);
+
+@serialize
+
+// Support reading older versions
+serialize_version = 2;
+file_var(0, serialize_version);
+serialize_version > 16000 ? serialize_version = 1;
+
+s_max_buffer_index = 0;
+// Read/write the sampler reference points
+i = 0;
+while (i < 128) (
+	file_var(0, sampler_starts[i]);
+	file_var(0, sampler_durations[i]);
+	file_var(0, sampler_ref_vel[i]);
+	serialize_version > 1 ? (
+		file_var(0, sampler_ref_srate[i]);
+	) : (
+		sampler_ref_srate[i] = 0;
+	);
+	s_max_buffer_index = max(s_max_buffer_index, sampler_starts[i] + sampler_durations[i]);
+	i += 1;
+);
+
+// Read/write the sampler buffer values
+i = 0;
+while (i < s_max_buffer_index) (
+	file_var(0, sampler_buffer[i*2]);
+	file_var(0, sampler_buffer[i*2 + 1]);
+	i += 1;
+);
+
+@gfx 560 440
+
+function draw_sampler() local(i, length, x, note, index) (
+	length = 1;
+	// Find how long the buffer actually is
+	i = 0;
+	while (i < 128) (
+		length = max(length, sampler_starts[i] + sampler_durations[i]);
+		i += 1;
+	);
+	step = ceil(length*0.1/ui_width());
+
+	// Draw the waveforms
+	control_background_technical();
+	ui_push();
+		ui_split_topratio(0.5);
+			ui_color(192, 128, 64);
+			ui_graph_step(sampler_buffer, length/step, 2*step, -1, 1);
+		ui_split_next();
+			ui_color(64, 128, 192);
+			ui_graph_step(sampler_buffer + 1, length/step, 2*step, -1, 1);
+		ui_pop();
+	ui_pop();
+
+	ui_push();
+		ui_retina(1);
+		// Draw playback positions
+		ui_color(255, 255, 255, 0.8);
+		note = synth_note_first();
+		while (note > 0) (
+			index = sampler_starts[synth_midinote(note)] + synth_attack(note);
+			x = ui_left() + ui_width()*index/length;
+			gfx_line(x, ui_top(), x, ui_bottom());
+			note = synth_note_next(note);
+		);
+	ui_pop();
+
+	control_finish_technical();
+);
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	ui_split_top(50);
+		ui_pad();
+		ui_split_leftratio(0.5);
+			ui_split_right(80);
+				sprintf(#controller_text, "%i", slider1);
+				slider1 = control_selector(slider1, #controller_text, min(127, slider1 + 1), max(1, slider1 - 1));
+			ui_pop();
+			ui_text("Learn controller:");
+		ui_split_next();
+			ui_split_right(50);
+				slider2 = control_switch(slider2);
+			ui_pop();
+			ui_text("Mute when learning:");
+		ui_pop();
+	ui_pop();
+
+	draw_sampler();
+) : ui_system();

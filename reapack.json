@@ -20,7 +20,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "2.0.2"
+			"version": "2.0.3"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -37,7 +37,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png"
 			},
-			"version": "1.0.5"
+			"version": "1.0.6"
 		},
 		"Spectrum Matcher": {
 			"type": "effect",
@@ -57,7 +57,7 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.3.7"
+			"version": "1.3.8"
 		},
 		"Spring-Box": {
 			"type": "effect",
@@ -79,7 +79,7 @@
 			"links": {
 				"screenshot": "Spring-Box.png"
 			},
-			"version": "1.1.0"
+			"version": "1.1.1"
 		},
 		"PadSynth": {
 			"type": "effect",
@@ -98,7 +98,7 @@
 			"links": {
 				"screenshot": "PadSynth.png"
 			},
-			"version": "1.1.5"
+			"version": "1.1.6"
 		},
 		"Smooth Limiter": {
 			"type": "effect",
@@ -111,7 +111,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Warble": {
 			"type": "effect",
@@ -143,7 +143,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.2"
+			"version": "1.1.3"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -159,7 +159,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.8"
+			"version": "1.0.9"
 		},
 		"Hammer And String": {
 			"type": "effect",
@@ -178,7 +178,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Hammer And Chord": {
 			"type": "effect",
@@ -200,7 +200,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.2"
+			"version": "1.2.3"
 		},
 		"MIDI Gate": {
 			"type": "effect",
@@ -216,7 +216,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.0"
+			"version": "1.2.1"
 		},
 		"Humonica": {
 			"type": "effect",
@@ -235,7 +235,7 @@
 					"main": false
 				}
 			},
-			"version": "2.0.10"
+			"version": "2.0.11"
 		},
 		"MIDI Harmony": {
 			"type": "effect",
@@ -251,7 +251,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		},
 		"Stereo Alignment Delay": {
 			"type": "effect",
@@ -264,7 +264,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.4"
+			"version": "1.2.5"
 		},
 		"MIDI Controller Control": {
 			"type": "effect",

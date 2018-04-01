@@ -48,6 +48,11 @@
 				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.2/Bad-Connection/ui-lib.jsfx-inc</source>
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.2/Bad-Connection/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="2.0.3" author="Geraint Luff" time="2018-04-01T13:11:24.206Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.3/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.3/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.3/Bad-Connection/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -76,6 +81,10 @@
 			<version name="1.0.5" author="Geraint Luff" time="2018-02-23T09:13:53.659Z">
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.5/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
 				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.5/Sandwich-Amp/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.6" author="Geraint Luff" time="2018-04-01T13:29:09.735Z">
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.6/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
+				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.6/Sandwich-Amp/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -153,6 +162,10 @@
 				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.7/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.7/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.3.8" author="Geraint Luff" time="2018-04-01T13:29:21.614Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.8/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.8/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
@@ -169,63 +182,9 @@
 				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.2/Smooth-Limiter/ui-lib.jsfx-inc</source>
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.2/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 			</version>
-		</reapack>
-		<reapack name="Warble" type="effect">
-			<metadata>
-			</metadata>
-			<version name="1.0.0" time="2017-01-26T15:58:50.285Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.1" time="2017-01-26T16:57:52.744Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.2" time="2017-01-26T17:02:05.312Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.3" time="2017-01-26T22:40:04.350Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.4" time="2017-02-06T10:08:40.600Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.5" time="2017-02-10T09:57:16.302Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.6" time="2017-02-11T13:13:34.566Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.7" time="2017-04-22T20:39:00.125Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/delay-utils.jsfx-inc</source>
-			</version>
-			<version name="1.0.8" time="2018-01-23T09:36:51.137Z">
-				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/pitch-detection.jsfx-inc</source>
-				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/ui-lib.jsfx-inc</source>
-				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/Warble.jsfx</source>
-				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/delay-utils.jsfx-inc</source>
+			<version name="1.0.3" time="2018-04-01T13:29:14.433Z">
+				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.3/Smooth-Limiter/ui-lib.jsfx-inc</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.3/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 			</version>
 		</reapack>
 		<reapack name="Panalysis" type="effect">
@@ -251,39 +210,9 @@
 				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.2/Panalysis/Panalysis.jsfx</source>
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.2/Panalysis/ui-lib.jsfx-inc</source>
 			</version>
-		</reapack>
-		<reapack name="MIDI Gate" type="effect">
-			<metadata>
-			</metadata>
-			<version name="1.0.0" time="2017-02-22T13:03:18.186Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/ui-lib.jsfx-inc</source>
-			</version>
-			<version name="1.0.1" time="2017-07-05T19:20:06.240Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/ui-lib.jsfx-inc</source>
-			</version>
-			<version name="1.0.2" time="2018-01-23T09:36:51.951Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/ui-lib.jsfx-inc</source>
-			</version>
-			<version name="1.0.3" time="2018-02-27T01:58:44.639Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/ui-lib.jsfx-inc</source>
-			</version>
-			<version name="1.1.0" time="2018-03-07T09:10:22.034Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/ui-lib.jsfx-inc</source>
-			</version>
-			<version name="1.2.0" time="2018-03-07T09:37:16.935Z">
-				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
-				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/synth-framework.jsfx-inc</source>
-				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/ui-lib.jsfx-inc</source>
+			<version name="1.1.3" time="2018-04-01T13:29:02.824Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.3/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.3/Panalysis/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="MIDI Harmony" type="effect">
@@ -293,6 +222,11 @@
 				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.0/MIDI-Harmony/synth-framework.jsfx-inc</source>
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.0/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
 				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.0/MIDI-Harmony/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" time="2018-04-01T13:28:50.072Z">
+				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
+				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -337,6 +271,12 @@
 				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.0/Spring-Box/ui-lib.jsfx-inc</source>
 				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.0/Spring-Box/delay-utils.jsfx-inc</source>
 				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.0/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+			</version>
+			<version name="1.1.1" time="2018-04-01T13:29:34.494Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
 			</version>
 		</reapack>
 	</category>
@@ -384,6 +324,11 @@
 			<version name="1.1.5" time="2018-02-15T22:51:02.261Z">
 				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.5/PadSynth/pad-synth.jsfx</source>
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.5/PadSynth/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.1.6" time="2018-04-01T13:28:58.383Z">
+				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.6/PadSynth/pad-synth.jsfx</source>
+				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.6/PadSynth/ui-lib.jsfx-inc</source>
+				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.6/PadSynth/ui-lib-compat.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Learning Sampler" type="effect">
@@ -434,6 +379,11 @@
 				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.8/Learning-Sampler/ui-lib.jsfx-inc</source>
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.8/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
+			<version name="1.0.9" time="2018-04-01T13:13:56.383Z">
+				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.9/Learning-Sampler/Learning%20Sampler.jsfx</source>
+				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.9/Learning-Sampler/ui-lib.jsfx-inc</source>
+				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.9/Learning-Sampler/synth-framework.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Hammer And String" type="effect">
 			<metadata>
@@ -455,6 +405,12 @@
 				<source file="Hammer-And-String/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.2/Hammer-And-String/ui-lib.jsfx-inc</source>
 				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.2/Hammer-And-String/delay-utils.jsfx-inc</source>
 				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.2/Hammer-And-String/synth-framework.jsfx-inc</source>
+			</version>
+			<version name="1.0.3" time="2018-04-01T13:11:40.618Z">
+				<source file="Hammer-And-String/Hammer And String.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/Hammer%20And%20String.jsfx</source>
+				<source file="Hammer-And-String/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/synth-framework.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Hammer And Chord" type="effect">
@@ -522,6 +478,114 @@
 				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/ui-lib.jsfx-inc</source>
 				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/synth-framework.jsfx-inc</source>
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.2/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="1.2.3" time="2018-04-01T13:11:30.905Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.3/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.3/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.3/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.3/Hammer-And-Chord/synth-framework.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.3/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
+		</reapack>
+	</category>
+	<category name="Pitch Correction">
+		<reapack name="Warble" type="effect">
+			<metadata>
+			</metadata>
+			<version name="1.0.0" time="2017-01-26T15:58:50.285Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.0/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" time="2017-01-26T16:57:52.744Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.1/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.2" time="2017-01-26T17:02:05.312Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.2/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.3" time="2017-01-26T22:40:04.350Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.3/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.4" time="2017-02-06T10:08:40.600Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.4/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.5" time="2017-02-10T09:57:16.302Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.5/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.6" time="2017-02-11T13:13:34.566Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.6/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.7" time="2017-04-22T20:39:00.125Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.7/Warble/delay-utils.jsfx-inc</source>
+			</version>
+			<version name="1.0.8" time="2018-01-23T09:36:51.137Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/delay-utils.jsfx-inc</source>
+			</version>
+		</reapack>
+	</category>
+	<category name="MIDI">
+		<reapack name="MIDI Gate" type="effect">
+			<metadata>
+			</metadata>
+			<version name="1.0.0" time="2017-02-22T13:03:18.186Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.0/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" time="2017-07-05T19:20:06.240Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.1/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.2" time="2018-01-23T09:36:51.951Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.2/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.3" time="2018-02-27T01:58:44.639Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.0.3/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.1.0" time="2018-03-07T09:10:22.034Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.1.0/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.2.0" time="2018-03-07T09:37:16.935Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.0/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.2.1" time="2018-04-01T13:28:43.643Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.1/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.1/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.1/MIDI-Gate/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -596,6 +660,12 @@
 				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.10/Humonica/synth-framework.jsfx-inc</source>
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.10/Humonica/ui-lib.jsfx-inc</source>
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.10/Humonica/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="2.0.11" time="2018-04-01T13:11:48.644Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/filter-utils.jsfx-inc</source>
 			</version>
 			<version name="2.0.2" time="2018-02-27T01:52:55.217Z">
 				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.2/Humonica/Humonica.jsfx</source>
@@ -686,6 +756,10 @@
 			<version name="1.2.4" time="2018-02-18T13:30:30.508Z">
 				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.4/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
 				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.4/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
+			</version>
+			<version name="1.2.5" time="2018-04-01T13:29:39.316Z">
+				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.5/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
+				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.5/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
 			</version>
 		</reapack>
 		<reapack name="MIDI Controller Control" type="effect">

@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"files": {
+		"Hammer-And-String/Hammer And String.jsfx": {
+			"main": false
+		},
+		"Hammer-And-String/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-String/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-String/synth-framework.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.3",
+	"package": "Hammer And String",
+	"time": "2018-04-01T13:11:40.618Z"
+}

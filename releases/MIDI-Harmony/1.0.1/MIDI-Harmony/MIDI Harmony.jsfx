@@ -1,0 +1,483 @@
+desc:MIDI Harmony (by Geraint Luff)
+
+in_pin:none
+out_pin:none
+
+slider1:input_source=0<0,1,1{fixed,MIDI}>-Source
+slider2:shift_up_only=0<0,1,1{up and down,up only}>-Shift mode
+slider3:fixed_note_mode=0<0,1,1{chord,note}>-Fixed Mode (chord/note)
+slider4:fixed_centre=60<0,127,1>-Fixed Centre (MIDI note)
+slider5:fixed_range=12<1,36,1>-Fixed Range (semitones)
+slider6:fixed_sequence_enabled=0<0,1,1{off,on}>-Fixed sequence (on/off)
+slider7:sequence_length=8<2,64,1>-Sequence length
+slider8:sequence_interval_pow2=0<0,3,1{1/4,1/8,1/16,1/32}>-Sequence interval
+slider9:free_mode=0<0,1,1{beats,note-on}>-Sequence Sync
+slider10:midi_input_channel=16<1,16,1>-MIDI side-channel
+slider11:midi_input_transpose=0<-24,24,1>-MIDI transpose
+
+import ui-lib.jsfx-inc
+
+@init
+
+gfx_ext_retina = 1;
+output_channel = 0;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+// Set up sequence
+freemem = (sequence_pitch = freemem) + 1000;
+freemem = (sequence_velocity = freemem) + 1000;
+max_vel = 0;
+i = 0;
+while (i < 100) (
+	max_vel = max(max_vel, max(sequence_velocity[i], abs(sequence_pitch[i])));
+	i += 1;
+);
+!max_vel ? (
+	i = 0;
+	while (i < 100) (
+		v = sqrt(3)*(sqrt(i%16) + 1);
+		v = v - floor(v);
+		sequence_velocity[i] = 0.2 + 0.8*v;
+		v = sqrt(2)*(i + 1);
+		v = v - floor(v);
+		sequence_pitch[i] = v*2 - 1;
+		i += 1;
+	);
+);
+
+// Set up note filtering
+freemem = (input_notes = freemem) + 128;
+input_polyphony = 0;
+freemem = (allowed_notes = freemem) + 128;
+freemem = (prev_output_notes = freemem) + 128;
+freemem = (target_notes = freemem) + 128;
+freemem = (output_notes = freemem) + 128;
+
+i = 0;
+while (i < 128) (
+	input_notes[i] = 0;
+	allowed_notes[i] = 0;
+	target_notes[i] = 0;
+	i += 1;
+);
+
+@block
+
+!free_mode && play_state > 0 && play_state != 6 ? (
+	beats = beat_position;
+);
+beats_per_sample = tempo/60/srate;
+
+function recalculate(offset) local(i, note, note_start, note_end, tmp, closest_dist, closest_note, target_centre, target_range) (
+	i = 0;
+	while (i < 12) (
+		allowed_notes[i] = input_notes[i];
+		i += 1;
+	);
+	shift_up_only ? (
+		while (i < 128) (
+			allowed_notes[i] = max(input_notes[i], allowed_notes[i - 12]);
+			i += 1;
+		);
+	) : (
+		while (i < 128) (
+			note = i%12;
+			allowed_notes[note] = max(allowed_notes[note], input_notes[i]);
+			i += 1;
+		);
+		i = 0;
+		while (i < 12) (
+			note = i + 12;
+			while (note < 128) (
+				allowed_notes[note] = allowed_notes[i];
+				note += 12;
+			);
+			i += 1;
+		);
+	);
+
+	tmp = output_notes;
+	output_notes = prev_output_notes;
+	prev_output_notes = tmp;
+
+	i = 0;
+	while (i < 128) (
+		output_notes[i] = 0;
+		i += 1;
+	);
+
+	input_source ? (
+		note = 0;
+		target_range = fixed_range;
+		while (note < 128) (
+			target_notes[note] ? (
+				target_centre = note + midi_input_transpose;
+				target_vel = target_notes[note]/127;
+				closest_dist = 1000000;
+				closest_note = -1;
+
+				note_start = max(0, floor(target_centre - target_range));
+				note_end = min(127, ceil(target_centre + target_range));
+				i = note_start + 1;
+				while (i < note_end) (
+					// TODO: allow duplicate notes?
+					allowed_notes[i] ? (
+						dist = (i - target_centre)/target_range;
+						dist = abs(dist);
+						closest_dist > dist ? (
+							closest_dist = dist;
+							closest_note = i;
+						);
+					);
+					i += 1;
+				);
+				closest_note >= 0 ? (
+					output_notes[closest_note] = max(output_notes[closest_note], target_vel*allowed_notes[closest_note]*(0.5 + 0.5*cos(closest_dist*$pi)));
+				);
+			);
+			note += 1;
+		);
+	) : (
+		target_centre = fixed_centre;
+		target_range = fixed_range;
+		target_vel = 1;
+		fixed_sequence_enabled ? (
+			target_centre += fixed_range*sequence_pitch[sequence_index];
+			target_vel = sequence_velocity[sequence_index];
+		);
+
+		note_start = max(0, floor(target_centre - target_range));
+		note_end = min(127, ceil(target_centre + target_range));
+
+		fixed_note_mode ? (
+			closest_dist = 1000000;
+			closest_note = -1;
+		);
+		i = note_start + 1;
+		while (i < note_end) (
+			allowed_notes[i] ? (
+				dist = (i - target_centre)/target_range;
+				fixed_note_mode ? (
+					dist = abs(dist);
+					// TODO: switch for this
+					// dist /= allowed_notes[i];
+					closest_dist > dist ? (
+						closest_dist = dist;
+						closest_note = i;
+					);
+				) : (
+					output_notes[i] = target_vel*allowed_notes[i]*(0.5 + 0.5*cos(dist*$pi));
+				);
+			);
+			i += 1;
+		);
+		fixed_note_mode && closest_note >= 0 ? (
+			output_notes[closest_note] = target_vel*allowed_notes[closest_note]*(0.5 + 0.5*cos(closest_dist*$pi));
+		);
+	);
+
+	i = 0;
+	while (i < 128) (
+		output_notes[i] > prev_output_notes[i] ? (
+			prev_output_notes[i] ? (
+				midisend(offset, $x80|output_channel, i, 0);
+			);
+
+			midisend(offset, $x90|output_channel, i, max(1, min(127, ceil(output_notes[i]))));
+		) : output_notes[i] < prev_output_notes[i] ? (
+			!output_notes[i] ? (
+				midisend(offset, $x80|output_channel, i, 0);
+			); // TODO: optionally re-send with lower velocity?
+		);
+		i += 1;
+	);
+);
+
+function set_sustain(value) (
+	value >= 64 ? (
+		0;
+	) : (
+		0;
+	);
+);
+
+sequence_interval = 1<<sequence_interval_pow2;
+
+function moveToOffset(next_offset) local(i, partial_beat) (
+	free_mode && !input_polyphony ? (
+		// TODO: have a controller for "silence ms", and only reset after that much gap
+		beats = 0;
+	);
+	samples_elapsed = next_offset - current_offset;
+	beats += beats_per_sample*samples_elapsed;
+	sequence_index = floor(beats*sequence_interval)%sequence_length;
+	sequence_index != prev_sequence_index && fixed_sequence_enabled && !input_source ? (
+		partial_beat = beats*sequence_interval;
+		partial_beat = (partial_beat - floor(partial_beat))/sequence_interval;
+		current_offset = max(current_offset, floor(next_offset - partial_beat/beats_per_sample + 0.5));
+		i = 0;
+		while (i < 128) (
+			output_notes[i] ? (
+				midisend(max(0, current_offset - 1), $x80|output_channel, i, 0);
+				output_notes[i] = 0;
+			);
+			i += 1;
+		);
+		needs_recalculate = 1;
+	) : (
+		current_offset = next_offset;
+	);
+	prev_sequence_index = sequence_index;
+);
+
+current_offset = 0;
+needs_recalculate = 0;
+moveToOffset(0);
+while (midirecv(offset, msg1, note, vel)) (
+	while (offset != current_offset) (
+		needs_recalculate ? recalculate(current_offset);
+		needs_recalculate = 0;
+		moveToOffset(offset);
+	);
+
+	type = (msg1&240);
+	channel = (msg1&15) + 1;
+	note_modulo = note%12;
+	type == $x90 && vel != 0 ? (
+		needs_recalculate = 1;
+		input_source && midi_input_channel == channel ? (
+			target_notes[note] = vel;
+		) : (
+			!input_notes[note] ? input_polyphony += 1;
+			input_notes[note] = vel;
+		);
+	) : type == $x80 || (type == $x90 && vel == 0) ? (
+		needs_recalculate = 1;
+		input_source && midi_input_channel == channel ? (
+			target_notes[note] = 0;
+		) : (
+			input_notes[note] ? (
+				input_polyphony -= 1;
+				input_notes[note] = 0;
+			);
+		);
+	) : (
+		type == $xB0 ? ( // Controller
+			note == 64 ? (
+				set_sustain(vel);
+			) : note == 121 ? (
+				set_sustain(0);
+			) : note == 123 || note == 120 ? (
+				note = 0;
+				while (note < 128) (
+					input_notes[note] = 0;
+					recalculate();
+					note += 1;
+				);
+			);
+		);
+		midisend(offset, type|output_channel, note, vel);
+	);
+);
+while (samplesblock != current_offset) (
+	needs_recalculate ? recalculate(current_offset);
+	needs_recalculate = 0;
+	moveToOffset(samplesblock);
+);
+
+@gfx 640 360
+
+function edit_sequence(seq, low, high, is_vel) local(extra, i, y, x1, x2) (
+	extra = (high - low)*0.05;
+	low -= extra;
+	high += extra;
+	control_background_technical();
+	is_vel ? (
+		ui_color(128, 192, 256);
+	);
+	i = 0;
+	while (i < sequence_length) (
+		x1 = floor(ui_left_retina() + i/sequence_length*ui_width_retina());
+		x2 = floor(ui_left_retina() + (i + 1)/sequence_length*ui_width_retina());
+		fixed_sequence_enabled && i == sequence_index ? (
+			ui_push();
+				gfx_a = 0.2;
+				gfx_rect(x1, ui_top_retina(), x2 - x1, ui_height_retina());
+			ui_pop();
+		);
+		y = ui_top_retina() + (seq[i] - high)/(low - high)*ui_height_retina();
+		is_vel ? (
+			ui_push();
+				gfx_a = 0.2;
+				gfx_rect(x1, y, x2 - x1, ui_bottom_retina() - y);
+			ui_pop();
+			gfx_line(x1, y, x2, y);
+		) : (
+			gfx_rect(x1, y - 1, x2 - x1, 3);
+		);
+
+		x1 = floor(ui_left() + i/sequence_length*ui_width());
+		x2 = floor(ui_left() + (i + 1)/sequence_length*ui_width());
+		(ui_drag() || ui_mouse_down()) && (ui_mouse_x() + ui_left() > x1 && ui_mouse_x() + ui_left() < x2) ? (
+			seq[i] = high + min(1, max(0, ui_mouse_yratio()))*(low - high);
+		);
+
+		i += 1;
+	);
+	control_finish_technical();
+);
+
+function push_labelled(label, number, number_format) (
+	ui_push_above(50);
+		ui_align(0.5, 0.85);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_align(0.5, 0.15);
+		number_format >= 0 ? (
+			ui_textnumber(number, number_format);
+		);
+	ui_pop();
+	ui_push_height(50);
+);
+
+function labelled_dial(value, low, high, bias, label, number_format) (
+	push_labelled(label, value, number_format);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, text) (
+	push_labelled(label, 0, text);
+		ui_push_heighttext(-1);
+			ui_pad(-1, 0);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	value;
+);
+
+function labelled_selector(value, value_text, up_value, down_value, label, text) (
+	push_labelled(label, 0, text);
+		ui_push_heighttext(-1);
+			ui_pad(-1, 0);
+			value = control_selector(value, value_text, up_value, down_value);
+		ui_pop();
+	ui_pop();
+	value;
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+	ui_split_top(50);
+		control_background_technical();
+		ui_graph_step(output_notes, 128, 1, 0, 127);
+		ui_color(255, 255, 255, 0.2);
+		ui_graph_step(allowed_notes, 128, 1, 0, 127);
+		input_source ? (
+			ui_color(64, 128, 192);
+			ui_graph_step(target_notes, 128, 1, 0, 127);
+		);
+		control_finish_technical();
+
+		ui_color(255, 255, 255);
+		ui_text("MIDI Harmony");
+	ui_pop();
+
+	ui_split_top(140);
+		ui_split_leftratio(2/6);
+			control_group("Mode");
+			ui_split_leftratio(1/2);
+				input_source = labelled_switch(input_source, "Target", input_source ? "MIDI" : "fixed");
+			ui_split_next();
+				shift_up_only = !labelled_switch(!shift_up_only, "Shift", shift_up_only ? "up only" : "up/down");
+			ui_split_next();
+			ui_pop();
+		ui_pop();
+
+		input_source ? (
+			control_group("MIDI");
+			ui_split_leftratio(1/4);
+				sprintf(#channel, "%i", midi_input_channel);
+				midi_input_channel = labelled_selector(midi_input_channel, #channel, min(16, midi_input_channel + 1), max(1, midi_input_channel - 1), "Control Channel", "");
+			ui_split_next();
+				fixed_range = labelled_dial(fixed_range, 1, 36, 1.4, "Range", "%i st");
+			ui_split_next();
+				midi_input_transpose = labelled_dial(midi_input_transpose, -24, 24, 0, "Transpose", "%i st");
+			ui_pop();
+		) : (
+			ui_split_leftratio(4/4);
+				control_group("Range");
+				ui_split_leftratio(1/4);
+					fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", "");
+				ui_split_next();
+					fixed_range = labelled_dial(fixed_range, 1, 36, 1.4, "Range", "%i st");
+				ui_split_next();
+					fixed_note_mode = !labelled_switch(!fixed_note_mode, "Output", fixed_note_mode ? "note" : "chord");
+				ui_split_next();
+					fixed_sequence_enabled = labelled_switch(fixed_sequence_enabled, "Sequence", fixed_sequence_enabled ? "on" : "off");
+				ui_pop();
+			ui_pop();
+		);
+	ui_pop();
+
+	input_source ? (
+		0;
+		//ui_error("MIDI input not supported");
+	) : fixed_sequence_enabled ? (
+		ui_split_left(250);
+			control_group("Sequence");
+			ui_split_leftratio(1/3);
+				push_labelled("Interval", 0, "");
+					ui_push_heighttext(-1);
+						ui_pad(-1, 0);
+						sprintf(#sequence_interval, "1/%i", 4<<sequence_interval_pow2);
+						sequence_interval_pow2 = control_selector(sequence_interval_pow2, #sequence_interval, min(3, sequence_interval_pow2 + 1), max(0, sequence_interval_pow2 - 1));
+					ui_pop();
+				ui_pop();
+			ui_split_next();
+				push_labelled("Length", 0, "");
+					ui_push_heighttext(-1);
+						ui_pad(-1, 0);
+						sprintf(#sequence_length, "%i", sequence_length);
+						sequence_length = control_selector(sequence_length, #sequence_length, min(64, sequence_length + 1), max(3, sequence_length - 1));
+					ui_pop();
+				ui_pop();
+			ui_split_next();
+				push_labelled("Sync", 0, free_mode ? "note-on" : "beats");
+					ui_push_heighttext(-1);
+						ui_pad(-1, 0);
+						free_mode = control_switch(free_mode);
+					ui_pop();
+				ui_pop();
+			ui_pop();
+		ui_pop();
+
+		ui_split_topratio(0.5);
+			edit_sequence(sequence_pitch, -1, 1, 0);
+			ui_align(0, 0);
+			ui_pad();
+			ui_text("pitch");
+		ui_split_next();
+			edit_sequence(sequence_velocity, 0, 1, 1);
+			ui_align(0, 0);
+			ui_pad();
+			ui_text("vel");
+		ui_pop();
+	);
+) : control_system();
+
+@serialize
+
+si = 0;
+sN = 100;
+file_var(0, sN);
+while (si < sN) (
+	file_var(0, sequence_pitch[si]);
+	file_var(0, sequence_velocity[si]);
+	si += 1;
+);

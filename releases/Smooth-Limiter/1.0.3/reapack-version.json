@@ -1,0 +1,15 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"files": {
+		"Smooth-Limiter/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Smooth-Limiter/Smooth Limiter.jsfx": {
+			"main": false
+		}
+	},
+	"version": "1.0.3",
+	"package": "Smooth Limiter",
+	"time": "2018-04-01T13:29:14.433Z"
+}
