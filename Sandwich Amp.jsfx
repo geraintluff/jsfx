@@ -20,6 +20,7 @@ import ui-lib.jsfx-inc
 
 @init
 
+gfx_ext_retina = 1;
 freemem = ui_setup(0);
 
 bufferlength = floor(0.1*srate);
@@ -185,14 +186,17 @@ function draw_grid() (
 );
 
 function draw_buffer(buffer) local(i, v) (
-	gfx_x = ui_left();
-	gfx_y = value_to_y(buffer[bufferpos]);
-	i = 0;
-	while (i < bufferlength) (
-		v = buffer[(bufferpos + i)%bufferlength];
-		gfx_lineto(index_to_x(i, bufferlength), value_to_y(v));
-		i += 1;
-	);
+	ui_push();
+		ui_retina(1);
+		gfx_x = ui_left();
+		gfx_y = value_to_y(buffer[bufferpos]);
+		i = 0;
+		while (i < bufferlength) (
+			v = buffer[(bufferpos + i)%bufferlength];
+			gfx_lineto(index_to_x(i, bufferlength), value_to_y(v));
+			i += 1;
+		);
+	ui_pop();
 );
 
 control_start("main", "default");

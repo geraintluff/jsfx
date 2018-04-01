@@ -9,6 +9,7 @@ slider5:0<-12,12,0.1>-pre-gain (dB)
 import ui-lib.jsfx-inc
 
 @init
+gfx_ext_retina = 1;
 
 bufferlength = ceil(srate*1);
 buffer0 = 0;
@@ -201,6 +202,7 @@ function value_to_y(v) (
 );
 
 function draw_response() local(i, x, y, ref) (
+	ui_retina(1);
 	control_background_passive();
 	ui_push(0.2);
 		ref = limit*2;
@@ -258,6 +260,8 @@ function draw_buffer(buffer, startpos, multiplier) local(width, i, i2, N, lowind
 );
 
 function draw_peaks(scale) local(startpos, y) (
+	ui_retina(1);
+
 	ui_color(0, 0, 0);
 	ui_fill();
 

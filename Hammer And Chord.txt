@@ -23,6 +23,7 @@ slider15:damping_freq_velocity=0<-3,3,0.01>-Decay velocity
 slider16:input_decay_ms=0<0,1000,1>-Input decay
 slider17:input_decay_velocity_curve=0.5<0,1,0.01>-Input decay velocity-sensitivity
 slider18:input_velocity_curve=0.5<0,1,0.01>-Input gain velocity-sensitivity
+slider19:midi_channel_filter=0<0,16,1{all,Channel 0,Channel 1,Channel 2,Channel 3,Channel 4,Channel 5,Channel 6,Channel 7,Channel 8,Channel 9,Channel 10,Channel 11,Channel 12,Channel 13,Channel 14,Channel 15,Channel 16>-MIDI channel filter
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -30,6 +31,8 @@ import delay-utils.jsfx-inc
 import filter-utils.jsfx-inc
 
 @init
+
+gfx_ext_retina = 1;
 
 function tanh(x) (
 	x >= 20 ? (
@@ -57,6 +60,13 @@ delay_samples_target = max_delay_samples;
 latest_release = 0;
 
 @block
+
+midi_channel_filter ? (
+	midi_channel_filter_enabled = 1;
+	midi_channel_filter_channel = midi_channel_filter - 1;
+) : (
+	midi_channel_filter_enabled = 0;
+);
 
 anticipation_samples = 0;//ceil(anticipation_ms*srate/1000);
 pdc_bot_ch = 0;
@@ -100,114 +110,118 @@ function impulse(note) local(attack, phase, amp) (
 	) : 0;
 );
 
-inv_stereo_width = 1/stereo_width;
+inv_stereo_factor = 0.5/stereo_width;
 
 inputM = (spl1 + spl0)*0.5;
-inputS = (spl1 - spl0)*0.5;
-input0 = inputM - inputS*inv_stereo_width;
-input1 = inputM + inputS*inv_stereo_width;
+inputS = (spl1 - spl0)*inv_stereo_factor;
+input0 = inputM - inputS;
+input1 = inputM + inputS;
 output0 = output1 = 0;
 
 note = synth_note_first();
 while (note > 0) (
-	note_min_release = min(note_min_release, synth_release(note));
-	synth_needs_init(note) ? (
-		mem = note + NOTE#;
-		note[NOTE#delay_samples] = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
-		note[NOTE#buffer0] = mem;
-		mem = delay_buffer_init(mem, max_delay_samples);
-		note[NOTE#buffer1] = mem;
-		mem = delay_buffer_init(mem, max_delay_samples);
-
-		decay_factor = pow(decay_factor_on, 1 + 2*(1 - synth_velocity(note)/127));
-		decay_normalisation = decay_reference_freq/synth_freq(note);
-		decay_normalisation = 1 + (decay_normalisation - 1)*decay_period;
-		decay_factor = pow(decay_factor, decay_normalisation);
-		resonator_gain = sqrt(1 - abs(decay_factor_on));
-		resonator_gain += (1 - resonator_gain)*resonator_scaling;
-		note[NOTE#resonator_gain] = resonator_gain;
-
-		note[NOTE#invert_feedback] = invert_feedback;
-		invert_feedback ? decay_factor = -sqrt(decay_factor);
-
-		filter_freq_vel = filter_freq*pow(2, damping_freq_velocity*(synth_velocity(note)*2/127 - 1));
-		filter_freq_vel = min(srate*0.45, filter_freq_vel);
-		filter_gain = pow(abs(decay_factor), damping_factor);
-		note[NOTE#filter0] = mem;
-		mem = filter_buffer_init(mem);
-		filter_buffer_highshelf_gainband(note[NOTE#filter0], filter_freq_vel, filter_gain, filter_bandwidth);
-		note[NOTE#filter1] = mem;
-		mem = filter_buffer_init(mem);
-		filter_buffer_highshelf_gainband(note[NOTE#filter1], filter_freq_vel, filter_gain, filter_bandwidth);
-
-		note[NOTE#decay_factor] = decay_factor;
-
-		note[NOTE#impulse_amp] = impulse_amp*pow(synth_velocity(note)/127, impulse_velocity);
-		pan = 0.5 + (rand() - 0.5)*0.05;
-		note[NOTE#pan_left] = (1 - pan)*2;
-		note[NOTE#pan_right] = pan*2;
-
-		note[NOTE#input_decay_gain] = pow(synth_velocity(note)/127, input_velocity_curve);
-		input_decay_samples = input_decay_ms*0.001*srate*pow(synth_velocity(note)/127, input_decay_velocity_curve);
-		input_decay_factor = input_decay_samples ? exp(-1/input_decay_samples) : 1;
-		note[NOTE#input_decay_factor] = input_decay_factor;
-
-		mod_filter_freq = synth_freq(note)*0.5;
-		note[NOTE#mod_gain] = sqrt(srate/mod_filter_freq);
-		note[NOTE#mod_filter0] = mem;
-		mem = filter_buffer_init(mem);
-		filter_buffer_lowpass(note[NOTE#mod_filter0], mod_filter_freq, 0.5);
-		note[NOTE#mod_filter1] = mem;
-		mem = filter_buffer_init(mem);
-		filter_buffer_lowpass(note[NOTE#mod_filter1], mod_filter_freq, 0.5);
-	);
-	synth_release(note) >= release_samples ? (
-		synth_stop(note);
+	midi_channel_filter_enabled && synth_channel(note) !== midi_channel_filter_channel ? (
+		synth_stop();
 	) : (
-		decay_factor = note[NOTE#decay_factor];
-		resonator_gain = note[NOTE#resonator_gain];
-		impulse_value = impulse(note);
+		note_min_release = min(note_min_release, synth_release(note));
+		synth_needs_init(note) ? (
+			mem = note + NOTE#;
+			note[NOTE#delay_samples] = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
+			note[NOTE#buffer0] = mem;
+			mem = delay_buffer_init(mem, max_delay_samples);
+			note[NOTE#buffer1] = mem;
+			mem = delay_buffer_init(mem, max_delay_samples);
 
-		delay_samples_target = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
-		delay_samples = note[NOTE#delay_samples];
-		delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
-		delay_freq = srate/delay_samples;
-		note[NOTE#delay_samples] = delay_samples;
+			decay_factor = pow(decay_factor_on, 1 + 2*(1 - synth_velocity(note)/127));
+			decay_normalisation = decay_reference_freq/synth_freq(note);
+			decay_normalisation = 1 + (decay_normalisation - 1)*decay_period;
+			decay_factor = pow(decay_factor, decay_normalisation);
+			resonator_gain = sqrt(1 - abs(decay_factor_on));
+			resonator_gain += (1 - resonator_gain)*resonator_scaling;
+			note[NOTE#resonator_gain] = resonator_gain;
 
-		note[NOTE#invert_feedback] ? delay_samples = max(min_delay_samples, delay_samples*0.5);
+			note[NOTE#invert_feedback] = invert_feedback;
+			invert_feedback ? decay_factor = -sqrt(decay_factor);
 
-		buffer0 = note[NOTE#buffer0];
-		buffer1 = note[NOTE#buffer1];
-		delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
-		delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
-		//delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
-		//delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
-		delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
-		delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
+			filter_freq_vel = filter_freq*pow(2, damping_freq_velocity*(synth_velocity(note)*2/127 - 1));
+			filter_freq_vel = min(srate*0.45, filter_freq_vel);
+			filter_gain = pow(abs(decay_factor), damping_factor);
+			note[NOTE#filter0] = mem;
+			mem = filter_buffer_init(mem);
+			filter_buffer_highshelf_gainband(note[NOTE#filter0], filter_freq_vel, filter_gain, filter_bandwidth);
+			note[NOTE#filter1] = mem;
+			mem = filter_buffer_init(mem);
+			filter_buffer_highshelf_gainband(note[NOTE#filter1], filter_freq_vel, filter_gain, filter_bandwidth);
 
-		input_envelope = note[NOTE#input_decay_gain] = note[NOTE#input_decay_gain]*note[NOTE#input_decay_factor];
-		excitation0 = input0*input_envelope;
-		excitation1 = input1*input_envelope;
-		ring_mod ? (
-			noise = (rand()*2 - 1)*note[NOTE#mod_gain];
-			excitation0 = filter_buffer_sample(note[NOTE#mod_filter0], noise)*excitation0;
-			noise = (rand()*2 - 1)*note[NOTE#mod_gain];
-			excitation1 = filter_buffer_sample(note[NOTE#mod_filter1], noise)*excitation1;
+			note[NOTE#decay_factor] = decay_factor;
+
+			note[NOTE#impulse_amp] = impulse_amp*pow(synth_velocity(note)/127, impulse_velocity);
+			pan = 0.5 + (rand() - 0.5)*0.05;
+			note[NOTE#pan_left] = (1 - pan)*2;
+			note[NOTE#pan_right] = pan*2;
+
+			note[NOTE#input_decay_gain] = pow(synth_velocity(note)/127, input_velocity_curve);
+			input_decay_samples = input_decay_ms*0.001*srate*pow(synth_velocity(note)/127, input_decay_velocity_curve);
+			input_decay_factor = input_decay_samples ? exp(-1/input_decay_samples) : 1;
+			note[NOTE#input_decay_factor] = input_decay_factor;
+
+			mod_filter_freq = synth_freq(note)*0.5;
+			note[NOTE#mod_gain] = sqrt(srate/mod_filter_freq);
+			note[NOTE#mod_filter0] = mem;
+			mem = filter_buffer_init(mem);
+			filter_buffer_lowpass(note[NOTE#mod_filter0], mod_filter_freq, 0.5);
+			note[NOTE#mod_filter1] = mem;
+			mem = filter_buffer_init(mem);
+			filter_buffer_lowpass(note[NOTE#mod_filter1], mod_filter_freq, 0.5);
 		);
-		excitation0 = impulse_value*note[NOTE#pan_left] + excitation0*resonator_gain + delayed0*decay_factor;
-		excitation1 = impulse_value*note[NOTE#pan_right] + excitation1*resonator_gain + delayed1*decay_factor;
-		delay_buffer_input(buffer0, excitation0);
-		delay_buffer_input(buffer1, excitation1);
+		synth_release(note) >= release_samples ? (
+			synth_stop(note);
+		) : (
+			decay_factor = note[NOTE#decay_factor];
+			resonator_gain = note[NOTE#resonator_gain];
+			impulse_value = impulse(note);
 
-		synth_release(note) > 0 ? (
-			release_ratio = synth_release(note)/release_samples;
-			env = pow(1 - release_ratio, 3);
-			delayed0 *= env;
-			delayed1 *= env;
+			delay_samples_target = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
+			delay_samples = note[NOTE#delay_samples];
+			delay_samples += (delay_samples_target - delay_samples)*delay_samples_slew_factor;
+			delay_freq = srate/delay_samples;
+			note[NOTE#delay_samples] = delay_samples;
+
+			note[NOTE#invert_feedback] ? delay_samples = max(min_delay_samples, delay_samples*0.5);
+
+			buffer0 = note[NOTE#buffer0];
+			buffer1 = note[NOTE#buffer1];
+			delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
+			delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
+			//delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
+			//delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
+			delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
+			delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
+
+			input_envelope = note[NOTE#input_decay_gain] = note[NOTE#input_decay_gain]*note[NOTE#input_decay_factor];
+			excitation0 = input0*input_envelope;
+			excitation1 = input1*input_envelope;
+			ring_mod ? (
+				noise = (rand()*2 - 1)*note[NOTE#mod_gain];
+				excitation0 = filter_buffer_sample(note[NOTE#mod_filter0], noise)*excitation0;
+				noise = (rand()*2 - 1)*note[NOTE#mod_gain];
+				excitation1 = filter_buffer_sample(note[NOTE#mod_filter1], noise)*excitation1;
+			);
+			excitation0 = impulse_value*note[NOTE#pan_left] + excitation0*resonator_gain + delayed0*decay_factor;
+			excitation1 = impulse_value*note[NOTE#pan_right] + excitation1*resonator_gain + delayed1*decay_factor;
+			delay_buffer_input(buffer0, excitation0);
+			delay_buffer_input(buffer1, excitation1);
+
+			synth_release(note) > 0 ? (
+				release_ratio = synth_release(note)/release_samples;
+				env = pow(1 - release_ratio, 3);
+				delayed0 *= env;
+				delayed1 *= env;
+			);
+
+			output0 += delayed0;
+			output1 += delayed1;
 		);
-
-		output0 += delayed0;
-		output1 += delayed1;
 	);
 	note = synth_note_next(note);
 );

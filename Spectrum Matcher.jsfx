@@ -11,7 +11,7 @@ slider7:correction_resolution=50<1,50,1>-correction resolution
 import ui-lib.jsfx-inc
 
 @init
-
+gfx_ext_retina = 1;
 option_show_grouped_correction = 0;
 
 MODEL_MAX_N = 100;
@@ -1628,6 +1628,7 @@ function labelled_dial(value, default, low, high, bias, label, displayvalue, dis
 
 function draw_frequency_grid() local(fi, fmag, freq, xratio) (
 	ui_push();
+		ui_retina(1);
 		fi = 1;
 		fmag = 10;
 		while (fi*fmag < high_freq) (
@@ -1640,7 +1641,7 @@ function draw_frequency_grid() local(fi, fmag, freq, xratio) (
 				gfx_lineto(gfx_x, ui_bottom());
 
 				fi == 1 ? (
-					ui_fontsize(10);
+					ui_fontsize(10*gfx_ext_retina);
 					ui_color(255, 255, 255, 0.5);
 					gfx_x += ui_texth()*0.5;
 					gfx_y = ui_bottom() - ui_texth()*1.5;
@@ -1665,8 +1666,10 @@ function correction_db_yratio(db) (
 );
 
 function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
+	ui_retina(1);
 	ui_color(0, 0, 0);
 	ui_fill();
+	ui_fontsize(ui_fontsize()*0.75);
 
 	draw_frequency_grid();
 	ui_color(255, 255, 255, 0.5);
@@ -1810,6 +1813,7 @@ function averages_db_yratio(db) (
 function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g_y_ratio, g_y) (
 	ui_color(0, 0, 0);
 	ui_fill();
+	ui_retina(1);
 
 	draw_frequency_grid();
 

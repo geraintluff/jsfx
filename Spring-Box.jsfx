@@ -24,6 +24,7 @@ filename:0,themes/bitmap-simple/theme-cyan.png
 @init
 
 freemem = ui_setup(0);
+gfx_ext_retina = 1;
 
 maxdetunefactor = pow(2, 110/1200)*exp(0.15); // 110 cents plus variation
 mindetunefreq = 0.1;

@@ -16,6 +16,8 @@ import synth-framework.jsfx-inc
 
 @init
 
+gfx_ext_retina = 1;
+
 freemem = 0;
 freemem = synth_setup(freemem, 1); // Request one slot to keep the phase in
 freemem = ui_setup(freemem);

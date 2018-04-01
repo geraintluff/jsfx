@@ -13,6 +13,8 @@ import synth-framework.jsfx-inc
 
 @init
 
+gfx_ext_retina = 1;
+
 freemem = 0;
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, 1 /* we need one slot for the "learning" flag */);
@@ -153,15 +155,18 @@ function draw_sampler() local(i, length, x, note, index) (
 		ui_pop();
 	ui_pop();
 
-	// Draw playback positions
-	ui_color(255, 255, 255, 0.8);
-	note = synth_note_first();
-	while (note > 0) (
-		index = sampler_starts[synth_midinote(note)] + synth_attack(note);
-		x = ui_left() + ui_width()*index/length;
-		gfx_line(x, ui_top(), x, ui_bottom());
-		note = synth_note_next(note);
-	);
+	ui_push();
+		ui_retina(1);
+		// Draw playback positions
+		ui_color(255, 255, 255, 0.8);
+		note = synth_note_first();
+		while (note > 0) (
+			index = sampler_starts[synth_midinote(note)] + synth_attack(note);
+			x = ui_left() + ui_width()*index/length;
+			gfx_line(x, ui_top(), x, ui_bottom());
+			note = synth_note_next(note);
+		);
+	ui_pop();
 
 	control_finish_technical();
 );

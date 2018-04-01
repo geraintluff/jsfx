@@ -19,6 +19,7 @@ import ui-lib.jsfx-inc
 
 @init
 
+gfx_ext_retina = 1;
 output_channel = 0;
 
 freemem = 0;
@@ -298,25 +299,27 @@ function edit_sequence(seq, low, high, is_vel) local(extra, i, y, x1, x2) (
 	);
 	i = 0;
 	while (i < sequence_length) (
-		x1 = floor(ui_left() + i/sequence_length*ui_width());
-		x2 = floor(ui_left() + (i + 1)/sequence_length*ui_width());
+		x1 = floor(ui_left_retina() + i/sequence_length*ui_width_retina());
+		x2 = floor(ui_left_retina() + (i + 1)/sequence_length*ui_width_retina());
 		fixed_sequence_enabled && i == sequence_index ? (
 			ui_push();
 				gfx_a = 0.2;
-				gfx_rect(x1, ui_top(), x2 - x1, ui_height());
+				gfx_rect(x1, ui_top_retina(), x2 - x1, ui_height_retina());
 			ui_pop();
 		);
-		y = ui_top() + (seq[i] - high)/(low - high)*ui_height();
+		y = ui_top_retina() + (seq[i] - high)/(low - high)*ui_height_retina();
 		is_vel ? (
 			ui_push();
 				gfx_a = 0.2;
-				gfx_rect(x1, y, x2 - x1, ui_bottom() - y);
+				gfx_rect(x1, y, x2 - x1, ui_bottom_retina() - y);
 			ui_pop();
 			gfx_line(x1, y, x2, y);
 		) : (
 			gfx_rect(x1, y - 1, x2 - x1, 3);
 		);
 
+		x1 = floor(ui_left() + i/sequence_length*ui_width());
+		x2 = floor(ui_left() + (i + 1)/sequence_length*ui_width());
 		(ui_drag() || ui_mouse_down()) && (ui_mouse_x() + ui_left() > x1 && ui_mouse_x() + ui_left() < x2) ? (
 			seq[i] = high + min(1, max(0, ui_mouse_yratio()))*(low - high);
 		);

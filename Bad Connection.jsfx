@@ -19,6 +19,7 @@ import delay-utils.jsfx-inc
 @init
 blocked = (rand(1) < 0.5);
 multiplier = 0.5;
+gfx_ext_retina = 1;
 
 MAX_DELAY_SAMPLES = srate*10;
 
@@ -32,36 +33,36 @@ delay_samples = 100;
 delay_slew_factor = 1/(srate*0.01);
 
 function calculate_params() (
-	totalprob = slider1/srate;
+       totalprob = slider1/srate;
 
-	slider2 < 1 ? (
-			slider2 > 0 ? (
-					r = slider2/(1 - slider2);
-					onprob = totalprob*(1 + r)/2;
-					offprob = totalprob*(1 + r)/(2*r);
-			) : (
-					onprob = totalprob/2;
-					offprob = 1;
-			);
-	) : (
-			onprob = 1;
-			offprob = totalprob/2;
-	);
+       slider2 < 1 ? (
+                     slider2 > 0 ? (
+                                   r = slider2/(1 - slider2);
+                                   onprob = totalprob*(1 + r)/2;
+                                   offprob = totalprob*(1 + r)/(2*r);
+                     ) : (
+                                   onprob = totalprob/2;
+                                   offprob = 1;
+                     );
+       ) : (
+                     onprob = 1;
+                     offprob = totalprob/2;
+       );
 
-	holdfactor = 0.5^(1000/srate/slider3);
-	driftfactor = 1 - holdfactor;
-	offlevel = (10^(slider4/20));
+       holdfactor = 0.5^(1000/srate/slider3);
+       driftfactor = 1 - holdfactor;
+       offlevel = (10^(slider4/20));
        slider4 > -0.3 && slider4 < 0.3 ? (
               offlevel = 1;
        );
-	onlevel = 1 - offlevel;
-	gain = 10^(slider5/20);
+       onlevel = 1 - offlevel;
+       gain = 10^(slider5/20);
 
-	tempo ? (
-		rounded_delay_16ths = floor(delay_16ths + 0.5);
-		delay_samples_target = srate*(delay_ms*0.001 + 60/tempo*0.25*rounded_delay_16ths);
-		delay_samples_target = max(5, min(MAX_DELAY_SAMPLES, floor(delay_samples_target)));
-	);
+       tempo ? (
+              rounded_delay_16ths = floor(delay_16ths + 0.5);
+              delay_samples_target = srate*(delay_ms*0.001 + 60/tempo*0.25*rounded_delay_16ths);
+              delay_samples_target = max(5, min(MAX_DELAY_SAMPLES, floor(delay_samples_target)));
+       );
 );
 
 function distort(x) (
@@ -79,9 +80,9 @@ calculate_params();
 @sample
 
 feedback ? (
-	delay_samples += (delay_samples_target - delay_samples)*delay_slew_factor;
-	spl0 += feedback*delay0.delay_output_linear(delay_samples);
-	spl1 += feedback*delay1.delay_output_linear(delay_samples);
+       delay_samples += (delay_samples_target - delay_samples)*delay_slew_factor;
+       spl0 += feedback*delay0.delay_output_linear(delay_samples);
+       spl1 += feedback*delay1.delay_output_linear(delay_samples);
 );
 
 clean_spl0 = spl0;
@@ -89,11 +90,11 @@ clean_spl1 = spl1;
 
 offlevel != 1 ? (
        blocked ? (
-       		multiplier = holdfactor*multiplier;
-       		rand(1) < onprob ? blocked = 0;
+                     multiplier = holdfactor*multiplier;
+                     rand(1) < onprob ? blocked = 0;
        ) : (
-       		multiplier = holdfactor*multiplier + driftfactor;
-       		rand(1) < offprob ? blocked = 1;
+                     multiplier = holdfactor*multiplier + driftfactor;
+                     rand(1) < offprob ? blocked = 1;
        );
 );
 
@@ -105,14 +106,14 @@ distortion_amount ? (
        spl1 = distort(spl1);
 );
 
-(rand(1) < prob) ? (blocked	= 1 - blocked);
+(rand(1) < prob) ? (blocked       = 1 - blocked);
 
 delay0.delay_input(spl0);
 delay1.delay_input(spl1);
 
 clean_input ? (
-	spl0 = clean_spl0;
-	spl1 = clean_spl1;
+       spl0 = clean_spl0;
+       spl1 = clean_spl1;
 );
 
 spl0 *= gain;
@@ -121,31 +122,31 @@ spl1 *= gain;
 @gfx 550 430
 
 function labelled_dial(value, low, high, bias, label, displayvalue, format) (
-	ui_push_height(50);
-		value = control_dial(value, low, high, bias);
-	ui_pop();
-	ui_push_above(50);
-		ui_text(label);
-	ui_pop();
-	ui_push_below(50);
-		ui_textnumber(displayvalue, format);
-	ui_pop();
-	value;
+       ui_push_height(50);
+              value = control_dial(value, low, high, bias);
+       ui_pop();
+       ui_push_above(50);
+              ui_text(label);
+       ui_pop();
+       ui_push_below(50);
+              ui_textnumber(displayvalue, format);
+       ui_pop();
+       value;
 );
 
 function labelled_switch(value, label, display) (
-	ui_push_height(30);
-		ui_push_width(60);
-			value = control_switch(value);
-		ui_pop();
-	ui_pop();
-	ui_push_above(50);
-		ui_text(label);
-	ui_pop();
-	ui_push_below(50);
-		ui_text(display);
-	ui_pop();
-	value;
+       ui_push_height(30);
+              ui_push_width(60);
+                     value = control_switch(value);
+              ui_pop();
+       ui_pop();
+       ui_push_above(50);
+              ui_text(label);
+       ui_pop();
+       ui_push_below(50);
+              ui_text(display);
+       ui_pop();
+       value;
 );
 
 function draw_distortion() local(x, y, width, height, top, left) (
@@ -153,6 +154,7 @@ function draw_distortion() local(x, y, width, height, top, left) (
        control_background_technical();
 
        ui_push_clip(1);
+              ui_retina(1.8);
               top = ui_top();
               left = ui_left();
               width = ui_width();
@@ -174,45 +176,45 @@ function draw_distortion() local(x, y, width, height, top, left) (
 ui_start("main");
 
 ui_screen() == "main" ? (
-	control_navbar("Bad Connection v2", -1, -1);
+       control_navbar("Bad Connection v2", -1, -1);
 
        ui_split_topratio(1/3);
-		ui_split_leftratio(4/5);
-			control_group("Volume variation");
-	       	ui_split_leftratio(1/4);
-	       		slider1 = labelled_dial(slider1, 0, 50, 3, "speed", slider1, "%i / sec");
-	       	ui_split_next();
-	       		slider2 = labelled_dial(slider2, 0, 1, 0, "on/off", slider2*100, "%i%%");
-	       	ui_split_next();
-	       		slider4 = labelled_dial(slider4, -60, 0, -2, "off level", slider4, "%idB");
-	       	ui_split_next();
-	       		slider3 = labelled_dial(slider3, 0, 200, 5, "smoothing", slider3, "%ims");
-			ui_pop();
-		ui_pop();
-		control_group("Gain");
-		slider5 = labelled_dial(slider5, -20, 20, 0, "gain", slider5, "%idB");
+              ui_split_leftratio(4/5);
+                     control_group("Volume variation");
+                     ui_split_leftratio(1/4);
+                            slider1 = labelled_dial(slider1, 0, 50, 3, "speed", slider1, "%i / sec");
+                     ui_split_next();
+                            slider2 = labelled_dial(slider2, 0, 1, 0, "on/off", slider2*100, "%i%%");
+                     ui_split_next();
+                            slider4 = labelled_dial(slider4, -60, 0, -2, "off level", slider4, "%idB");
+                     ui_split_next();
+                            slider3 = labelled_dial(slider3, 0, 200, 5, "smoothing", slider3, "%ims");
+                     ui_pop();
+              ui_pop();
+              control_group("Gain");
+              slider5 = labelled_dial(slider5, -20, 20, 0, "gain", slider5, "%idB");
        ui_split_next();
               ui_split_leftratio(2/5);
                      control_group("Distortion");
                      ui_split_leftratio(1/2);
                             distortion_amount = labelled_dial(distortion_amount, 0, 1, 3, "amount", distortion_amount*100, "%i%%");
-              	ui_split_next();
-              		distortion_bumpiness = labelled_dial(distortion_bumpiness, 3, 20, 1, "fuzziness", 0, "");
+                     ui_split_next();
+                            distortion_bumpiness = labelled_dial(distortion_bumpiness, 3, 20, 1, "fuzziness", 0, "");
                      ui_pop();
               ui_pop();
 
               draw_distortion();
-	ui_split_next();
-		control_group("Delay");
-       	ui_split_leftratio(1/4);
-       		delay_16ths = labelled_dial(delay_16ths, 0, 16, 2, "delay (tempo)", floor(delay_16ths + 0.5), "%i/16");
-       	ui_split_next();
-       		delay_ms = labelled_dial(delay_ms, -100, 100, 0, "delay (ms)", delay_ms, "%ims");
-       	ui_split_next();
-       		feedback = labelled_dial(feedback, 0, 1, 0, "feedback", feedback*100, "%i%%");
-       	ui_split_next();
-       		clean_input = !labelled_switch(!clean_input, "first impulse", clean_input ? "clean" : "dirty");
-       	ui_pop();       ui_pop();
+       ui_split_next();
+              control_group("Delay");
+              ui_split_leftratio(1/4);
+                     delay_16ths = labelled_dial(delay_16ths, 0, 16, 2, "delay (tempo)", floor(delay_16ths + 0.5), "%i/16");
+              ui_split_next();
+                     delay_ms = labelled_dial(delay_ms, -100, 100, 0, "delay (ms)", delay_ms, "%ims");
+              ui_split_next();
+                     feedback = labelled_dial(feedback, 0, 1, 0, "feedback", feedback*100, "%i%%");
+              ui_split_next();
+                     clean_input = !labelled_switch(!clean_input, "first impulse", clean_input ? "clean" : "dirty");
+              ui_pop();       ui_pop();
 ) : ui_system();
 
 ui_interacted() ? (

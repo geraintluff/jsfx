@@ -1033,6 +1033,8 @@ function effect_ui_conmod(effect) local(state, effect_index, mod_range, source, 
 		ui_pop();
 	ui_pop();
 
+	ui_retina(1);
+
 	ui_color(0, 0, 0);
 	ui_fill();
 	ui_colora(255, 255, 255, 0.8);
@@ -1210,6 +1212,8 @@ function effect_ui_dist(effect) local(state, effect_index, mod_range, i, value, 
 			state[4/*DIST_STATE:WET*/] = control_hslider(state[4/*DIST_STATE:WET*/], 0, 1, 0);
 		ui_pop();
 	ui_pop();
+
+	ui_retina(1);
 
 	ui_color(0, 0, 0);
 	ui_fill();
@@ -2418,7 +2422,9 @@ function custom_push_labels(label, value, format) (
 	ui_push_height(50);
 );
 
-function draw_waveform() local(wavetable, samples, value, x, y, gi, gis, box_left, box_top, box_width, box_height) (
+function draw_waveform() local(retina, wavetable, samples, value, x, y, gi, gis, box_left, box_top, box_width, box_height) (
+	retina = ui_retina(1);
+
 	box_left = ui_left();
 	box_top = ui_top();
 	box_width = ui_width();
@@ -2458,6 +2464,7 @@ function draw_waveform() local(wavetable, samples, value, x, y, gi, gis, box_lef
 		gi += 1;
 		gi < wavetable_sampleslength;
 	);
+	ui_retina(retina);
 	ui_color(0, 0, 0);
 	ui_border();
 );
@@ -2470,7 +2477,9 @@ function draw_regenerate_button() (
 	ui_pop();
 );
 
-function draw_density() local(i, box_left, box_top, box_width, box_height, index, density, x, y, w) (
+function draw_density() local(retina, i, box_left, box_top, box_width, box_height, index, density, x, y, w) (
+	retina = ui_retina(1);
+
 	box_left = ui_left();
 	box_top = ui_top();
 	box_width = ui_width();
@@ -2501,6 +2510,8 @@ function draw_density() local(i, box_left, box_top, box_width, box_height, index
 		gfx_line(x, y, x, box_top + box_height);
 		i += 1;
 	);
+
+	ui_retina(retina);
 
 	ui_press() || ui_drag() ? (
 		y = max(0, min(1, 1 - ui_mouse_yratio()));

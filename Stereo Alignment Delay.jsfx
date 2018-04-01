@@ -20,6 +20,8 @@ import ui-lib.jsfx-inc
 
 @init
 
+gfx_ext_retina = 1;
+
 send_routing_id == 0 ? send_routing_id = rand()*1048576 + 1;
 send_routing_length = 1*srate; // Maximum supported latency difference
 //send_routing_index = 0;
@@ -540,6 +542,7 @@ gmem[0] === send_routing_id ? (
 	display_size = delay_fftsize*0.3;
 	control_background_technical();
 	ui_push();
+		ui_retina(1);
 		ui_color(255, 255, 255, 0.15);
 		delay_peak_minsample != delay_peak_maxsample ? (
 			peak_x1 = ui_left() + (0.5 + delay_peak_minsample/display_size)*ui_width() + 0.5;
@@ -554,8 +557,10 @@ gmem[0] === send_routing_id ? (
 
        ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
        ui_hover() ? (
+	mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
+
 		ui_color(255, 128, 128, 0.8);
-		mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
+		ui_retina(1);
 		ui_align(1, 1);
 		ui_textnumber(mouse_sample, "%i samples");
 		ui_align(0, 1);
@@ -576,7 +581,7 @@ gmem[0] === send_routing_id ? (
 	ui_push();
 		ui_color(255, 255, 255);
 		ui_align(delay_samples >= delay_fftsize*0.1 ? 0 : 1, 0);
-		ui_split_top(gfx_texth);
+		ui_split_top(ui_texth());
 			g_ms = delay_samples/srate*1000;
 			g_ms >= 0 ? (
 				amplitude_mode === 2 ? (
@@ -608,10 +613,10 @@ gmem[0] === send_routing_id ? (
 				);
 			);
 		ui_pop();
-		ui_split_top(gfx_texth);
+		ui_split_top(ui_texth());
 			ui_textnumber(delay_samples, "(peak at %i samples)");
 		ui_pop();
-		ui_split_top(gfx_texth);
+		ui_split_top(ui_texth());
 			ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
 		ui_pop();
 	ui_pop();
