@@ -1,0 +1,222 @@
+desc:Echo Cycles (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:input_width=0.5<0,1>-Input width
+slider2:output_variation=0.5<0,1>-Output variation
+slider3:delay_ms=0<0,1000>-Delay (ms)
+slider4:delay_beats=0.75<0,4,0.25>-Delay (beats)
+slider5:feedback_ratio=0.5<0,0.99>-Feedback
+slider6:feedback_rotation=2<0,6.283185307179586>-Feedback rotation
+slider7:input_rotation=2<0,6.283185307179586>-Input rotation
+
+filename:0,themes/bitmap-simple/theme-dark-cyan.png
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+
+@init
+
+MAX_DELAY = 8;
+MAX_DELAY_SAMPLES = srate*MAX_DELAY + 100;
+
+gfx_ext_retina = 1;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+buffer_length = MAX_DELAY_SAMPLES;
+freemem = (delay_buffer_mono = freemem) + buffer_length;
+freemem = (delay_buffer_left = freemem) + buffer_length;
+freemem = (delay_buffer_right = freemem) + buffer_length;
+memset(delay_buffer_mono, 0, buffer_length);
+memset(delay_buffer_left, 0, buffer_length);
+memset(delay_buffer_right, 0, buffer_length);
+
+vis_sample = 0;
+delay_gain = 0;
+delay_gain_step = 0;
+
+@slider
+
+delay_beats_float = delay_beats;
+
+@block
+
+delay_seconds = delay_ms*0.001 + delay_beats*60/tempo;
+delay_samples_target = max(1, floor(delay_seconds*srate + 0.5));
+delay_samples_target != delay_samples ? (
+	delay_gain <= 0.01 ? (
+		delay_samples = delay_samples_target;
+		delay_gain_step = (1 - delay_gain)/samplesblock;
+	) : (
+		delay_gain_step = -delay_gain/samplesblock;
+	);
+) : (
+	delay_gain_step = (1 - delay_gain)/samplesblock;
+);
+
+input_mono = sqrt(0.5);
+input_cos = cos((input_width + 1)*$pi/4);
+input_sin = sin((input_width + 1)*$pi/4);
+input_rot_cos = cos(input_rotation);
+input_rot_sin = sin(input_rotation);
+input_ll = input_rot_cos*input_sin - input_rot_sin*input_cos;
+input_lr = input_rot_cos*input_cos - input_rot_sin*input_sin;
+input_rl = input_rot_sin*input_sin + input_rot_cos*input_cos;
+input_rr = input_rot_sin*input_cos + input_rot_cos*input_sin;
+
+feedback_cos = feedback_ratio*cos(feedback_rotation);
+feedback_sin = feedback_ratio*sin(feedback_rotation);
+
+output_on_channel = output_variation + (1 - output_variation)/sqrt(2);
+output_off_channel = (output_variation - 1)/sqrt(2);
+
+@sample
+
+vis_sample += 1;
+
+delay_gain += delay_gain_step;
+
+// Input audio
+mono = (spl0 + spl1)*input_mono;
+
+left = input_ll*spl0 + input_lr*spl1;
+right = input_rl*spl0 + input_rr*spl1;
+
+delayed_mono = delay_buffer_mono[buffer_read_index];
+delayed_left = delay_buffer_left[buffer_read_index];
+delayed_right = delay_buffer_right[buffer_read_index];
+
+// Feedback
+mono += feedback_ratio*delayed_mono;
+left += feedback_cos*delayed_left - feedback_sin*delayed_right;
+right += feedback_sin*delayed_left + feedback_cos*delayed_right;
+
+buffer_write_index = buffer_read_index + delay_samples;
+while (buffer_write_index >= buffer_length) (
+	buffer_write_index -= buffer_length;
+);
+delay_buffer_mono[buffer_write_index] = mono*delay_gain;
+delay_buffer_left[buffer_write_index] = left*delay_gain;
+delay_buffer_right[buffer_write_index] = right*delay_gain;
+
+spl0 += delayed_mono + output_on_channel*delayed_left + output_off_channel*delayed_right;
+spl1 += delayed_mono + output_on_channel*delayed_right + output_off_channel*delayed_left;
+
+buffer_read_index += 1;
+buffer_read_index >= buffer_length ? (
+	buffer_read_index = 0;
+);
+
+@gfx 490 324
+
+function labels(title, number, displaynumber, format) local(height) (
+	height = (ui_height() - 60)/2;
+	ui_split_top(height);
+		ui_text(title);
+	ui_pop();
+	ui_split_bottom(height);
+		format >= 0 ? (
+			number = control_hidden_textnumber(number, displaynumber, format);
+		);
+	ui_pop();
+	number;
+);
+function labels(title) (
+	labels(title, 0, 0, -1);
+);
+
+control_start("main", "bitmap-simple", 0);
+
+function draw_taps(vis_tap_mono, vis_tap_left, vis_tap_right) (
+	vis_tap_index = 0;
+	vis_radius = min(ui_width_retina()/4, ui_height_retina()*0.5/vis_taps);
+
+	loop(vis_taps,
+		vis_l = vis_tap_mono + vis_tap_left*output_on_channel + vis_tap_right*output_off_channel;
+		vis_r = vis_tap_mono + vis_tap_right*output_on_channel + vis_tap_left*output_off_channel;
+		vis_m = (vis_l + vis_r)*0.5;
+		vis_amp = (sqrt(vis_l*vis_l + vis_r*vis_r) + sqrt(vis_m*vis_m + vis_s*vis_s))*0.25;
+		vis_amp = vis_m;
+		vis_pan = vis_r/(vis_l + vis_r);
+		vis_pan_radius = (0.5 + 0.5*vis_amp)*vis_radius;
+
+		gfx_y = ui_top_retina() + ui_height_retina()*(vis_tap_index + 0.5)/vis_taps;
+		gfx_x = ui_left_retina() + vis_pan_radius + (ui_width_retina() - vis_pan_radius*2)*vis_pan;
+		ui_push();
+			vis_highlight_index == vis_tap_index ? (
+				ui_color(255, 255, 255);
+			);
+			gfx_circle(gfx_x, gfx_y, vis_radius*sqrt(vis_amp), 1);
+		ui_pop();
+
+		// Rotate
+		vis_l = vis_tap_left*feedback_cos - vis_tap_right*feedback_sin;
+		vis_r = vis_tap_left*feedback_sin + vis_tap_right*feedback_cos;
+		vis_tap_mono *= feedback_ratio;
+		vis_tap_left = vis_l;
+		vis_tap_right = vis_r;
+		vis_tap_index += 1;
+	);
+);
+
+ui_screen() == "main" ? (
+	ui_split_right(80);
+		control_background_technical();
+		vis_taps = max(10, min(50, -10*log(2)/log(feedback_ratio)));
+		vis_highlight_index = floor(vis_sample/delay_samples) - 1;
+		vis_highlight_index > vis_taps*1.5 ? (
+			vis_sample = 0;
+		);
+
+		ui_color(128, 192, 255);
+		draw_taps(1, input_ll, input_rl);
+		ui_color(255, 192, 128);
+		draw_taps(1, input_lr, input_rr);
+
+		control_finish_technical();
+	ui_pop();
+
+	control_navbar("Echo Cycles");
+
+	ui_split_topratio(1/2);
+		control_group("Stereo");
+		ui_split_leftratio(1/4);
+			labels("input width");
+			input_width = control_dial(input_width, 0, 1, 0, 0.5);
+		ui_split_next();
+			labels("accents");
+			output_variation = control_dial(output_variation, 0, 1, 0, 0.5);
+		ui_split_next();
+			labels("rotation");
+			feedback_rotation = control_dial_angle(feedback_rotation);
+		ui_split_next();
+			labels("start");
+			input_rotation = control_dial_angle(input_rotation);
+		ui_pop();
+	ui_split_next();
+		control_group("Delay");
+		ui_split_leftratio(1/3);
+			delay_ms = labels("time", delay_ms, delay_ms + 0.01, "%.1fms");
+			delay_ms = max(0, min(1000, delay_ms));
+
+			delay_ms = control_dial(delay_ms, 0, 1000, 3.5, 0);
+		ui_split_next();
+			delay_beats_float = labels("tempo", delay_beats_float, delay_beats, "%.2f beats");
+			delay_beats_float = control_dial(delay_beats_float, 0, 4, 2, 0.25);
+			delay_beats = max(0, min(4, floor(delay_beats_float*4 + 0.5)/4));
+		ui_split_next();
+			labels("feedback");
+			feedback_ratio = control_dial(feedback_ratio, 0, 0.99, 0, 0.5);
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+@serialize
+
+serialize_version = 1;
+file_var(0, serialize_version);

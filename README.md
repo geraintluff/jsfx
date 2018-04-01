@@ -19,6 +19,7 @@ Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP f
 * Humonica - harmoniser ([audio demo](audio-demos/humonica.mp3))
 * MIDI Gate - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in "mute" mode). ([audio demo](audio-demos/midi-gate.mp3))
 * MIDI Harmony - arpeggiator and auto-accompaniment plugin
+* Echo Cycles - a delay effect where the echoes bounce around or sweep through the stereo field
 
 Presets (RPL) for these effects can be downloaded from GitHub.
 

@@ -277,6 +277,24 @@
 					"main": false
 				}
 			}
+		},
+		"Echo-Cycles": {
+			"type": "effect",
+			"category": "Delay",
+			"files": {
+				"Echo-Cycles.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"themes/bitmap-simple/theme-dark-cyan.png": {
+					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

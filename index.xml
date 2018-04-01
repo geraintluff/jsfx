@@ -776,5 +776,13 @@
 			<metadata>
 			</metadata>
 		</reapack>
+		<reapack name="Cyclical-Echo.jsfx" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
+		<reapack name="Cyclical-Echo" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>
