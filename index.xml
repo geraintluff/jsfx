@@ -288,6 +288,13 @@
 				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.0.0/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
 				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.0.0/Echo-Cycles/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="1.1.0" time="2018-04-04T22:26:29.105Z">
+				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.1.0/Echo-Cycles/Echo-Cycles.jsfx</source>
+				<source file="Echo-Cycles/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.1.0/Echo-Cycles/ui-lib.jsfx-inc</source>
+				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.1.0/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.1.0/Echo-Cycles/delay-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.1.0/Echo-Cycles/filter-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
