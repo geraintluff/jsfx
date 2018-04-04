@@ -293,6 +293,9 @@
 				},
 				"delay-utils.jsfx-inc": {
 					"main": false
+				},
+				"filter-utils.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "1.0.0"

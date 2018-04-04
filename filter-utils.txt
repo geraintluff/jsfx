@@ -15,6 +15,54 @@ function filter_buffer_size() (
 	FILTER#;
 );
 
+function filter_init() (
+	this.x1 = this.x2 = this.y1 = this.y2 = 0;
+	this.b0 = 1;
+	this.b1 = this.b2 = this.a1 = this.a2 = 0;
+);
+
+function filter_sample(x0) local(y0) (
+	y0 = this.b0*x0 + this.b1*this.x1 + this.b2*this.x2 - this.a1*this.y1 - this.a2*this.y2;
+	this.x2 = this.x1;
+	this.x1 = x0;
+	this.y2 = this.y1;
+	this.y1 = y0;
+);
+
+function filter_bandpass(normfreq, BW) local(inv_a0, b1, w0, sin_w0, Q, alpha) (
+	w0 = 2*$pi*max(0.000001, min(0.49, normfreq));
+	sin_w0 = sin(w0);
+	cos_w0 = cos(w0);
+
+	BW > 0 ? (
+		Q = 0.5/sinh(log(2)*0.5*BW*w0/sin_w0);
+	) : (
+		Q = -BW;
+	);
+	alpha = sin_w0*0.5/Q;
+	debug.w0 = w0;
+	debug.sin_w0 = sin_w0;
+	debug.alpha = alpha;
+	debug.Q = Q;
+	debug.BW = BW;
+
+	// TODO: this is actually a lowpass!  Do the right thing.
+	inv_a0 = 1/(1 + alpha);
+	this.a1 = -2*cos_w0*inv_a0;
+	this.a2 = (1 - alpha)*inv_a0;
+
+	this.b0 = alpha*inv_a0;
+	this.b1 = 0;
+	this.b2 = -this.b0;
+);
+
+function filter_bandpass(normfreq, BW, gain) local(inv_a0, b1, w0, sin_w0, Q, alpha) (
+	this.filter_bandpass(normfreq, BW);
+	this.b0 += (1 - this.b0)*gain;
+	this.b1 += (this.a1 - this.b1)*gain;
+	this.b2 += (this.a2 - this.b2)*gain;
+);
+
 function filter_buffer_init(freemem) local(obj) (
 	obj = freemem;
 	obj[FILTER#A1] = 0;
@@ -29,7 +77,7 @@ function filter_buffer_init(freemem) local(obj) (
 	freemem + FILTER#;
 );
 
-function filter_buffer_lowpass(obj, freq, BW) local(inv_a0, b1, w0, sin_w0, Q, alpha) (
+function filter_buffer_lowpass(obj, freq, BW) local(inv_a0, b0, w0, sin_w0, Q, alpha) (
 	w0 = 2*$pi*min(0.49, freq/srate);
 	sin_w0 = sin(w0);
 	cos_w0 = cos(w0);
