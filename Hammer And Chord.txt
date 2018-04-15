@@ -24,6 +24,7 @@ slider16:input_decay_ms=0<0,1000,1>-Input decay
 slider17:input_decay_velocity_curve=0.5<0,1,0.01>-Input decay velocity-sensitivity
 slider18:input_velocity_curve=0.5<0,1,0.01>-Input gain velocity-sensitivity
 slider19:midi_channel_filter=0<0,16,1{all,Channel 0,Channel 1,Channel 2,Channel 3,Channel 4,Channel 5,Channel 6,Channel 7,Channel 8,Channel 9,Channel 10,Channel 11,Channel 12,Channel 13,Channel 14,Channel 15,Channel 16>-MIDI channel filter
+slider20:tuning_mode=1<0,1,1{pitch,sustain}>-Resonator mode
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
@@ -191,10 +192,13 @@ while (note > 0) (
 
 			buffer0 = note[NOTE#buffer0];
 			buffer1 = note[NOTE#buffer1];
-			delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
-			delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
-			//delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
-			//delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
+			tuning_mode ? (
+				delayed0 = delay_buffer_output_allpass(buffer0, delay_samples*detune_l_factor - 1);
+				delayed1 = delay_buffer_output_allpass(buffer1, delay_samples*detune_r_factor - 1);
+			) : (
+				delayed0 = delay_buffer_output_linear(buffer0, delay_samples*detune_l_factor - 1);
+				delayed1 = delay_buffer_output_linear(buffer1, delay_samples*detune_r_factor - 1);
+			);
 			delayed0 = filter_buffer_sample(note[NOTE#filter0], delayed0);
 			delayed1 = filter_buffer_sample(note[NOTE#filter1], delayed1);
 
@@ -276,7 +280,7 @@ function labelled_switch(value, label, format_text) local(height) (
 control_start("main", "tron");
 
 ui_screen() == "main" ? (
-	control_navbar("Hammer And Chord (polyphonic)", -1, -1);
+	control_navbar("Hammer And Chord (polyphonic resonator)", -1, -1);
 
 	ui_split_topratio(0.5);
 		ui_split_leftratio(3/9);
@@ -290,29 +294,18 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(4/6);
+		ui_split_leftratio(3/6);
 			control_group("Damping");
-			ui_split_leftratio(1/4);
+			ui_split_leftratio(1/3);
 				filter_freq = labelled_default_dial(filter_freq, 500, 16000, log(16000/500), "Freq", "%iHz", 2000);
 			ui_split_next();
 				damping_factor = labelled_default_dial(damping_factor, 0, 5, 1.5, "Amount", "", 1);
 			ui_split_next();
 				damping_freq_velocity = labelled_default_dial(damping_freq_velocity, -3, 3, 0, "Velocity", "", 0);
-			ui_split_next();
-				invert_feedback = labelled_switch(invert_feedback, "Feedback", invert_feedback ? "negative" : "positive");
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(2/2);
-			control_group("Stereo");
-			ui_split_leftratio(1/2);
-				detune_lr_cents = labelled_default_dial(detune_lr_cents, -30, 30, 0, "Detune", "%ict", 0);
-			ui_split_next();
-				stereo_width = labelled_default_dial(stereo_width, 0.1, 1, 0.45, "Width", "", 0.5);
-			ui_pop();
-		ui_pop();
-	ui_split_next();
-		ui_split_leftratio(3/8);
+		ui_split_leftratio(3/3);
 			control_group("Impulse");
 			ui_split_leftratio(1/3);
 				impulse_brightness = labelled_default_dial(impulse_brightness, 0.1, 100, log(1000), "Brightness", "", 30);
@@ -322,8 +315,8 @@ ui_screen() == "main" ? (
 				impulse_velocity = labelled_default_dial(impulse_velocity, 0, 2, 0, "Velocity", "", 1);
 			ui_pop();
 		ui_pop();
-
-		ui_split_leftratio(5/5);
+	ui_split_next();
+		ui_split_leftratio(5/9);
 			control_group("Input");
 			ui_split_leftratio(1/5);
 				resonator_scaling = labelled_default_dial(resonator_scaling, 0, 1, 0, "Type", resonator_scaling < 0.25 ? "continuous" : resonator_scaling < 0.75 ? "hybrid" : "impulse", 0.1);
@@ -335,6 +328,24 @@ ui_screen() == "main" ? (
 				input_velocity_curve = labelled_default_dial(input_velocity_curve, 0, 1, 0, "Gain", "Velocity", 0.5);
 			ui_split_next();
 				ring_mod = labelled_switch(ring_mod, "De-tonal", ring_mod ? "on" : "off");
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(2/4);
+			control_group("Resonator");
+			ui_split_leftratio(1/2);
+				invert_feedback = labelled_switch(invert_feedback, "Mode", invert_feedback ? "negative" : "positive");
+			ui_split_next();
+				tuning_mode = labelled_switch(tuning_mode, "Interp", tuning_mode ? "all-pass" : "linear");
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(2/2);
+			control_group("Stereo");
+			ui_split_leftratio(1/2);
+				detune_lr_cents = labelled_default_dial(detune_lr_cents, -30, 30, 0, "Detune", "%ict", 0);
+			ui_split_next();
+				stereo_width = labelled_default_dial(stereo_width, 0.1, 1, 0.45, "Width", "", 0.5);
 			ui_pop();
 		ui_pop();
 	ui_pop();
