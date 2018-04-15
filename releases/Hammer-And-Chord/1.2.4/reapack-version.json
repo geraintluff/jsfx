@@ -1,0 +1,24 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"files": {
+		"Hammer-And-Chord/Hammer And Chord.jsfx": {
+			"main": false
+		},
+		"Hammer-And-Chord/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/filter-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.2.4",
+	"package": "Hammer And Chord",
+	"time": "2018-04-15T22:27:41.780Z"
+}
