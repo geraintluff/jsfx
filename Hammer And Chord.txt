@@ -24,7 +24,7 @@ slider16:input_decay_ms=0<0,1000,1>-Input decay
 slider17:input_decay_velocity_curve=0.5<0,1,0.01>-Input decay velocity-sensitivity
 slider18:input_velocity_curve=0.5<0,1,0.01>-Input gain velocity-sensitivity
 slider19:midi_channel_filter=0<0,16,1{all,Channel 0,Channel 1,Channel 2,Channel 3,Channel 4,Channel 5,Channel 6,Channel 7,Channel 8,Channel 9,Channel 10,Channel 11,Channel 12,Channel 13,Channel 14,Channel 15,Channel 16>-MIDI channel filter
-slider20:tuning_mode=1<0,1,1{pitch,sustain}>-Resonator mode
+slider20:tuning_mode=0<0,1,1{linear,all-pass}>-Resonator mode
 
 import ui-lib.jsfx-inc
 import synth-framework.jsfx-inc
