@@ -4,6 +4,8 @@ This is a collection of audio effects I have written in REAPER's JSFX language.
 
 Download them from [GitHub](https://github.com/geraintluff/jsfx), or [as a ZIP file](http://stash.reaper.fm/v/29933/Geraint%27s%20JSFX.zip), or on [ReaPack](https://reapack.com/) by adding the repository: https://geraintluff.github.io/jsfx/index.xml
 
+There's also a growing set of [video demos/tutorials](https://www.youtube.com/playlist?list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK), although not all effects are covered (yet).
+
 * PadSynth - a synth that produces thick sounds, including per-note effects and modulators ([audio demo](audio-demos/padsynth.mp3))
 * Spring-Box - an echo/chorus effect ([audio demo](audio-demos/spring-box.mp3))
 * Bad Connection - simulate poor connections by flipping between two volumes ([audio demo](audio-demos/Bad Connection/radio-dropout.mp3)), distortion, and a feedback delay line ([audio demo 2](audio-demos/bad-connection-spring-box-glitch.mp3)).
