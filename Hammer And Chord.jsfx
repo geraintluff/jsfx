@@ -106,7 +106,7 @@ function impulse(note) local(attack, phase, amp) (
 	attack = synth_attack(note) - anticipation_samples;
 	attack >= 0 && attack < impulse_length_samples ? (
 		phase = attack/impulse_length_samples - 0.5;
-		phase2 = impulse_brightness*phase*pow(synth_velocity(note)/127, 1);
+		phase2 = impulse_brightness*phase*synth_velocity(note)/127;
 		amp = note[0/*NOTE:impulse_amp*/]*(1 + 0.25*impulse_brightness)/(0.1 + impulse_brightness);
 		tanh(phase2*2*$pi)*(0.5 + 0.5*cos(phase*2*$pi))*amp;
 	) : 0;
@@ -123,7 +123,7 @@ output0 = output1 = 0;
 note = synth_note_first();
 while (note > 0) (
 	midi_channel_filter_enabled && synth_channel(note) !== midi_channel_filter_channel ? (
-		synth_stop();
+		synth_stop(note);
 	) : (
 		note_min_release = min(note_min_release, synth_release(note));
 		synth_needs_init(note) ? (
@@ -219,7 +219,8 @@ while (note > 0) (
 
 			synth_release(note) > 0 ? (
 				release_ratio = synth_release(note)/release_samples;
-				env = pow(1 - release_ratio, 3);
+				release_ratio_remainder = 1 - release_ratio;
+				env = release_ratio_remainder*release_ratio_remainder*release_ratio_remainder;
 				delayed0 *= env;
 				delayed1 *= env;
 			);

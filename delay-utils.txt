@@ -45,6 +45,7 @@ function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buff
 	i = 0;
 	while (i < DELAY#) (
 		obj[i] = 0;
+		i += 1;
 	);
 
 	obj[DELAY#interp_samples] = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
