@@ -819,5 +819,9 @@
 			<metadata>
 			</metadata>
 		</reapack>
+		<reapack name="Level Meter" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>

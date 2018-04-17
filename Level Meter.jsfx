@@ -1,0 +1,91 @@
+desc: Level Meter (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:none
+
+slider1:input_width=0.5<0,1>-Input width
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+import filter-utils.jsfx-inc
+
+@init
+
+gfx_ext_retina = 1;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+!kfilter_shelf_freq ? (
+	kfilter_shelf_freq = 1500.51206937/48000;
+	kfilter_shelf_dB = 0.99994882;
+	kfilter_shelf_slope = 1.00057567;
+	kfilter_highpass_freq = 38.135420783/48000;
+	kfilter_highpass_bw = 2.54176494;
+);
+
+change_scale = 0.00001;
+
+function kfilter_init() (
+	this.shelf.filter_init();
+	this.shelf.filter_highshelf_gainslope(kfilter_shelf_freq, pow(10, kfilter_shelf_dB/20), kfilter_shelf_slope);
+	this.highpass.filter_init();
+	this.highpass.filter_highpass(kfilter_highpass_freq, kfilter_highpass_bw);
+	this.highpass.b0 *= 1.0049949;
+	this.highpass.b1 *= 1.0049949;
+	this.highpass.b2 *= 1.0049949;
+);
+
+@sample
+
+target.b0 = 1;
+target.b1 = -2;
+target.b2 = 1;
+target.a1 = -1.99004745483398;
+target.a2 = 0.99007225036621;
+/*
+target.b0 = 1.53512485958697;
+target.b1 = -2.69169618940638;
+target.b2 = 1.19839281085285;
+target.a1 = -1.69065929318241;
+target.a2 = 0.73248077421585;
+*/
+
+function filter_error() (
+	filter.kfilter_init();
+
+	(filter.highpass.a1 - target.a1)*(filter.highpass.a1 - target.a1)
+	+ (filter.highpass.a2 - target.a2)*(filter.highpass.a2 - target.a2)
+	+ (filter.highpass.b0 - target.b0)*(filter.highpass.b0 - target.b0)
+	+ (filter.highpass.b1 - target.b1)*(filter.highpass.b1 - target.b1)
+	+ (filter.highpass.b2 - target.b2)*(filter.highpass.b2 - target.b2);
+);
+
+old_error = filter_error();
+
+// Randomly mutate
+
+old_kfilter_highpass_freq = kfilter_highpass_freq;
+kfilter_highpass_freq *= 1 + (rand() - 0.5)*change_scale;
+new_error = filter_error();
+new_error >= old_error ? (
+	kfilter_highpass_freq = old_kfilter_highpass_freq;
+) : (
+	old_error = new_error;
+);
+
+old_kfilter_highpass_bw = kfilter_highpass_bw;
+kfilter_highpass_bw *= 1 + (rand() - 0.5)*change_scale;
+new_error = filter_error();
+new_error >= old_error ? (
+	kfilter_highpass_bw = old_kfilter_highpass_bw;
+) : (
+	old_error = new_error;
+);
+
+filter.kfilter_init();
+
+@serialize
+
+foo = foo;
