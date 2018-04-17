@@ -4,7 +4,7 @@ in_pin:Left
 in_pin:Right
 out_pin:none
 
-slider1:input_width=0.5<0,1>-Input width
+slider1:gating_relative_threshold_db=0<-60,0>-Gating threshold (LUFS)
 
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
