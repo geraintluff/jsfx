@@ -147,7 +147,7 @@ while (note > 0) (
 
 			filter_freq_vel = filter_freq*pow(2, damping_freq_velocity*(synth_velocity(note)*2/127 - 1));
 			filter_freq_vel = min(srate*0.45, filter_freq_vel);
-			filter_gain = pow(abs(decay_factor), damping_factor);
+			filter_gain = pow(abs(decay_factor), damping_factor*4);
 			note[6/*NOTE:filter0*/] = mem;
 			mem = filter_buffer_init(mem);
 			filter_buffer_highshelf_gainband(note[6/*NOTE:filter0*/], filter_freq_vel, filter_gain, filter_bandwidth);
