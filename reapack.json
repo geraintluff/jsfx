@@ -111,7 +111,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.3"
+			"version": "1.0.4"
 		},
 		"Warble": {
 			"type": "effect",
@@ -314,7 +314,7 @@
 					"main": false
 				}
 			},
-			"version": "0.1.0"
+			"version": "0.1.1"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

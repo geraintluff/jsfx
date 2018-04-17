@@ -191,6 +191,10 @@
 				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.3/Smooth-Limiter/ui-lib.jsfx-inc</source>
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.3/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 			</version>
+			<version name="1.0.4" time="2018-04-17T09:57:27.360Z">
+				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.4/Smooth-Limiter/ui-lib.jsfx-inc</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.4/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
+			</version>
 		</reapack>
 		<reapack name="Panalysis" type="effect">
 			<metadata>
@@ -241,6 +245,11 @@
 				<source file="Level-Meter/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/filter-utils.jsfx-inc</source>
 				<source file="Level-Meter/Level Meter.jsfx">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/Level%20Meter.jsfx</source>
 				<source file="Level-Meter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="0.1.1" time="2018-04-17T09:58:38.097Z">
+				<source file="Level-Meter/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.1/Level-Meter/filter-utils.jsfx-inc</source>
+				<source file="Level-Meter/Level Meter.jsfx">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.1/Level-Meter/Level%20Meter.jsfx</source>
+				<source file="Level-Meter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.1/Level-Meter/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>

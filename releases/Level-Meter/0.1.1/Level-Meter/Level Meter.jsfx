@@ -1,0 +1,172 @@
+desc: Level Meter - LUFS (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:none
+
+slider1:gating_relative_threshold_db=0<-60,0>-Gating threshold (LUFS)
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+import filter-utils.jsfx-inc
+
+@init
+
+function kfilter_init() local(kfilter_shelf_freq, kfilter_shelf_dB, kfilter_shelf_slope, kfilter_highpass_freq, kfilter_highpass_bw) (
+	// Matches the coefficients for 48kHz - found by experiment, closest I could get
+	kfilter_shelf_freq = 1500.51206565/srate;
+	kfilter_shelf_gain = 1.58485584; // 3.999... dB
+	kfilter_shelf_slope = 1.00057567;
+	kfilter_highpass_freq = 38.135420783/srate;
+	kfilter_highpass_bw = 2.54176494;
+	kfilter_highpass_gain = 1.0049949;
+
+	this.shelf.filter_init();
+	this.shelf.filter_highshelf_gainslope(kfilter_shelf_freq, kfilter_shelf_gain, kfilter_shelf_slope);
+	this.highpass.filter_init();
+	this.highpass.filter_highpass(kfilter_highpass_freq, kfilter_highpass_bw);
+	this.highpass.b0 *= kfilter_highpass_gain;
+	this.highpass.b1 *= kfilter_highpass_gain;
+	this.highpass.b2 *= kfilter_highpass_gain;
+);
+function kfilter_sample(x) (
+	this.highpass.filter_sample(this.shelf.filter_sample(x));
+);
+
+function powerToDb(power) (
+	power > 0.00000000000000000000000000000011724653045822965 ? (
+		10*log10(power) - 0.691;
+	) : -300;
+);
+function powerToDb(power, counter) (
+	counter ? powerToDb(power/counter) : -300;
+);
+
+
+gfx_ext_retina = 1;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+// blocks of 400ms
+gatingblock_length = ceil(0.4*srate);
+gatingblock_interval = ceil(gatingblock_length/4);
+gatingblock_index = 0;
+gatingblock_power = 0;
+
+freemem = (gatingblock = freemem) + gatingblock_length;
+memset(gatingblock, 0, gatingblock_length);
+
+filter_l.kfilter_init();
+filter_r.kfilter_init();
+
+function reset_stage1() (
+	gating_absolute_threshold_db = -70;
+	gating_absolute_power = 0;
+	gating_absolute_counter = 0;
+
+	gating_relative_threshold_db = 10000000;
+	gating_relative_power = 0;
+	gating_relative_counter = 0;
+);
+function reset_stage2() (
+	gating_relative_threshold_db = gating_absolute_counter ? powerToDb(gating_absolute_power/gating_absolute_counter) - 10 : 0;
+	gating_relative_power = 0;
+	gating_relative_counter = 0;
+);
+!gating_absolute_threshold_db ? (
+	reset_stage1();
+);
+
+@block
+
+// Recalculate block power, to prevent accumulated numerical errors
+gatingblock_power = 0;
+i = 0;
+loop(gatingblock_length,
+	gatingblock_power += gatingblock[i];
+	i += 1;
+);
+
+@sample
+
+action_reset_stage1 ? (
+	action_reset_stage1 = 0;
+	reset_stage1();
+);
+action_reset_stage2 ? (
+	action_reset_stage2 = 0;
+	reset_stage2();
+);
+
+// For multichannel, create more filters, and sum them with different weights
+// For 5.1 surround, centre is also at 0dB, LFE is ignored, and the L/R surround channels should be premultiplied by 1.41 *after* the power calculation (so ~1.5dB boost)
+left = filter_l.kfilter_sample(spl0);
+right = filter_r.kfilter_sample(spl1);
+power = left*left + right*right;
+
+gatingblock_power += power - gatingblock[gatingblock_index];
+gatingblock[gatingblock_index] = power;
+gatingblock_index += 1;
+gatingblock_index >= gatingblock_length ? gatingblock_index = 0;
+
+// So, according to the spec, we should only do this every 1/4 block (100ms).
+// That introduces uncertainty - the result will be slightly dependent on the block alignment, although not very much.
+// However, calculating all the possible alignments/offsets (including gating), and averaging that is *equivalent* to doing this every sample, which is simpler for us.
+// This 100ms interval was presumably introduced so that a naive implementation would not be as inefficient, but it doesn't matter for our implementation.
+gatingblock_power_db = powerToDb(gatingblock_power/gatingblock_length);
+
+gatingblock_power_db > gating_absolute_threshold_db ? (
+	gating_absolute_power += gatingblock_power;
+	gating_absolute_counter += gatingblock_length;
+);
+
+gatingblock_power_db > gating_relative_threshold_db ? (
+	gating_relative_power += gatingblock_power;
+	gating_relative_counter += gatingblock_length;
+);
+
+@gfx 400 320
+
+control_start("main", "black");
+ui_screen() == "main" ? (
+	ui_split_top(75);
+		ui_color(255, 0, 0, 0.2);
+		ui_fill();
+
+		ui_color(255, 0, 0);
+		ui_border_bottom();
+		ui_fontsize(12);
+		ui_wraptext("WARNING\nThis plugin is in alpha-stage, and the results are not guaranteed to be accurate! If you have another integrated LUFS meter, please compare the two and tell luffgd@gmail.com whether they match. :)");
+	ui_pop();
+
+	ui_pad();
+	control_group("LUFS");
+
+	ui_split_bottomtext();
+		ui_split_leftratio(1/2);
+			control_button("Stage 1 reset") ? (
+				action_reset_stage1 = 1;
+			);
+		ui_split_next();
+			control_button("Stage 2 reset") ? (
+				action_reset_stage2 = 1;
+			);
+		ui_pop();
+	ui_pop();
+
+	ui_split_topratio(1/4);
+		ui_textnumber(gatingblock_power_db, "Instant: %f");
+	ui_split_next();
+		ui_textnumber(powerToDb(gating_absolute_power, gating_absolute_counter), "Absolute (int): %f");
+	ui_split_next();
+		gating_relative_threshold_db < 0 ? ui_textnumber(gating_relative_threshold_db, "Relative threshold: %f");
+	ui_split_next();
+		gating_relative_threshold_db < 0 ? ui_textnumber(powerToDb(gating_relative_power, gating_relative_counter), "Relative (int): %f");
+	ui_pop();
+) : control_system();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);
