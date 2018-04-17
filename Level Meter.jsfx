@@ -126,10 +126,20 @@ gatingblock_power_db > gating_relative_threshold_db ? (
 	gating_relative_counter += gatingblock_length;
 );
 
-@gfx 400 275
+@gfx 400 320
 
 control_start("main", "black");
 ui_screen() == "main" ? (
+	ui_split_top(75);
+		ui_color(255, 0, 0, 0.2);
+		ui_fill();
+
+		ui_color(255, 0, 0);
+		ui_border_bottom();
+		ui_fontsize(12);
+		ui_wraptext("WARNING\nThis plugin is in alpha-stage, and the results are not guaranteed to be accurate! If you have another integrated LUFS meter, please compare the two and tell luffgd@gmail.com whether they match. :)");
+	ui_pop();
+
 	ui_pad();
 	control_group("LUFS");
 
