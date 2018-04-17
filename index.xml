@@ -234,6 +234,15 @@
 				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Level Meter" type="effect">
+			<metadata>
+			</metadata>
+			<version name="0.1.0" time="2018-04-17T09:19:36.939Z">
+				<source file="Level-Meter/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/filter-utils.jsfx-inc</source>
+				<source file="Level-Meter/Level Meter.jsfx">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/Level%20Meter.jsfx</source>
+				<source file="Level-Meter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.0/Level-Meter/ui-lib.jsfx-inc</source>
+			</version>
+		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
@@ -816,10 +825,6 @@
 			</version>
 		</reapack>
 		<reapack name="MIDI Controller Control" type="effect">
-			<metadata>
-			</metadata>
-		</reapack>
-		<reapack name="Level Meter" type="effect">
 			<metadata>
 			</metadata>
 		</reapack>

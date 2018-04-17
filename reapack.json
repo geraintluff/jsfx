@@ -302,7 +302,7 @@
 		},
 		"Level Meter": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Utility",
 			"files": {
 				"filter-utils.jsfx-inc": {
 					"main": false
@@ -313,7 +313,8 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				}
-			}
+			},
+			"version": "0.1.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
