@@ -297,7 +297,7 @@ function labelled_dial(value, low, high, bias, label, formatvalue, format, defau
 		ui_pop();
 		ui_push_rightof(50);
 			ui_align(0, 0.5);
-			ui_textnumber(formatvalue, format);
+			value = control_hidden_textnumber(value, formatvalue, format);
 		ui_pop();
 		ui_click() && ui_clickcount() == 2 ? (
 			value = default;
@@ -317,7 +317,7 @@ ui_screen() == "main" ? (
 		ui_split_topratio(1/5);
 			slider1 = labelled_dial(slider1, -20, -0.1, -3.5, "limit:", slider1, "%0.1fdB", -3);
 		ui_split_next();
-			slider5 = labelled_dial(slider5, -12, 12, 0, "pre-gain:", slider5, "%0.1fdB", 0);
+			slider5 = labelled_dial(slider5, -12, 12, 0, "pre-gain:", slider5 + (slider5 > 0 ? 0.002 : -0.002), abs(slider5) < 10 ? "%0.2fdB" : "%0.1fdB", 0);
 		ui_split_next();
 			slider2 = labelled_dial(slider2, 0.1, 100, 3, "attack:", slider2, "%0.1fms", 10);
 		ui_split_next();
