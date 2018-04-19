@@ -130,6 +130,15 @@ function delay_output_linear(samples) local(index, index1, index2, ratio, i, int
 	sum;
 );
 
+function delay_buffer_output_samples(obj, samples) local(index, buffer) (
+	index = obj[2/*DELAY:index*/] - samples;
+	while (index < 0) (
+		index += obj[1/*DELAY:length*/];
+	);
+	buffer = obj[4/*DELAY:buffer*/];
+	buffer[index];
+);
+
 function delay_buffer_output_linear(obj, samples) local(index, index1, index2, ratio, i, interp_buffer, buffer, interp_index, sum) (
 	index = obj[2/*DELAY:index*/] - max(obj[0/*DELAY:interp_samples*/], samples + obj[6/*DELAY:interp_offset*/] - 1);
 	index1 = floor(index);
