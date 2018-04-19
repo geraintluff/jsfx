@@ -557,6 +557,20 @@
 				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.5/Hammer-And-Chord/synth-framework.jsfx-inc</source>
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.2.5/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 			</version>
+			<version name="1.3.0" time="2018-04-19T21:03:29.370Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.0/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.0/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.0/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.0/Hammer-And-Chord/synth-framework.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.0/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="1.3.1" time="2018-04-19T21:23:38.163Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.1/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.1/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.1/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.1/Hammer-And-Chord/synth-framework.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.3.1/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Pitch Correction">
