@@ -198,7 +198,6 @@ function synth_sample_each(note*) (
 
 function synth_continue(note*) (
 	note._synth.index < synthx_max_active_note;
-	1;
 );
 
 function synth_needs_init(note*) (
