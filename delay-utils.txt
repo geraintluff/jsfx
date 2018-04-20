@@ -19,6 +19,8 @@ function delay_setup(freemem, max_delay_samples) local(i, t, wr, w) (
 		this.buffer[i] = 0;
 		i += 1;
 	);
+	this.allpass.x1 = this.allpass.x2 = this.allpass.y1 = this.allpass.y2 = 0;
+
 	this.interp_scale = 64;
 	this.interp_offset = this.interp_samples/2;
 	freemem = (this.interp_buffer = freemem) + this.interp_samples*this.interp_scale;
@@ -33,6 +35,98 @@ function delay_setup(freemem, max_delay_samples) local(i, t, wr, w) (
 	);
 	freemem;
 );
+
+function delay_init(freemem, max_delay_samples) (
+	this.delay_setup(freemem, max_delay_samples);
+);
+
+function delay_size(max_delay_samples) local(length, interp_samples, interp_scale) (
+	interp_samples = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
+	length = ceil(max_delay_samples + interp_samples + 1);
+	interp_scale = 64;
+	length + interp_scale*interp_samples;
+);
+
+function delay_input(spl) (
+	this.index += 1;
+	this.index >= this.buffer_length ? (
+		this.index = 0;
+	);
+	this.buffer[this.index] = spl;
+	spl;
+);
+
+function delay_output_linear(samples) local(index, index1, index2, ratio, i, interp_index, sum) (
+	index = this.index - max(this.interp_samples, samples + this.interp_offset - 1);
+	index1 = floor(index);
+	ratio = index - index1;
+	while (index1 < 0) (
+		index1 += this.buffer_length;
+	);
+
+	sum = 0;
+	index = index1;
+	interp_index = floor((1 - ratio)*this.interp_scale);
+	i = 0;
+	while (i < this.interp_samples) (
+		sum += this.interp_buffer[interp_index]*this.buffer[index];
+		interp_index += this.interp_scale;
+		index += 1;
+		index >= this.buffer_length ? (
+			index = 0;
+		);
+		i += 1;
+	);
+	sum;
+);
+
+function delay_output_samples(samples) local(index, buffer) (
+	index = this.index - samples;
+	while (index < 0) (
+		index += this.buffer_length;
+	);
+	this.buffer[index];
+);
+
+function delay_output_allpass(samples)
+		local(buffer, interp_buffer, index, index1, index2, Delta, ratio, x0, y0, a1, a2, b0, b1, b2) (
+	buffer = this.buffer;
+	index = this.index - max(3, samples);
+	index1 = ceil(index + 2 + 0.1); // This makes sure Delta is above 2
+	Delta = index1 - index;
+	Delta = 3;
+	while (index1 < 0) (
+		index1 += this.buffer_length;
+	);
+
+	this.allpass.prev_delay != index1 ? (
+		// Reset the filter
+		index2 = index1 - 1;
+		index2 < 0 ? index2 += this.buffer_length;
+		this.allpass.x1 = buffer[index2];
+		ratio = max(0, min(1, Delta));
+		// Linear interpolation to simulate previous output
+		this.allpass.y1 = buffer[index1] + ratio*(buffer[index2] - buffer[index1]);
+		this.allpass.prev_delay = index1;
+	);
+
+	// Second-order Thiran
+	a1 = -2*(Delta - 2)/(Delta + 1);
+	a2 = (Delta - 2)*(Delta - 1)/(Delta + 1)/(Delta + 2);
+	b0 = a2;
+	b1 = a1;
+	b2 = 1;
+
+	x0 = buffer[index1];
+	y0 = b0*x0 + b1*this.allpass.x1 + b2*this.allpass.x2
+		- a1*this.allpass.y1 - a2*this.allpass.y2;
+	this.allpass.x2 = this.allpass.x1;
+	this.allpass.x1 = x0;
+	this.allpass.y2 = this.allpass.y1;
+	this.allpass.y1 = y0;
+);
+
+/**************** Buffer versions ****************/
 
 function delay_buffer_size(max_delay_samples) local(length, interp_samples, interp_scale) (
 	interp_samples = this.config.interpolation_samples ? this.config.interpolation_samples : 4;
@@ -78,21 +172,8 @@ function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buff
 	freemem;
 );
 
-function delay_init(freemem, max_delay_samples) (
-	this.delay_setup(freemem, max_delay_samples);
-);
-
 function delay_buffer_init(freemem, max_delay_samples) (
 	delay_buffer_setup(freemem, max_delay_samples);
-);
-
-function delay_input(spl) (
-	this.index += 1;
-	this.index >= this.buffer_length ? (
-		this.index = 0;
-	);
-	this.buffer[this.index] = spl;
-	spl;
 );
 
 function delay_buffer_input(obj, spl) local(buffer, index) (
@@ -103,30 +184,6 @@ function delay_buffer_input(obj, spl) local(buffer, index) (
 	buffer = obj[DELAY#buffer];
 	buffer[index] = spl;
 	spl;
-);
-
-function delay_output_linear(samples) local(index, index1, index2, ratio, i, interp_index, sum) (
-	index = this.index - max(this.interp_samples, samples + this.interp_offset - 1);
-	index1 = floor(index);
-	ratio = index - index1;
-	while (index1 < 0) (
-		index1 += this.buffer_length;
-	);
-
-	sum = 0;
-	index = index1;
-	interp_index = floor((1 - ratio)*this.interp_scale);
-	i = 0;
-	while (i < this.interp_samples) (
-		sum += this.interp_buffer[interp_index]*this.buffer[index];
-		interp_index += this.interp_scale;
-		index += 1;
-		index >= this.buffer_length ? (
-			index = 0;
-		);
-		i += 1;
-	);
-	sum;
 );
 
 function delay_buffer_output_samples(obj, samples) local(index, buffer) (
@@ -164,8 +221,9 @@ function delay_buffer_output_linear(obj, samples) local(index, index1, index2, r
 	sum;
 );
 
-function delay_buffer_output_allpass(obj, samples)
-		local(interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1, a2, b0, b1, b2) (
+// SHOULD NOT USE
+function __deprecated__delay_buffer_output_allpass(obj, samples)
+		local(buffer, interp_buffer, index, index1, index2, delta, ratio, x0, y0, a1, a2, b0, b1, b2) (
 	buffer = obj[DELAY#buffer];
 	index = obj[DELAY#index] - max(3, samples);
 	index1 = ceil(index + 2 + 0.1); // This makes sure Delta is above 2
@@ -180,7 +238,7 @@ function delay_buffer_output_allpass(obj, samples)
 		index2 = index1 - 1;
 		index2 < 0 ? index2 += obj[DELAY#length];
 		obj[DELAY#allpass_x1] = buffer[index2];
-		ratio = max(0, min(1, delta));
+		ratio = max(0, min(1, Delta));
 		// Linear interpolation to simulate previous output
 		obj[DELAY#allpass_y1] = buffer[index1] + ratio*(buffer[index2] - buffer[index1]);
 		obj[DELAY#allpass_prev_delay] = index1;
