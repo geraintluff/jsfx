@@ -193,7 +193,7 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				},
-				"synth-framework.jsfx-inc": {
+				"synth-framework-obj.jsfx-inc": {
 					"main": false
 				},
 				"filter-utils.jsfx-inc": {
