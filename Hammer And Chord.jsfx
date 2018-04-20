@@ -237,20 +237,20 @@ function process_note(note*) (
 				note.buffer0.delay_input(excitation0);
 				note.buffer1.delay_input(excitation1);
 
-				synth_release(note) > 0 ? (
-					release_ratio = synth_release(note)/release_samples;
-					release_ratio_remainder = 1 - release_ratio;
-					env = release_ratio_remainder*release_ratio_remainder*release_ratio_remainder;
-					delayed0 *= env;
-					delayed1 *= env;
-				);
-
 				timbre_samples = floor(delay_samples*timbre_wavelength_offset_actual + 0.5);
 				timbre0 = note.buffer0.delay_output_samples(timbre_samples);
 				timbre1 = note.buffer1.delay_output_samples(timbre_samples);
 
-				output0 += delayed0 - timbre0*timbre_inverse_gain;
-				output1 += delayed1 - timbre1*timbre_inverse_gain;
+				synth_release(note) > 0 ? (
+					release_ratio = synth_release(note)/release_samples;
+					release_ratio_remainder = 1 - release_ratio;
+					env = release_ratio_remainder*release_ratio_remainder*release_ratio_remainder;
+					output0 += (delayed0 - timbre0*timbre_inverse_gain)*env;
+					output1 += (delayed1 - timbre1*timbre_inverse_gain)*env;
+				) : (
+					output0 += delayed0 - timbre0*timbre_inverse_gain;
+					output1 += delayed1 - timbre1*timbre_inverse_gain;
+				);
 			);
 		);
 	);
