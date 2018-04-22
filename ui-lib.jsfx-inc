@@ -2512,53 +2512,59 @@ function uix_autoselect_char(char) (
 		|| (char >= 192 && char <= 255);
 );
 
-function control_textinput_hasfocus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
-	// TODO: have version with and without text, so we can do this properly
-	text_length = text ? strlen(text) : 0;
-	prompt_selectcursor = floor(prompt_selectpacked) - 1;
-	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
-	prompt_selecttrail >= 0;
+function uix_control_textinput_pack(focused, start, end) local(packed) (
+	packed = start + end*67108864;
+	focused ? packed + 1: -packed;
+);
+function uix_control_textinput_unpack_focused(packed) (
+	packed > 0 ? 1 : 0;
+);
+function uix_control_textinput_unpack_cursor(packed) (
+	packed > 0 ? (packed - 1)%67108864 : (-packed)%67108864;
+);
+function uix_control_textinput_unpack_trail(packed) (
+	packed > 0 ? floor((packed - 1)/67108864) : floor(-packed/67108864);
 );
 
-function control_textinput_focus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
-	text_length = text ? strlen(text) : 0;
-	prompt_selectcursor = floor(prompt_selectpacked) - 1;
-	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
+////////////////
+// TODO: make sure I didn't typo "trail" as "tail" here
+////////////////
 
-	prompt_selecttrail = (prompt_selectcursor < 0) ? 0 : prompt_selectcursor;
-
-	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
-	prompt_selectpacked;
+function control_textinput_hasfocus(prompt_selectpacked) (
+	uix_control_textinput_unpack_focused(prompt_selectpacked);
 );
 
-function control_textinput_unfocus(prompt_selectpacked) local(text_length, prompt_selectcursor, prompt_selecttrail) (
-	text_length = text ? strlen(text) : 0;
-	prompt_selectcursor = floor(prompt_selectpacked) - 1;
-	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
-
-	prompt_selecttrail = -1;
-
-	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
-	prompt_selectpacked;
+function control_textinput_select(packed, cursor, trail) local(focused) (
+	focused = uix_control_textinput_unpack_focused(packed);
+	uix_control_textinput_pack(focused, cursor, trail);
 );
 
-function control_textinput(text, prompt_selectpacked) local(text_length, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, keyinterested, char_index, select_padding) (
+function control_textinput_focus(packed) local(focused, cursor, trail) (
+	cursor = uix_control_textinput_unpack_cursor(packed);
+	trail = uix_control_textinput_unpack_trail(packed);
+
+	uix_control_textinput_pack(1, cursor, trail);
+);
+
+function control_textinput_unfocus(packed) local(cursor, trail) (
+	cursor = uix_control_textinput_unpack_cursor(packed);
+	trail = uix_control_textinput_unpack_trail(packed);
+
+	uix_control_textinput_pack(0, cursor, trail);
+);
+
+function control_textinput(text, packed) local(text_length, prompt_selectlow, prompt_selecthigh, textx, texty, selectw, t, char, keyinterested, char_index, select_padding) (
 	text_length = strlen(text);
-	prompt_selectcursor = floor(prompt_selectpacked) - 1;
-	prompt_selecttrail = floor((prompt_selectpacked - 1 - prompt_selectcursor)*(text_length + 2) + 0.5) - 1;
-	prompt_selectcursor < 0 ? (
-		prompt_selectcursor = text_length;
-		prompt_selecttrail >= 0 ? prompt_selecttrail = prompt_selectcursor;
-	);
+
+	prompt_focused = uix_control_textinput_unpack_focused(packed);
+	prompt_selectcursor = uix_control_textinput_unpack_cursor(packed);
+	prompt_selecttrail = uix_control_textinput_unpack_trail(packed);
+
 	prompt_selectcursor = min(text_length, prompt_selectcursor);
-	prompt_selecttrail = max(-1, min(text_length, prompt_selecttrail));
+	prompt_selecttrail = min(text_length, prompt_selecttrail);
 
 	prompt_selecthigh = max(prompt_selectcursor, prompt_selecttrail);
 	prompt_selectlow = prompt_selecttrail >= 0 ? min(prompt_selectcursor, prompt_selecttrail) : prompt_selecthigh;
-	prompt_selectcursor < 0 ? (
-		prompt_selectcursor = text_length;
-		prompt_selecttrail = -1;
-	);
 
 	ui_push();
 		ui_align(0, 0.5);
@@ -2593,8 +2599,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 			);
 		);
 		ui_mouse_down_outside() ? (
-			prompt_selectcursor = text_length;
-			prompt_selecttrail = -1; // No cursor
+			prompt_focused = 0;
 		);
 
 		ui_push();
@@ -2639,10 +2644,11 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 
 		control_finish_inset();
 
-		prompt_selecttrail >= 0 ? (
-			keyinterested = prompt_selecttrail >= 0;
-			while (keyinterested && ui_key()) (
+		prompt_focused ? (
+			keyinterested = prompt_focused;
+			while (prompt_focused && ui_key()) (
 				char = ui_key();
+				debug.char = char;
 				ui_key_printable() ? (
 					strcpy_substr(#control_tmp1, text, 0, prompt_selectlow);
 					str_setchar(#control_tmp1, prompt_selectlow, char);
@@ -2718,8 +2724,7 @@ function control_textinput(text, prompt_selectpacked) local(text_length, prompt_
 		);
 	ui_pop();
 
-	prompt_selectpacked = prompt_selectcursor + (prompt_selecttrail + 1)/(text_length + 2) + 1;
-	prompt_selectpacked;
+	uix_control_textinput_pack(prompt_focused, prompt_selectcursor, prompt_selecttrail);
 );
 
 uix_control_hidden_text_active_x =uix_control_hidden_text_active_y = -1;
@@ -2737,6 +2742,7 @@ function control_hidden_text(text) local(i) (
 			uix_control_hidden_text_active_y = ui_top();
 			// TODO: select-all here, when it's implemented
 			uix_control_hidden_text_state = control_textinput_focus(0);
+			uix_control_hidden_text_state = control_textinput_select(uix_control_hidden_text_state, 0, strlen(text));
 		);
 	);
 );
@@ -2745,7 +2751,7 @@ function control_hidden_textnumber(actualnumber, number, format) local(i) (
 		ui_key() == 27 || ui_key() == 13 || ui_mouse_down_outside(1) || ui_mouse_down_outside(2) || ui_mouse_down_outside(64) ? (
 			uix_control_hidden_text_active_x = uix_control_hidden_text_active_y = -1;
 			ui_key() != 27 ? (
-				actualnumber = ui_parsenumber(#uix_control_hidden_textnumber, $pi);
+				actualnumber = ui_parsenumber(#uix_control_hidden_textnumber, actualnumber);
 			);
 		);
 		uix_control_hidden_text_state = control_textinput(#uix_control_hidden_textnumber, uix_control_hidden_text_state);
@@ -2757,6 +2763,7 @@ function control_hidden_textnumber(actualnumber, number, format) local(i) (
 			uix_control_hidden_text_active_y = ui_top();
 			// TODO: select-all here, when it's implemented
 			uix_control_hidden_text_state = control_textinput_focus(0);
+			uix_control_hidden_text_state = control_textinput_select(uix_control_hidden_text_state, 0, strlen(#uix_control_hidden_textnumber));
 		);
 	);
 	actualnumber;
