@@ -20,7 +20,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png"
 			},
-			"version": "2.0.4"
+			"version": "2.1.0"
 		},
 		"Sandwich Amp": {
 			"type": "effect",
@@ -57,7 +57,7 @@
 					"Spectrum Matcher 2.png"
 				]
 			},
-			"version": "1.3.8"
+			"version": "1.4.0"
 		},
 		"Spring-Box": {
 			"type": "effect",
@@ -111,7 +111,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.4"
+			"version": "1.1.0"
 		},
 		"Warble": {
 			"type": "effect",

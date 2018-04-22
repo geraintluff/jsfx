@@ -58,6 +58,12 @@
 				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.4/Bad-Connection/ui-lib.jsfx-inc</source>
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.0.4/Bad-Connection/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="2.1.0" author="Geraint Luff" time="2018-04-22T20:56:05.490Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.0/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.0/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.0/Bad-Connection/delay-utils.jsfx-inc</source>
+				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -171,6 +177,11 @@
 				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.8/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.3.8/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.4.0" author="Geraint Luff" time="2018-04-22T20:57:04.694Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.4.0/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.4.0/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
@@ -194,6 +205,11 @@
 			<version name="1.0.4" time="2018-04-17T09:57:27.360Z">
 				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.4/Smooth-Limiter/ui-lib.jsfx-inc</source>
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.4/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
+			</version>
+			<version name="1.1.0" time="2018-04-22T20:56:48.805Z">
+				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.0/Smooth-Limiter/ui-lib.jsfx-inc</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.0/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
+				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
 			</version>
 		</reapack>
 		<reapack name="Panalysis" type="effect">
