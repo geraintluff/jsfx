@@ -1,5 +1,10 @@
 desc:Spectrum Matcher (by Geraint Luff)
 
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 slider1:30<10,50,10>-bands
 slider2:4<1,10,0.1>-peak bias
 slider3:40<10,200>-smoothing period (ms)

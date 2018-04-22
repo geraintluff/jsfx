@@ -1,5 +1,10 @@
 desc:Bad Connection (by Geraint Luff)
 
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
 slider1:8<0,50,0.1>-Changes per second
 slider2:0.6<0.0,1,0.01>-Bias (off - on)
 slider3:5<0,20,0.1>-Transition speed (ms)
