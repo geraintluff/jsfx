@@ -6,7 +6,7 @@ out_pin:Left
 out_pin:Right
 
 slider1:delay_ms_l=0<-125,125,0.1>-Left delay (ms)
-slider2:delay_ms_r=<-125,125,0.1>-Right delay (ms)
+slider2:delay_ms_r=0<-125,125,0.1>-Right delay (ms)
 slider3:delay_linked=0<0,1,1{no,yes}>-Linked
 slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
 slider5:delay_fftsize_1024log2=3<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
