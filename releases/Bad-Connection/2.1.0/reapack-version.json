@@ -1,0 +1,23 @@
+{
+	"type": "effect",
+	"category": "Distortion",
+	"files": {
+		"Bad-Connection/Bad Connection.jsfx": {
+			"main": false
+		},
+		"Bad-Connection/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Bad-Connection/delay-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"author": "Geraint Luff",
+	"links": {
+		"screenshot": "Bad Connection.png"
+	},
+	"version": "2.1.0",
+	"package": "Bad Connection",
+	"time": "2018-04-22T20:56:05.490Z",
+	"changeLog": "Declare inputs/outputs (2-channel)"
+}
