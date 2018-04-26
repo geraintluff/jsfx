@@ -1,6 +1,7 @@
 {
 	"name": "Geraint's JSFX",
 	"git": true,
+	"author": "Geraint Luff",
 	"packages": {
 		"Bad Connection": {
 			"type": "effect",
@@ -61,6 +62,7 @@
 		},
 		"Spring-Box": {
 			"type": "effect",
+			"author": "Geraint Luff",
 			"category": "Delay",
 			"files": {
 				"Spring-Box.jsfx": {
