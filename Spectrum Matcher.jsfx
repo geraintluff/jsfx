@@ -1904,6 +1904,12 @@ ui_screen() == "main" ? (
 							new_correction_resolution = correction_resolution = bands_N;
 							action_freeze = 1;
 						);
+						flash_phase = time_precise()/4;
+						flash_phase_index = floor((flash_phase - floor(flash_phase))*25);
+						flash_phase_index == 0 || flash_phase_index == 2 ? (
+							ui_color(128, 192, 255, 0.2);
+							ui_fill();
+						);
 					) : (
 						ui_fontsize(14);
 
