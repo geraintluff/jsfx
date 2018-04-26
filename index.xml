@@ -182,6 +182,11 @@
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.4.0/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
 			</version>
+			<version name="1.5.0" author="Geraint Luff" time="2018-04-26T07:46:10.815Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.5.0/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.5.0/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+				<changelog><![CDATA[add Amount control]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>

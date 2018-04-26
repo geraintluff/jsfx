@@ -1,0 +1,23 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Utility",
+	"files": {
+		"Spectrum-Matcher/Spectrum Matcher.jsfx": {
+			"main": false
+		},
+		"Spectrum-Matcher/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": [
+			"Spectrum Matcher 1.png",
+			"Spectrum Matcher 2.png"
+		]
+	},
+	"version": "1.5.0",
+	"package": "Spectrum Matcher",
+	"time": "2018-04-26T07:46:10.815Z",
+	"changeLog": "add Amount control"
+}
