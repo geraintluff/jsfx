@@ -12,6 +12,7 @@ slider4:1<0.5,1.5>-sharpness (Q)
 slider5:6<-12,20>-hard limit (dB)
 slider6:correction_gain_db=0<-24,12,0.1>-correction gain (dB)
 slider7:correction_resolution=50<1,50,1>-correction resolution
+slider8:correction_strength=1<0,1>-correction strength
 
 import ui-lib.jsfx-inc
 
@@ -932,7 +933,7 @@ function calculate_correction_coefficients() local(i, logMerged, logA, logB, siz
 	while (i < model_N) (
 		i == 0 || correction_group_num[i] != correction_group_num[i - 1] ? (
 			boundary_freq = low_freq*exp(log(high_freq/low_freq)*i/model_N);
-			amp = exp(correction_group_logamp[i]/correction_group_size[i]);
+			amp = exp(correction_group_logamp[i]/correction_group_size[i]*correction_strength);
 
 			Q = (filter_i == 0) ? 0.71 : slider4;
 			A = sqrt(amp/prev_amp);
@@ -1215,6 +1216,7 @@ action_correct ? (
 	correction_resolution = 0;
 	calculate_correction_coefficients();
 	correction_active = 1;
+	correction_strength = 1;
 	correction_learning = 1;
 );
 
@@ -1238,6 +1240,11 @@ slider4 != last_sharpness ? (
 	action_recalculate = 1;
 );
 last_sharpness = slider4;
+
+correction_strength != last_correction_strength ? (
+	action_recalculate = 1;
+);
+last_correction_strength = correction_strength;
 
 model_N && action_recalculate ? (
 	action_recalculate = 0;
@@ -1899,12 +1906,12 @@ ui_screen() == "main" ? (
 						);
 					) : (
 						ui_fontsize(14);
-						ui_padleft();
-						ui_pad(0, -1);
-						ui_split_right(30);
-							ui_textnumber(correction_resolution, "%i");
+
+						ui_pad(-1, -1, 0, -1);
+						ui_split_leftratio(0.25);
 						ui_pop();
-						ui_split_right(ui_height());
+
+						ui_split_left(ui_height());
 							!new_correction_resolution ? new_correction_resolution = correction_resolution;
 							new_correction_resolution = min(new_correction_resolution, bands_N);
 							new_correction_resolution = control_dial(new_correction_resolution, 5, bands_N, 2);
@@ -1914,9 +1921,14 @@ ui_screen() == "main" ? (
 							);
 						ui_pop();
 
-						ui_align(1, 0.5);
-						ui_pad(0, 0, 2, 0);
-						ui_text("Bands");
+						ui_align(0, 0.5);
+						ui_pad(2, 0, 0, 0);
+						ui_split_topratio(0.5);
+							ui_fontbold(1);
+							ui_text("Bands");
+						ui_split_next();
+							ui_textnumber(correction_resolution, "%i");
+						ui_pop();
 					);
 				) : (
 					control_button("Correct", 0);
@@ -1925,47 +1937,70 @@ ui_screen() == "main" ? (
 		ui_pop();
 
 		ui_fontsize(14);
-		ui_split_leftratio(0.3);
-			ui_pad(0, -1);
-			ui_split_right(30);
-				ui_textnumber(slider4, "%0.1f");
-			ui_pop();
-			ui_split_right(ui_height());
-				slider4 = control_dial(slider4, 0.5, 1.5, 0);
-			ui_pop();
+		ui_split_leftratio(0.25);
+			correction_active ? (
+				ui_pad(-1, -1, 0, -1);
+				ui_padleft(ui_height()*0.15);
+				ui_split_left(ui_height()*1.15);
+					slider4 = control_dial(slider4, 0.5, 1.5, 0);
+				ui_pop();
 
-			ui_align(1, 0.5);
-			ui_pad(0, 0, 2, 0);
-			ui_text("Q");
-		ui_pop();
-		ui_split_leftratio(1/2);
-			ui_pad(0, -1);
-			ui_split_right(50);
-				ui_align(0.8, 0.5);
-				ui_textnumber(floor(correction_gain_db*10 + 0.4)*0.1, "%0.1fdB");
-			ui_pop();
-			ui_split_right(ui_height());
+				ui_align(0, 0.5);
+				ui_pad(2, 0, 0, 0);
+				ui_split_topratio(0.5);
+					ui_fontbold(1);
+					ui_text("Q");
+				ui_split_next();
+					ui_textnumber(slider4, "%0.1f");
+				ui_pop();
+			);
+		ui_split_next();
+			correction_active ? (
+				ui_pad(-1, -1, 0, -1);
+				ui_split_left(ui_height());
+					correction_strength = control_dial(correction_strength, 0, 1, 0);
+				ui_pop();
+
+				ui_align(0, 0.5);
+				ui_pad(2, 0, 0, 0);
+				ui_split_topratio(0.5);
+					ui_fontbold(1);
+					ui_text("Amount");
+				ui_split_next();
+					ui_textnumber(floor(correction_strength*100 + 0.5), "%i%%");
+				ui_pop();
+			);
+		ui_split_next();
+			ui_pad(-1, -1, 0, -1);
+			ui_split_left(ui_height());
 				correction_gain_db = control_dial(correction_gain_db, -24, 12, -1.5);
 				ui_click() && ui_clickcount() == 2 ? (
 					correction_gain_db = 0;
 				);
 			ui_pop();
 
-			ui_align(1, 0.5);
-			ui_pad(0, 0, 2, 0);
-			ui_text("Gain");
-		ui_split_next();
-			ui_pad(0, -1);
-			ui_split_right(50);
-				ui_textnumber(slider5, "%0.1fdB");
+			ui_align(0, 0.5);
+			ui_pad(2, 0, 0, 0);
+			ui_split_topratio(0.5);
+				ui_fontbold(1);
+				ui_text("Gain");
+			ui_split_next();
+				ui_textnumber(floor(correction_gain_db*10 + 0.4)*0.1, "%0.1fdB");
 			ui_pop();
-			ui_split_right(ui_height());
+		ui_split_next();
+			ui_pad(-1, -1, 0, -1);
+			ui_split_left(ui_height());
 				slider5 = control_dial(slider5, -12, 20, 1);
 			ui_pop();
 
-			ui_align(1, 0.5);
-			ui_pad(0, 0, 2, 0);
-			ui_text("Clip");
+			ui_align(0, 0.5);
+			ui_pad(2, 0, 0, 0);
+			ui_split_topratio(0.5);
+				ui_fontbold(1);
+				ui_text("Clip");
+			ui_split_next();
+				ui_textnumber(slider5, "%0.1fdB");
+			ui_pop();
 		ui_pop();
 	ui_pop();
 
@@ -2038,3 +2073,9 @@ model_N != bands_N || !model_N ? (
 file_var(0, correction_learning);
 
 action_recalculate = 1;
+
+preset_version = 2;
+file_avail(0) == 0 ? preset_version = 1 : file_var(0, preset_version);
+preset_version < 2 ? (
+	correction_strength = 1;
+);
