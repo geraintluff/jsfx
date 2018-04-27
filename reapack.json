@@ -7,6 +7,7 @@
 			"type": "effect",
 			"category": "Distortion",
 			"summary": "simulate poor connections by random volume variation, distortion, and a feedback delay line",
+			"sort": 5,
 			"files": {
 				"Bad Connection.jsfx": {
 					"main": false
@@ -20,7 +21,15 @@
 			},
 			"author": "Geraint Luff",
 			"links": {
-				"screenshot": "Bad Connection.png"
+				"screenshot": "Bad Connection.png",
+				"presets": [
+					"Bad Connection.rpl"
+				],
+				"audio": [
+					"audio-demos/bad-connection-chaos.mp3",
+					"audio-demos/bad-connection-spring-box-glitch.mp3"
+				],
+				"youtube": "https://www.youtube.com/watch?v=pmjLZKVoBLo&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
 			"version": "2.1.0",
 			"readme": "doc/Bad Connection.md"
@@ -42,6 +51,9 @@
 				"screenshot": "Sandwich Amp.png",
 				"audio": [
 					"audio-demos/Sandwich-Amp.mp3"
+				],
+				"presets": [
+					"Sandwich Amp.rpl"
 				]
 			},
 			"version": "1.0.6",
@@ -51,6 +63,7 @@
 			"type": "effect",
 			"category": "Utility",
 			"summary": "analyse the difference between an input and a model, and optionally correct with EQ",
+			"sort": 6,
 			"files": {
 				"Spectrum Matcher.jsfx": {
 					"main": false
@@ -63,7 +76,11 @@
 				"screenshot": [
 					"Spectrum Matcher 1.png",
 					"Spectrum Matcher 2.png"
-				]
+				],
+				"presets": [
+					"Spectrum Matcher.rpl"
+				],
+				"youtube": "https://www.youtube.com/watch?v=QLh6b88OvFs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
 			"version": "1.5.0",
 			"readme": "doc/Spectrum Matcher.md"
@@ -91,7 +108,11 @@
 				"screenshot": "Spring-Box.png",
 				"audio": [
 					"audio-demos/Spring-Box.mp3"
-				]
+				],
+				"presets": [
+					"Spring-Box.rpl"
+				],
+				"youtube": "https://www.youtube.com/watch?v=UqryhWXHbhA&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
 			"version": "1.1.1",
 			"readme": "doc/Spring Box.md"
@@ -100,6 +121,7 @@
 			"type": "effect",
 			"category": "Synth",
 			"summary": "a synth that produces thick sounds, including per-note effects and modulators",
+			"sort": 0,
 			"files": {
 				"pad-synth.jsfx": {
 					"main": false
@@ -111,14 +133,10 @@
 					"main": false
 				}
 			},
-			"links": {
-				"screenshot": "PadSynth.png",
-				"audio": [
-					"audio-demos/PadSynth.mp3"
-				]
-			},
 			"version": "1.1.8",
-			"readme": "doc/PadSynth.md"
+			"links": {
+				"youtube": "https://www.youtube.com/watch?v=hgSqq-SgSjs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+			}
 		},
 		"Smooth Limiter": {
 			"type": "effect",
@@ -133,8 +151,11 @@
 				}
 			},
 			"version": "1.1.0",
-			"links": {},
-			"readme": "doc/Smooth Limiter.md"
+			"links": {
+				"presets": [
+					"Smooth Limiter.rpl"
+				]
+			}
 		},
 		"Warble": {
 			"type": "effect",
@@ -155,8 +176,7 @@
 				}
 			},
 			"version": "1.0.8",
-			"links": {},
-			"readme": "doc/Warble.md"
+			"links": {}
 		},
 		"Panalysis": {
 			"type": "effect",
@@ -170,9 +190,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.3",
-			"links": {},
-			"readme": "doc/Panalysis.md"
+			"version": "1.1.3"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -212,18 +230,13 @@
 					"main": false
 				}
 			},
-			"version": "1.0.3",
-			"links": {
-				"audio": [
-					"audio-demos/Hammer-And-String.mp3"
-				]
-			},
-			"readme": "doc/Hammer And String.md"
+			"version": "1.0.3"
 		},
 		"Hammer And Chord": {
 			"type": "effect",
 			"category": "Synth",
 			"summary": "a polyphonic string resonator/synth",
+			"sort": 1,
 			"files": {
 				"Hammer And Chord.jsfx": {
 					"main": false
@@ -243,11 +256,11 @@
 			},
 			"version": "1.4.3",
 			"links": {
-				"audio": [
-					"audio-demos/Hammer-And-Chord.mp3"
+				"youtube": [
+					"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
+					"https://www.youtube.com/watch?v=E_3ILfZsrs4&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 				]
-			},
-			"readme": "doc/Hammer And Chord.md"
+			}
 		},
 		"MIDI Gate": {
 			"type": "effect",
@@ -264,21 +277,13 @@
 					"main": false
 				}
 			},
-			"version": "1.2.1",
-			"links": {
-				"screenshot": [
-					"doc/images/MIDI Gate.png"
-				],
-				"audio": [
-					"audio-demos/MIDI-Gate.mp3"
-				]
-			},
-			"readme": "doc/MIDI Gate.md"
+			"version": "1.2.1"
 		},
 		"Humonica": {
 			"type": "effect",
 			"category": "Misc",
 			"summary": "harmoniser",
+			"sort": 1,
 			"files": {
 				"Humonica.jsfx": {
 					"main": false
@@ -295,18 +300,12 @@
 			},
 			"version": "2.0.11",
 			"links": {
-				"screenshot": [
-					"doc/images/Humonica.png"
-				],
-				"audio": [
-					"audio-demos/Humonica.mp3"
-				]
-			},
-			"readme": "doc/Humonica.md"
+				"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+			}
 		},
 		"MIDI Harmony": {
 			"type": "effect",
-			"category": "Utility",
+			"category": "MIDI",
 			"summary": "arpeggiator and auto-accompaniment plugin",
 			"files": {
 				"synth-framework.jsfx-inc": {
@@ -319,9 +318,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1",
-			"links": {},
-			"readme": "doc/MIDI Harmony.md"
+			"version": "1.0.1"
 		},
 		"Stereo Alignment Delay": {
 			"type": "effect",
@@ -357,6 +354,7 @@
 			"type": "effect",
 			"category": "Delay",
 			"summary": "a delay effect where the feedback system moves echoes through the stereo field",
+			"sort": 4,
 			"files": {
 				"Echo-Cycles.jsfx": {
 					"main": false
@@ -376,14 +374,8 @@
 			},
 			"version": "1.2.0",
 			"links": {
-				"screenshot": [
-					"doc/images/Echo-Cycles.png"
-				],
-				"audio": [
-					"audio-demos/Echo-Cycles.mp3"
-				]
-			},
-			"readme": "doc/Echo-Cycles.md"
+				"youtube": "https://www.youtube.com/watch?v=BZ-1z7IKYTs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+			}
 		},
 		"Level Meter": {
 			"type": "effect",
@@ -409,12 +401,13 @@
 		"website": "https://geraintluff.github.io/jsfx/"
 	},
 	"readme": "README.md",
-	"homepage": "index-auto.html",
+	"homepage": "index.html",
 	"globFields": {
 		"readme": "doc/{package}.md"
 	},
 	"globLinks": {
-		"screenshot": "doc/images/{package}.png",
-		"audio": "audio-demos/{package}.mp3"
+		"screenshot": "doc/images/{package}*.png",
+		"audio": "audio-demos/{package}*.mp3",
+		"presets": "{package}.rpl"
 	}
 }
