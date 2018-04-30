@@ -275,7 +275,7 @@
 		},
 		"Humonica": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Synth",
 			"summary": "harmoniser",
 			"sort": 1,
 			"files": {
@@ -316,7 +316,7 @@
 		},
 		"Stereo Alignment Delay": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Delay",
 			"summary": "delay and phase/delay analysis (stereo channels, or between instances)",
 			"files": {
 				"ui-lib.jsfx-inc": {
@@ -391,7 +391,7 @@
 		},
 		"Vibrato": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Delay",
 			"summary": "MIDI-note triggered vibrato",
 			"files": {
 				"Vibrato.jsfx": {

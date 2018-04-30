@@ -183,16 +183,17 @@ h3 {
 </li>
 <li><a href="#Hammer And Chord">Hammer And Chord</a> - a polyphonic string resonator/synth
 </li>
+<li><a href="#Humonica">Humonica</a> - harmoniser
+</li>
 <li><a href="#Learning Sampler">Learning Sampler</a> - a basic sampler that records incoming audio and plays it back
 </li></ul>
-<h3>Misc</h3><ul><li><a href="#Humonica">Humonica</a> - harmoniser
-</li>
-<li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
-</li>
-<li><a href="#Vibrato">Vibrato</a> - Misc effect</li></ul>
 <h3>Delay</h3><ul><li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
 </li>
 <li><a href="#Spring-Box">Spring-Box</a> - an echo/chorus effect
+</li>
+<li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
+</li>
+<li><a href="#Vibrato">Vibrato</a> - MIDI-note triggered vibrato
 </li></ul>
 <h3>Distortion</h3><ul><li><a href="#Bad Connection">Bad Connection</a> - simulate poor connections by random volume variation, distortion, and a feedback delay line
 </li>
@@ -313,10 +314,10 @@ h3 {
 <p>The delay analyser detects when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.</p>
 <p><img src="Stereo Alignment Delay analysis.png" alt="screenshot"></p>
 </div>
-<div class="reapack-package" id="Vibrato"><h1 id="vibrato">Vibrato</h1>
+<div class="reapack-package" id="Vibrato"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/Vibrato.mp3"></audio></div><h1 id="vibrato">Vibrato</h1>
 <p>This effect produces vibrato, using MIDI notes to control the envelope.</p>
 <p>When no notes are being played, no vibrato is added.  When a note is played, vibrato slowly appears, and stops when the note finishes.  When a new note is triggered, vibrato stops and then starts again.</p>
-<p><img src="Vibrato.png" alt="screenshot"></p>
+<p><img src="doc/images/Vibrato.png" alt="screenshot"></p>
 </div>
 <div class="reapack-package" id="Warble"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/warble-formant-mod.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-original.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-shifted.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-subtle.mp3"></audio></div><h1 id="warble">Warble</h1>
 <p>Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>
