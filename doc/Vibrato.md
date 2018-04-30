@@ -1,8 +1,8 @@
 # Vibrato
 
-This effect produces vibrato, using MIDI notes to give a more natural envelope to the vibrato.
+This effect it adds vibrato, using MIDI notes to produce a more natural envelope (compared to a constant LFO).  Each note resets the vibrato to zero, and it is slowly introduced.
 
-When no notes are being played, no vibrato is added.  When a note is played, vibrato slowly appears, and stops when the note finishes.  When a new note is triggered, vibrato stops and then starts again.
+This is most useful for adding vibrato to synths that don't have already have it - for example, [ReaSynth](audio-demos/Vibrato-ReaSynth.mp3).
 
 ![screenshot](images/Vibrato.png)
 
