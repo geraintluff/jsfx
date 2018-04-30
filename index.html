@@ -188,7 +188,8 @@ h3 {
 <h3>Misc</h3><ul><li><a href="#Humonica">Humonica</a> - harmoniser
 </li>
 <li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
-</li></ul>
+</li>
+<li><a href="#Vibrato">Vibrato</a> - Misc effect</li></ul>
 <h3>Delay</h3><ul><li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
 </li>
 <li><a href="#Spring-Box">Spring-Box</a> - an echo/chorus effect
@@ -300,7 +301,7 @@ h3 {
 <p><img src="Smooth Limiter.png" alt="screenshot"></p>
 <p>The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.</p>
 </div>
-<div class="reapack-package" id="Spring-Box"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/Spring-Box.mp3"></audio><a href="Spring-Box.rpl" target="_blank">presets</a><a href="https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="spring-box">Spring-Box</h1>
+<div class="reapack-package" id="Spring-Box"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/spring-box.mp3"></audio><a href="Spring-Box.rpl" target="_blank">presets</a><a href="https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="spring-box">Spring-Box</h1>
 <p>Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
 <p>Early echoes can be suppressed to get a smoother sound (the &quot;late bias&quot; control), by using two parallel delay structures with different feedback ratios, and subtracting the results.</p>
 <p><img src="Spring-Box.png" alt="screenshot"></p>
@@ -311,6 +312,11 @@ h3 {
 <p><img src="Stereo Alignment Delay.png" alt="screenshot"></p>
 <p>The delay analyser detects when one channel is ahead/behind or out of phase with the other - this can be useful when trying to get phases to agree in a multi-mic setup.</p>
 <p><img src="Stereo Alignment Delay analysis.png" alt="screenshot"></p>
+</div>
+<div class="reapack-package" id="Vibrato"><h1 id="vibrato">Vibrato</h1>
+<p>This effect produces vibrato, using MIDI notes to control the envelope.</p>
+<p>When no notes are being played, no vibrato is added.  When a note is played, vibrato slowly appears, and stops when the note finishes.  When a new note is triggered, vibrato stops and then starts again.</p>
+<p><img src="Vibrato.png" alt="screenshot"></p>
 </div>
 <div class="reapack-package" id="Warble"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/warble-formant-mod.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-original.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-shifted.mp3"></audio><audio controls preload="metadata" src="audio-demos/warble-subtle.mp3"></audio></div><h1 id="warble">Warble</h1>
 <p>Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>

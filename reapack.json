@@ -388,6 +388,28 @@
 			},
 			"version": "0.1.1",
 			"links": {}
+		},
+		"Vibrato": {
+			"type": "effect",
+			"category": "Misc",
+			"summary": "MIDI-note triggered vibrato",
+			"files": {
+				"Vibrato.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
+				},
+				"themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png": {
+					"main": false
+				},
+				"themes/bitmap-simple/theme-dark-blue.png": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
