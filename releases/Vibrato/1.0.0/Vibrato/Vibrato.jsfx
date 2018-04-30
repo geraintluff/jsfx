@@ -1,0 +1,170 @@
+desc:Vibrato (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:depth_cents=30<0, 100>-depth (cents)
+slider2:rate_hz=5.1<3, 10>-rate (Hz)
+slider3:attack_ms=500<0,1500>-attack (ms)
+slider4:release_ms=1000<0,3000>-release (ms)
+slider5:attack_curve_mode=0<0,1,1{immediate,delayed}>-attack type
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-dark-blue.png
+// Photo by Tom Barrett on Unsplash: https://unsplash.com/photos/-bSucp2nUdQ
+filename:1,themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png
+
+@init
+
+MAX_DELAY = 0.1;
+MAX_DELAY_SAMPLES = ceil(MAX_DELAY*srate);
+
+gfx_ext_retina = 1;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = delay0.delay_setup(freemem, MAX_DELAY_SAMPLES);
+freemem = delay1.delay_setup(freemem, MAX_DELAY_SAMPLES);
+
+currently_active = 0;
+current_depth_samples = 0;
+current_phase = 1;
+note_count = 0;
+samples_since_attack = 0;
+samples_since_release = 0;
+
+@block
+
+attack_samples = attack_ms*0.001*srate;
+release_samples = release_ms*0.001*srate;
+phase_rate = rate_hz/srate;
+
+while (midirecv(offset, msg1, note, vel)) (
+	type = (msg1&240);
+	channel = (msg1&15) + 1;
+
+	type == $x90 && vel != 0 ? (
+		currently_active = 1;
+		note_count += 1;
+		samples_since_attack = -offset;
+	) : type == $x80 || (type == $x90 && vel == 0) ? (
+		note_count -= 1;
+		!note_count ? (
+			samples_since_release = -offset;
+		);
+	) : (
+		type == $xB0 ? ( // Controller
+			note == 123 || note == 120 ? (
+				note_count = 0;
+			);
+		);
+	);
+	midisend(offset, msg1, note, vel);
+);
+
+note_count = max(0, note_count);
+
+@sample
+
+delay0.delay_input(spl0);
+delay1.delay_input(spl1);
+
+currently_active ? (
+	samples_since_attack += 1;
+	samples_since_release += 1;
+
+	current_depth_samples ? (
+		phase_value = (0.5 - 0.5*cos(current_phase*2*$pi));
+		delay_samples = min(MAX_DELAY_SAMPLES, current_depth_samples*phase_value));
+		spl0 = delay0.delay_output_linear1(delay_samples);
+		spl1 = delay1.delay_output_linear1(delay_samples);
+	);
+
+	current_phase += phase_rate;
+	current_phase >= 1 ? (
+		samples_since_attack < attack_samples ? (
+			envelope = max(0, samples_since_attack)/attack_samples;
+			attack_curve_mode ? (
+				envelope *= envelope;
+			);
+		) : (
+			envelope = 1;
+		);
+		note_count <= 0 ? (
+			samples_since_release < release_samples ? (
+				envelope *= 1 - max(0, samples_since_release)/release_samples;
+			) : (
+				envelope = 0;
+				currently_active = 0;
+			);
+		);
+		envelope > 0 ? (
+
+			current_phase = 0;
+			current_depth_samples = envelope*srate*(depth_cents*0.01/12/(2*$pi)/rate_hz;
+		);
+	);
+);
+
+@gfx 350 320
+
+function labels(label, value, number_format) local(h) (
+	h = (ui_height() - 60)/2;
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+);
+
+control_start("main", "bitmap-simple", 0);
+
+gfx_a = 0.8;
+g_scale = max(gfx_w/600, gfx_h/401);
+gfx_x = (gfx_w - 600*g_scale)*0.5;
+gfx_y = (gfx_h - 401*g_scale)*0.5;
+gfx_blit(1, g_scale, 0);
+
+ui_screen() == "main" ? (
+	control_navbar("Vibrato");
+
+	ui_push_width(350);
+
+		ui_split_topratio(0.5);
+			control_group("LFO");
+			ui_split_leftratio(1/2);
+				labels("Depth", depth_cents, "%i cents");
+				depth_cents = control_dial(depth_cents, 0, 100, 2, 30);
+			ui_split_next();
+				labels("Rate", rate_hz, "%.1f Hz");
+				rate_hz = control_dial(rate_hz, 3, 10, 1, 5.1);
+			ui_pop();
+		ui_pop();
+
+		control_group("Note Envelope");
+		ui_split_leftratio(1/3);
+			labels("Attack", attack_ms, "%i ms");
+			attack_ms = control_dial(attack_ms, 0, 1500, 2, 500);
+		ui_split_next();
+			labels("Release", release_ms, "%i ms");
+			release_ms = control_dial(release_ms, 0, 3000, 2, 1000);
+		ui_split_next();
+			labels("Attack curve", 0, attack_curve_mode ? "delayed" : "immediate");
+			attack_curve_mode = control_switch(attack_curve_mode);
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);

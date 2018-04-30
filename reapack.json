@@ -409,7 +409,8 @@
 				"themes/bitmap-simple/theme-dark-blue.png": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
