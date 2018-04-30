@@ -106,12 +106,6 @@
 			},
 			"links": {
 				"screenshot": "Spring-Box.png",
-				"audio": [
-					"audio-demos/Spring-Box.mp3"
-				],
-				"presets": [
-					"Spring-Box.rpl"
-				],
 				"youtube": "https://www.youtube.com/watch?v=UqryhWXHbhA&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
 			"version": "1.1.1",
