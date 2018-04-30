@@ -411,6 +411,31 @@
 				}
 			},
 			"version": "1.0.0"
+		},
+		"Cross-Polyphonic-FM": {
+			"type": "effect",
+			"category": "Misc",
+			"hidden": true,
+			"files": {
+				"Cross-Polyphonic-FM.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
+				},
+				"synth-framework-obj.jsfx-inc": {
+					"main": false
+				},
+				"themes/bitmap-simple/theme-dark-orange.png": {
+					"main": false
+				},
+				"themes/backgrounds/sebastian-pociecha-451575-unsplash.png": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
