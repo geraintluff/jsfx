@@ -435,7 +435,8 @@
 				"themes/backgrounds/sebastian-pociecha-451575-unsplash.png": {
 					"main": false
 				}
-			}
+			},
+			"version": "0.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

@@ -205,8 +205,6 @@ h3 {
 </li>
 <li><a href="#Smooth Limiter">Smooth Limiter</a> - a limiter that aims to have the correction curve as smooth as possible
 </li></ul>
-<h3>Misc</h3><ul><li><a href="#Cross-Polyphonic-FM">Cross-Polyphonic-FM</a> - Misc effect</li>
-<li><a href="#Poly-FM">Poly-FM</a> - Misc effect</li></ul>
 <h3>MIDI</h3><ul><li><a href="#MIDI Gate">MIDI Gate</a> - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
 </li>
 <li><a href="#MIDI Harmony">MIDI Harmony</a> - arpeggiator and auto-accompaniment plugin
@@ -259,7 +257,6 @@ h3 {
 <p><img src="Spectrum Matcher 2.png" alt="screenshot"></p>
 <p>This effect is quite CPU-intensive, so if you&#39;re not using it it could be good to bypass it.</p>
 </div>
-<div class="reapack-package" id="Cross-Polyphonic-FM"><h1>Cross-Polyphonic-FM</h1></div>
 <div class="reapack-package" id="Learning Sampler"><h1 id="learning-sampler">Learning Sampler</h1>
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>
 <p>To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.</p>
@@ -292,7 +289,6 @@ h3 {
 <p>It&#39;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:</p>
 <p><img src="Panalysis 2.png" alt="screenshot"></p>
 </div>
-<div class="reapack-package" id="Poly-FM"><h1>Poly-FM</h1></div>
 <div class="reapack-package" id="Sandwich Amp"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/Sandwich-Amp.mp3"></audio><a href="Sandwich Amp.rpl" target="_blank">presets</a></div><h1 id="sandwich-amp">Sandwich Amp</h1>
 <p>Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</p>
 <p>The underlying distortion function is <code>tanh()</code> (which is a fairly &quot;soft&quot; distortion, as opposed to a hard clip), but it can be driven quite hard, and an offset can be added to get asymmetrical response.</p>
