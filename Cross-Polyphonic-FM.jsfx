@@ -12,6 +12,7 @@ slider4:release_ms=10<3, 1000>-release (ms)
 slider5:fm_depth=4<0, 10>-FM depth
 slider6:fm_transpose_fine=0<-12, 12>-FM transpose (fine)
 slider7:fm_transpose_octaves=0<-1,3,1>-FM transpose (octaves)
+slider8:velocity_curve=0.5<0,2>-Velocity curve
 
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
@@ -107,15 +108,16 @@ function process_note(note*) (
 	synth_sample_each(note) ? (
 		synth_needs_init(note) ? (
 			note.phase = 0;
+			note.amp = velocity_curve ? pow(synth_velocity(note)/127, velocity_curve) : 1;
 		);
 
-		envelope = 1;
+		envelope = note.amp;
 		synth_attack(note) < attack_samples ? (
 			envelope *= synth_attack(note)/attack_samples;
 		) : synth_attack(note) - attack_samples < decay_samples ? (
 			envelope *= 1 - (synth_attack(note) - attack_samples)/decay_samples*(1 - sustain_level);
 		) : (
-			envelope = sustain_level;
+			envelope *= sustain_level;
 		);
 		synth_release(note) > 0 ? (
 			synth_release(note) >= release_samples ? (
@@ -209,20 +211,26 @@ ui_screen() == "main" ? (
 	control_navbar("Cross-Polyphonic FM");
 
 	ui_split_topratio(1/2);
-		control_group("Envelope");
-		ui_split_leftratio(1/4);
-			labels("Attack", attack_ms, "%i ms");
-			attack_ms = control_dial(attack_ms, 0, 1000, 5, 3);
-		ui_split_next();
-			labels("Decay", decay_ms, "%i ms");
-			decay_ms = control_dial(decay_ms, 0, 1000, 5, 500);
-		ui_split_next();
-			labels("Sustain", floor(sustain_level*100 + 0.5), "%i%%");
-			sustain_level = control_dial(sustain_level, 0, 1, 0, 0.5);
-		ui_split_next();
-			labels("Release", release_ms, "%i ms");
-			release_ms = control_dial(release_ms, 0, 1000, 5, 10);
+		ui_split_leftratio(4/5);
+			control_group("Envelope");
+			ui_split_leftratio(1/4);
+				labels("Attack", attack_ms, "%i ms");
+				attack_ms = control_dial(attack_ms, 0, 1000, 5, 3);
+			ui_split_next();
+				labels("Decay", decay_ms, "%i ms");
+				decay_ms = control_dial(decay_ms, 0, 1000, 5, 500);
+			ui_split_next();
+				labels("Sustain", floor(sustain_level*100 + 0.5), "%i%%");
+				sustain_level = control_dial(sustain_level, 0, 1, 0, 0.5);
+			ui_split_next();
+				labels("Release", release_ms, "%i ms");
+				release_ms = control_dial(release_ms, 0, 1000, 5, 10);
+			ui_pop();
 		ui_pop();
+
+		control_group("Velocity");
+		labels("Velocity", 0, "curve");
+		velocity_curve = control_dial(velocity_curve, 0, 2, 2, 0.5);
 	ui_split_next();
 		ui_split_leftratio(1/4);
 			control_background_technical();
