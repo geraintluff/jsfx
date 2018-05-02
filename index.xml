@@ -437,6 +437,14 @@
 				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
 				<changelog><![CDATA[initial release (alpha)]]></changelog>
 			</version>
+			<version name="1.0.0" author="Geraint Luff" time="2018-05-02T12:05:50.543Z">
+				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
+				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
