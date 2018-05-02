@@ -189,6 +189,8 @@ h3 {
 </li></ul>
 <h3>Delay</h3><ul><li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
 </li>
+<li><a href="#Cross-Polyphonic-FM">Cross-Polyphonic-FM</a> - MIDI-controlled frequency-modulation effect
+</li>
 <li><a href="#Spring-Box">Spring-Box</a> - an echo/chorus effect
 </li>
 <li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
@@ -256,6 +258,11 @@ h3 {
 <p>It can learn new models from the incoming audio, and save this as a preset for later use:</p>
 <p><img src="Spectrum Matcher 2.png" alt="screenshot"></p>
 <p>This effect is quite CPU-intensive, so if you&#39;re not using it it could be good to bypass it.</p>
+</div>
+<div class="reapack-package" id="Cross-Polyphonic-FM"><div class="reapack-links"><audio controls preload="metadata" src="audio-demos/Cross-Polyphonic-FM.mp3"></audio></div><h1 id="cross-polyphonic-fm">Cross-Polyphonic FM</h1>
+<p>This effect is a MIDI-controlled frequency-modulator effect.  It can be used to add character to an existing sound (such as a different synth).</p>
+<p>Multiple MIDI notes produces multiple modulation frequencies.  The notes aren&#39;t processed separately - they are added together to form the modulation waveform.  This means that different notes interact (slightly similar to distortion).</p>
+<p><img src="doc/images/Cross-Polyphonic-FM.png" alt="screenshot"></p>
 </div>
 <div class="reapack-package" id="Learning Sampler"><h1 id="learning-sampler">Learning Sampler</h1>
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>

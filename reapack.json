@@ -414,8 +414,8 @@
 		},
 		"Cross-Polyphonic-FM": {
 			"type": "effect",
-			"category": "Misc",
-			"hidden": true,
+			"category": "Delay",
+			"summary": "MIDI-controlled frequency-modulation effect",
 			"files": {
 				"Cross-Polyphonic-FM.jsfx": {
 					"main": false

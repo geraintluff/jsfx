@@ -422,6 +422,22 @@
 				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.0.0/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
 			</version>
 		</reapack>
+		<reapack name="Cross-Polyphonic-FM" type="effect">
+			<metadata>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Cross-Polyphonic-FM.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Cross-Polyphonic FM\b}\line\line This effect is a MIDI-controlled frequency-modulator effect.  It can be used to add character to an existing sound (such as a different synth).\line\line Multiple MIDI notes produces multiple modulation frequencies.  The notes aren&apos;t processed separately - they are added together to form the modulation waveform.  This means that different notes interact (slightly similar to distortion).\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Cross-Polyphonic-FM.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Cross-Polyphonic-FM.png</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Cross-Polyphonic-FM.mp3</link>
+			</metadata>
+			<version name="0.0.0" author="Geraint Luff" time="2018-05-01T07:51:05.308Z">
+				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
+				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
+				<changelog><![CDATA[initial release (alpha)]]></changelog>
+			</version>
+		</reapack>
 	</category>
 	<category name="Synth">
 		<reapack name="PadSynth" type="effect">
@@ -980,19 +996,6 @@
 		<reapack name="MIDI Controller Control" type="effect">
 			<metadata>
 			</metadata>
-		</reapack>
-		<reapack name="Cross-Polyphonic-FM" type="effect">
-			<metadata>
-			</metadata>
-			<version name="0.0.0" author="Geraint Luff" time="2018-05-01T07:51:05.308Z">
-				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
-				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
-				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
-				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
-				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
-				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/0.0.0/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
-				<changelog><![CDATA[initial release (alpha)]]></changelog>
-			</version>
 		</reapack>
 	</category>
 </index>
