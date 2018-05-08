@@ -1,0 +1,26 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"summary": "MIDI-note triggered vibrato",
+	"files": {
+		"Vibrato/Vibrato.jsfx": {
+			"main": false
+		},
+		"Vibrato/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Vibrato/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png": {
+			"main": false
+		},
+		"Vibrato/themes/bitmap-simple/theme-dark-blue.png": {
+			"main": false
+		}
+	},
+	"version": "1.1.0",
+	"package": "Vibrato",
+	"time": "2018-05-08T10:32:19.208Z",
+	"changeLog": "Add lookahead control"
+}
