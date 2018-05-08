@@ -7,9 +7,10 @@ out_pin:Right
 
 slider1:depth_cents=30<0, 100>-depth (cents)
 slider2:rate_hz=5.1<3, 10>-rate (Hz)
-slider3:attack_ms=500<0,1500>-attack (ms)
-slider4:release_ms=1000<0,3000>-release (ms)
+slider3:attack_ms=500<0,2000>-attack (ms)
+slider4:release_ms=1000<0,10000>-release (ms)
 slider5:attack_curve_mode=0<0,1,1{immediate,delayed}>-attack type
+slider6:lookahead_ms=0<0,300,1>-lookahead (ms)
 
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
@@ -20,7 +21,7 @@ filename:1,themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png
 
 @init
 
-MAX_DELAY = 0.1;
+MAX_DELAY = 0.5;
 MAX_DELAY_SAMPLES = ceil(MAX_DELAY*srate);
 
 gfx_ext_retina = 1;
@@ -39,6 +40,11 @@ samples_since_release = 0;
 
 @block
 
+lookahead_samples = floor(srate*lookahead_ms*0.001);
+pdc_delay = lookahead_samples;
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+
 attack_samples = attack_ms*0.001*srate;
 release_samples = release_ms*0.001*srate;
 phase_rate = rate_hz/srate;
@@ -50,11 +56,11 @@ while (midirecv(offset, msg1, note, vel)) (
 	type == $x90 && vel != 0 ? (
 		currently_active = 1;
 		note_count += 1;
-		samples_since_attack = -offset;
+		samples_since_attack = -offset - lookahead_samples;
 	) : type == $x80 || (type == $x90 && vel == 0) ? (
 		note_count -= 1;
 		!note_count ? (
-			samples_since_release = -offset;
+			samples_since_release = -offset - lookahead_samples;
 		);
 	) : (
 		type == $xB0 ? ( // Controller
@@ -79,9 +85,12 @@ currently_active ? (
 
 	current_depth_samples ? (
 		phase_value = (0.5 - 0.5*cos(current_phase*2*$pi));
-		delay_samples = min(MAX_DELAY_SAMPLES, current_depth_samples*phase_value));
+		delay_samples = min(MAX_DELAY_SAMPLES, lookahead_samples + current_depth_samples*phase_value);
 		spl0 = delay0.delay_output_linear1(delay_samples);
 		spl1 = delay1.delay_output_linear1(delay_samples);
+	) : lookahead_samples ? (
+		spl0 = delay0.delay_output_samples(lookahead_samples);
+		spl1 = delay1.delay_output_samples(lookahead_samples);
 	);
 
 	current_phase += phase_rate;
@@ -102,12 +111,12 @@ currently_active ? (
 				currently_active = 0;
 			);
 		);
-		envelope > 0 ? (
-
-			current_phase = 0;
-			current_depth_samples = envelope*srate*(depth_cents*0.01/12/(2*$pi)/rate_hz;
-		);
+		current_phase = 0;
+		current_depth_samples = envelope*srate*(depth_cents*0.01/12/(2*$pi)/rate_hz);
 	);
+) : lookahead_samples ? (
+	spl0 = delay0.delay_output_samples(lookahead_samples);
+	spl1 = delay1.delay_output_samples(lookahead_samples);
 );
 
 @gfx 350 320
@@ -140,23 +149,30 @@ ui_screen() == "main" ? (
 	ui_push_width(350);
 
 		ui_split_topratio(0.5);
-			control_group("LFO");
-			ui_split_leftratio(1/2);
-				labels("Depth", depth_cents, "%i cents");
-				depth_cents = control_dial(depth_cents, 0, 100, 2, 30);
-			ui_split_next();
-				labels("Rate", rate_hz, "%.1f Hz");
-				rate_hz = control_dial(rate_hz, 3, 10, 1, 5.1);
+			ui_split_leftratio(2/3);
+				control_group("LFO");
+				ui_split_leftratio(1/2);
+					labels("Depth", depth_cents, "%i cents");
+					depth_cents = control_dial(depth_cents, 0, 100, 2, 30);
+				ui_split_next();
+					labels("Rate", rate_hz + 0.05, "%.1f Hz");
+					rate_hz = control_dial(rate_hz, 3, 10, 1, 5.1);
+				ui_pop();
 			ui_pop();
+
+			control_group("Latency");
+			labels("Lookahead", lookahead_ms, "%i ms");
+			lookahead_ms = control_dial(lookahead_ms, 0, ceil(1000/rate_hz), 0, 0);
+			lookahead_ms = floor(lookahead_ms + 0.5);
 		ui_pop();
 
 		control_group("Note Envelope");
 		ui_split_leftratio(1/3);
 			labels("Attack", attack_ms, "%i ms");
-			attack_ms = control_dial(attack_ms, 0, 1500, 2, 500);
+			attack_ms = control_dial(attack_ms, 0, 2000, 2.2, 500);
 		ui_split_next();
 			labels("Release", release_ms, "%i ms");
-			release_ms = control_dial(release_ms, 0, 3000, 2, 1000);
+			release_ms = control_dial(release_ms, 0, 10000, 4.4, 1000);
 		ui_split_next();
 			labels("Attack curve", 0, attack_curve_mode ? "delayed" : "immediate");
 			attack_curve_mode = control_switch(attack_curve_mode);
@@ -166,5 +182,9 @@ ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 1;
+preset_version = 2;
 file_var(0, preset_version);
+
+preset_version < 2 ? (
+	lookahead_ms = 0;
+);
