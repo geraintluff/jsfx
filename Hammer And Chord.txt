@@ -177,7 +177,7 @@ function process_note(note*) (
 				filter_gain = pow(abs(decay_factor), damping_factor*4);
 				note.filter0.filter_init();
 				note.filter0.filter_highshelf_gainband(filter_freq_vel, filter_gain, filter_bandwidth);
-				note.filter1 = filter_init();
+				note.filter1.filter_init();
 				note.filter1.filter_highshelf_gainband(filter_freq_vel, filter_gain, filter_bandwidth);
 
 				note.decay_factor = decay_factor;

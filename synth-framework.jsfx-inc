@@ -118,7 +118,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			// Controller
 			midi_msg2 == 121 ? (
 				synth_reset_controllers();
-			) : midi_msg == 123 ? (
+			) : midi_msg2== 123 ? (
 				// stop all notes (with release)
 				i = 0;
 				while (i < synthx_polyphony) (
@@ -127,7 +127,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 					note[3/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[3/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], 0);
 					i += 1;
 				);
-			) : midi_msg == 120 ? (
+			) : midi_msg2== 120 ? (
 				// stop all notes (no release)
 				i = 0;
 				while (i < synthx_polyphony) (
