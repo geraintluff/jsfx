@@ -433,6 +433,13 @@
 				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.0/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
 				<changelog><![CDATA[Add lookahead control]]></changelog>
 			</version>
+			<version name="1.1.1" author="Geraint Luff" time="2018-05-12T16:00:19.396Z">
+				<source file="Vibrato/Vibrato.jsfx">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/Vibrato.jsfx</source>
+				<source file="Vibrato/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/ui-lib.jsfx-inc</source>
+				<source file="Vibrato/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/delay-utils.jsfx-inc</source>
+				<source file="Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png</source>
+				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
+			</version>
 		</reapack>
 		<reapack name="Cross-Polyphonic-FM" type="effect">
 			<metadata>
