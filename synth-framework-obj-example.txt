@@ -1,0 +1,99 @@
+desc:Synth framework example (object version)
+
+in_pin:none
+out_pin:Left
+out_pin:Right
+
+import synth-framework-obj.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = synth_setup(freemem); // Request one slot to keep the phase in
+synth_setup_each(synth1);
+synth_setup_each(synth2);
+synth_setup_each(synth3);
+synth_setup_each(synth4);
+synth_setup_each(synth5);
+synth_setup_each(synth6);
+synth_setup_each(synth7);
+synth_setup_each(synth8);
+synth_setup_each(synth9);
+synth_setup_each(synth10);
+synth_setup_each(synth11);
+synth_setup_each(synth12);
+synth_setup_each(synth13);
+synth_setup_each(synth14);
+synth_setup_each(synth15);
+synth_setup_each(synth16);
+
+attack_samples = 0.01*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_block();
+synth_block_each(synth1)
+&& synth_block_each(synth2)
+&& synth_block_each(synth3)
+&& synth_block_each(synth4)
+&& synth_block_each(synth5)
+&& synth_block_each(synth6)
+&& synth_block_each(synth7)
+&& synth_block_each(synth8)
+&& synth_block_each(synth9)
+&& synth_block_each(synth10)
+&& synth_block_each(synth11)
+&& synth_block_each(synth12)
+&& synth_block_each(synth13)
+&& synth_block_each(synth14)
+&& synth_block_each(synth15)
+&& synth_block_each(synth16);
+
+@sample
+
+function process_note(note*) (
+	synth_sample_each(note) ? (
+		synth_needs_init(note) ? (
+			note.phase = 0;
+		);
+
+		note.phase += synth_freq(note)/srate;
+
+		amp = 0.25;
+		amp *= synth_velocity(note)/127;
+		amp *= synth_controller(11)/127;
+		attack_samples && synth_attack(note) < attack_samples ? (
+			amp *= synth_attack(note)/attack_samples;
+		);
+		release_samples && synth_release(note) > 0 ? (
+			amp *= 1 - synth_release(note)/release_samples;
+		);
+
+		value = sin(note.phase*2*$pi);
+		spl0 += value*amp;
+		spl1 += value*amp;
+
+		synth_release(note) >= release_samples ? (
+			synth_stop(note);
+		);
+	);
+	synth_continue(note);
+);
+
+process_note(synth1)
+&& process_note(synth2)
+&& process_note(synth3)
+&& process_note(synth4)
+&& process_note(synth5)
+&& process_note(synth6)
+&& process_note(synth7)
+&& process_note(synth8)
+&& process_note(synth9)
+&& process_note(synth10)
+&& process_note(synth11)
+&& process_note(synth12)
+&& process_note(synth13)
+&& process_note(synth14)
+&& process_note(synth15)
+&& process_note(synth16);
