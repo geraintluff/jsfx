@@ -259,6 +259,11 @@
 				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.3/Panalysis/Panalysis.jsfx</source>
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.3/Panalysis/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.1.4" author="Geraint Luff" time="2018-05-27T10:35:09.635Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.4/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.4/Panalysis/ui-lib.jsfx-inc</source>
+				<changelog><![CDATA[Add "polar" display mode]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Level Meter" type="effect">
 			<metadata>

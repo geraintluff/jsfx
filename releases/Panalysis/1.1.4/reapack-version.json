@@ -1,0 +1,17 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "visualise and manipulate the stereo field of the audio",
+	"files": {
+		"Panalysis/Panalysis.jsfx": {
+			"main": false
+		},
+		"Panalysis/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.1.4",
+	"package": "Panalysis",
+	"time": "2018-05-27T10:35:09.635Z",
+	"changeLog": "Add \"polar\" display mode"
+}
