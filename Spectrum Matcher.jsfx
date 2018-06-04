@@ -1186,7 +1186,7 @@ new_correction_resolution = correction_resolution;
 
 @block
 
-correction_gain_ratio = pow(10, correction_gain_db/20);
+correction_gain_ratio = pow(10, correction_gain_db*correction_strength/20);
 
 action_recalculate ? (
 	action_recalculate = 0;
@@ -1713,11 +1713,11 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 			gfx_y = ui_top() + ui_texth()*1.5;
 			gfx_printf("%iHz", freq);
 
-			g_ratio = correction_amp(freq);
+			g_ratio = correction_amp(freq)*correction_gain_ratio;
 			g_db = log(g_ratio)*20/log(10);
 			gfx_x = ui_left() + ui_texth();
 			gfx_y = ui_top() + ui_texth()*0.5;
-			gfx_printf("%0.1fdB", g_db + correction_gain_db);
+			gfx_printf("%0.1fdB", g_db);
 		);
 	);
 
@@ -1776,9 +1776,9 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 		gi = 0;
 		while (gi < ui_width()) (
 			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
-			g_ratio = correction_amp(freq);
+			g_ratio = correction_amp(freq)*correction_gain_ratio;
 			g_db = log(g_ratio)*20/log(10);
-			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+			g_y_ratio = correction_db_yratio(g_db);
 			g_y = ui_top() + g_y_ratio*ui_height();
 			ui_color(192, 192, 192);
 
@@ -2084,8 +2084,14 @@ file_var(0, correction_learning);
 
 action_recalculate = 1;
 
-preset_version = 2;
+preset_version = 3;
 file_avail(0) == 0 ? preset_version = 1 : file_var(0, preset_version);
 preset_version < 2 ? (
 	correction_strength = 1;
+);
+preset_version < 3 ? (
+	// Gain used to be unaffected by correction strength, but now it is
+	correction_strength > 0 ? (
+		correction_gain_db /= correction_strength;
+	);
 );
