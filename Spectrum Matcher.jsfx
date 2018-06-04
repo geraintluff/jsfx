@@ -1235,6 +1235,10 @@ correction_learning && correction_viable ? (
 	calculate_correction_coefficients();
 );
 correction_viable = model_N == bands_N && bands_total_energy >= 0.3;
+correction_learning && !correction_viable ? (
+	// Not frozen, but we shouldn't be correcting either
+	correction_active = 0;
+);
 
 slider4 != last_sharpness ? (
 	action_recalculate = 1;
