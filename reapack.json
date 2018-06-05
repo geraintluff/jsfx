@@ -82,7 +82,7 @@
 				],
 				"youtube": "https://www.youtube.com/watch?v=QLh6b88OvFs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "1.6.0",
+			"version": "1.6.1",
 			"readme": "doc/Spectrum Matcher.md"
 		},
 		"Spring-Box": {
