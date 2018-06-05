@@ -207,6 +207,11 @@
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.5.2/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 				<changelog><![CDATA[Correction amount affects gain]]></changelog>
 			</version>
+			<version name="1.6.0" author="Geraint Luff" time="2018-06-05T21:59:32.476Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.6.0/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.6.0/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+				<changelog><![CDATA[Add range controls]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
