@@ -1762,19 +1762,21 @@ function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
 		g_db *= 2;
 	);
 
-	ui_push();
-		g_left = ui_left() + max(0, min(1, log(correction_range_low/low_freq)/log(high_freq/low_freq)))*ui_width();
-		ui_color(80, 80, 48, 0.4);
-		gfx_rect(ui_left(), ui_top(), g_left - ui_left(), ui_height());
-		ui_color(255, 255, 192);
-		gfx_line(g_left, ui_top(), g_left, ui_bottom());
+	correction_active ? (
+		ui_push();
+			g_left = ui_left() + max(0, min(1, log(correction_range_low/low_freq)/log(high_freq/low_freq)))*ui_width();
+			ui_color(80, 80, 48, 0.4);
+			gfx_rect(ui_left(), ui_top(), g_left - ui_left(), ui_height());
+			ui_color(255, 255, 192);
+			gfx_line(g_left, ui_top(), g_left, ui_bottom());
 
-		g_left = ui_left() + max(0, min(1, log(correction_range_high/low_freq)/log(high_freq/low_freq)))*ui_width();
-		ui_color(80, 80, 48, 0.4);
-		gfx_rect(g_left, ui_top(), ui_right() - g_left, ui_height());
-		ui_color(255, 255, 192);
-		gfx_line(g_left, ui_top(), g_left, ui_bottom());
-	ui_pop();
+			g_left = ui_left() + max(0, min(1, log(correction_range_high/low_freq)/log(high_freq/low_freq)))*ui_width();
+			ui_color(80, 80, 48, 0.4);
+			gfx_rect(g_left, ui_top(), ui_right() - g_left, ui_height());
+			ui_color(255, 255, 192);
+			gfx_line(g_left, ui_top(), g_left, ui_bottom());
+		ui_pop();
+	);
 
 	correction_active ? (
 		ui_hover() ? (
