@@ -345,6 +345,12 @@
 				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/delay-utils.jsfx-inc</source>
 				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.1/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
 			</version>
+			<version name="1.1.2" author="Geraint Luff" time="2018-06-07T09:35:25.324Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">
 			<metadata>
