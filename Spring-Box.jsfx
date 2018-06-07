@@ -98,6 +98,8 @@ function update() local(delay, chorus, chorusfactor) (
 	ampB = amp*min(1, feedbackRatio*1.1);
 );
 
+/*
+// Create an orthogonal matrix for the mixing
 coeff_a = 1;
 coeff_b = exp(0);
 coeff_c = -coeff_a;
@@ -140,6 +142,7 @@ mat44 = coeff_a;
 	mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
 	mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
 );
+*/
 
 @slider
 
@@ -147,15 +150,33 @@ update();
 
 @block
 
+filter_Q = 0.5;
+filter_freq = slider7;
+filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
+filter_cosW0 = cos(filter_w0);
+filter_alpha = sin(filter_w0)/(2*filter_Q);
+
+filter_a0 = 1 + filter_alpha;
+filter_a1 = (-2*filter_cosW0)/filter_a0;
+filter_a2 = (1 - filter_alpha)/filter_a0;
+filter_b1 = (1 - filter_cosW0)/filter_a0;
+filter_b0 = filter_b1/2;
+filter_b2 = filter_b0;
+
 @sample
 
 chorus_alignment ? (
 	chorusphase1 += chorusphasespeed1;
 	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
 
-	chorusphase2 = chorusphase1 + 0.5*$pi;
-	chorusphase3 = chorusphase1 + $pi;
-	chorusphase4 = chorusphase1 + 1.5*$pi;
+	//chorusphase2 = chorusphase1 + 0.5*$pi;
+	//chorusphase3 = chorusphase1 + $pi;
+	//chorusphase4 = chorusphase1 + 1.5*$pi;
+
+	sine1 = sin(chorusphase1);
+	sine2 = cos(chorusphase2);
+	sine3 = -sine1;
+	sine4 = -sine2;
 ) : (
 	chorusphase1 += chorusphasespeed1;
 	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
@@ -165,32 +186,37 @@ chorus_alignment ? (
 	chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
 	chorusphase4 += chorusphasespeed4;
 	chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
+
+	sine1 = sin(chorusphase1);
+	sine2 = sin(chorusphase2);
+	sine3 = sin(chorusphase3);
+	sine4 = sin(chorusphase4);
 );
 
-d = delaysamples1 + (1 + sin(chorusphase1))*0.5*chorussamples;
-echo1a = delay1a.delay_output_linear(d - 1);
-echo1b = delay1b.delay_output_linear(d - 1);
+d = delaysamples1 + (1 + sine1)*0.5*chorussamples - 1;
+echo1a = delay1a.delay_output_linear(d);
+echo1b = delay1b.delay_output_linear(d);
 
-d = delaysamples2 + (1 + sin(chorusphase2))*0.5*chorussamples;
-echo2a = delay2a.delay_output_linear(d - 1);
-echo2b = delay2b.delay_output_linear(d - 1);
+d = delaysamples2 + (1 + sine2)*0.5*chorussamples - 1;
+echo2a = delay2a.delay_output_linear(d);
+echo2b = delay2b.delay_output_linear(d);
 
-d = delaysamples3 + (1 + sin(chorusphase3))*0.5*chorussamples;
-echo3a = delay3a.delay_output_linear(d - 1);
-echo3b = delay3b.delay_output_linear(d - 1);
+d = delaysamples3 + (1 + sine3)*0.5*chorussamples - 1;
+echo3a = delay3a.delay_output_linear(d);
+echo3b = delay3b.delay_output_linear(d);
 
-d = delaysamples4 + (1 + sin(chorusphase4))*0.5*chorussamples;
-echo4a = delay4a.delay_output_linear(d - 1);
-echo4b = delay4b.delay_output_linear(d - 1);
+d = delaysamples4 + (1 + sine4)*0.5*chorussamples - 1;
+echo4a = delay4a.delay_output_linear(d);
+echo4b = delay4b.delay_output_linear(d);
 
-y1a = echo1a*mat11 + echo2a*mat12 + echo3a*mat13 + echo4a*mat14;
-y1b = echo1b*mat11 + echo2b*mat12 + echo3b*mat13 + echo4b*mat14;
-y2a = echo1a*mat21 + echo2a*mat22 + echo3a*mat23 + echo4a*mat24;
-y2b = echo1b*mat21 + echo2b*mat22 + echo3b*mat23 + echo4b*mat24;
-y3a = echo1a*mat31 + echo2a*mat32 + echo3a*mat33 + echo4a*mat34;
-y3b = echo1b*mat31 + echo2b*mat32 + echo3b*mat33 + echo4b*mat34;
-y4a = echo1a*mat41 + echo2a*mat42 + echo3a*mat43 + echo4a*mat44;
-y4b = echo1b*mat41 + echo2b*mat42 + echo3b*mat43 + echo4b*mat44;
+y1a = 0.5*(echo1a + echo2a - echo3a + echo4a);
+y1b = 0.5*(echo1b + echo2b - echo3b + echo4b);
+y2a = -0.5*(echo1a + echo2a + echo3a - echo4a);
+y2b = -0.5*(echo1b + echo2b + echo3b - echo4b);
+y3a = 0.5*(echo1a - echo2a - echo3a - echo4a);
+y3b = 0.5*(echo1b - echo2b - echo3b - echo4b);
+y4a = 0.5*(echo1a - echo2a + echo3a + echo4a);
+y4b = 0.5*(echo1b - echo2b + echo3b + echo4b);
 
 left = spl0;
 right = spl1;
@@ -208,34 +234,20 @@ left = (y1a - y1b + y3a - y3b)*0.71;
 right = (y2a - y2b + y4a - y4b)*0.71;
 
 // Filter
-filter_Q = 0.5;
-filter_freq = slider7;
-filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
-filter_cosW0 = cos(filter_w0);
-filter_alpha = sin(filter_w0)/(2*filter_Q);
-
-filter_a0 = 1 + filter_alpha;
-filter_a1 = (-2*filter_cosW0)/filter_a0;
-filter_a2 = (1 - filter_alpha)/filter_a0;
-filter_b1 = (1 - filter_cosW0)/filter_a0;
-filter_b0 = filter_b1/2;
-filter_b2 = filter_b0;
 
 x = left;
-y = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
+left = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
 filterLx2 = filterLx1;
 filterLx1 = x;
 filterLy2 = filterLy1;
-filterLy1 = y;
-left = y;
+filterLy1 = left;
 
 x = right;
-y = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
+right = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
 filterRx2 = filterRx1;
 filterRx1 = x;
 filterRy2 = filterRy1;
-filterRy1 = y;
-right = y;
+filterRy1 = right;
 
 spl0 = spl0*dry + left*wet;
 spl1 = spl1*dry + right*wet;
