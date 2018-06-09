@@ -1,0 +1,29 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "analyse the difference between an input and a model, and optionally correct with EQ",
+	"sort": 6,
+	"files": {
+		"Spectrum-Matcher/Spectrum Matcher.jsfx": {
+			"main": false
+		},
+		"Spectrum-Matcher/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": [
+			"Spectrum Matcher 1.png",
+			"Spectrum Matcher 2.png"
+		],
+		"presets": [
+			"Spectrum Matcher.rpl"
+		],
+		"youtube": "https://www.youtube.com/watch?v=QLh6b88OvFs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"version": "1.7.0",
+	"readme": "doc/Spectrum Matcher.md",
+	"package": "Spectrum Matcher",
+	"time": "2018-06-09T09:49:23.024Z",
+	"changeLog": "Allow negative correction amounts"
+}
