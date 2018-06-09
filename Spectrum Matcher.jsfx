@@ -12,7 +12,7 @@ slider4:1<0.5,1.5>-sharpness (Q)
 slider5:6<-12,20>-hard limit (dB)
 slider6:correction_gain_db=0<-24,12,0.1>-correction gain (dB)
 slider7:correction_resolution=50<1,50,1>-correction resolution
-slider8:correction_strength=1<0,1>-correction strength
+slider8:correction_strength=1<-1,1>-correction strength
 slider9:correction_range_low=20<10,18000,1>-correction range low (Hz)
 slider10:correction_range_high=18000<20,20000,1>-correction range high (Hz)
 slider11:correction_boundary_low=0<0,2,1{highpass,flat,zero}>-correction boundary low
@@ -2044,7 +2044,7 @@ ui_screen() == "main" ? (
 					ui_set_rect(ui_left() - 8, ui_top(), ui_width(), ui_height());
 
 					ui_split_left(ui_height());
-						correction_strength = control_dial(correction_strength, 0, 1, 0);
+						correction_strength = control_dial(correction_strength, -1, 1, 0, 0);
 					ui_pop();
 
 					ui_align(0, 0.5);
