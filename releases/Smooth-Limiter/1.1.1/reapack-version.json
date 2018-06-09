@@ -1,0 +1,24 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "a limiter that aims to have the correction curve as smooth as possible",
+	"files": {
+		"Smooth-Limiter/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Smooth-Limiter/Smooth Limiter.jsfx": {
+			"main": false
+		},
+		"Smooth-Limiter/Smooth Limiter.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.1.1",
+	"links": {
+		"presets": [
+			"Smooth Limiter.jsfx.rpl"
+		]
+	},
+	"package": "Smooth Limiter",
+	"time": "2018-06-09T22:03:46.040Z"
+}

@@ -1,0 +1,29 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"summary": "harmoniser",
+	"sort": 1,
+	"files": {
+		"Humonica/Humonica.jsfx": {
+			"main": false
+		},
+		"Humonica/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Humonica/Humonica.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "2.0.12",
+	"links": {
+		"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"package": "Humonica",
+	"time": "2018-06-09T22:00:52.455Z"
+}

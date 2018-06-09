@@ -1,0 +1,337 @@
+desc:Smooth Limiter (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:-3<-20,0.1,0.1>-limit (dB)
+slider2:10<0.1,100,0.1>-anticipation (ms)
+slider3:50<1,100,0.1>-release (ms)
+slider4:0<0,1,0.01>-distortion
+slider5:0<-12,12,0.1>-pre-gain (dB)
+
+import ui-lib.jsfx-inc
+
+@init
+gfx_ext_retina = 1;
+
+bufferlength = ceil(srate*1);
+buffer0 = 0;
+buffer1 = buffer0 + bufferlength;
+bufferpeak = buffer1 + bufferlength;
+freemem = bufferpeak + bufferlength;
+
+overcorrect_factor = 1.002; // about 0.02dB
+
+freemem = ui_setup(freemem);
+
+function tanh(x) (
+	x >= 20 ? (
+		1;
+	) : x <= -20 ? (
+		-1;
+	) : (
+		(exp(2*x) - 1)/(exp(2*x) + 1);
+	);
+);
+function atanh(x) (
+	x >= 1 ? (
+		20;
+	) ? (x <= -1) ? (
+		-20;
+	) : (
+		log((1 + x)/(1 - x))*0.5;
+	);
+);
+
+writepos = 10;
+delaysamples = 10;
+attacksamples = 10;
+releasesamples = 100;
+limit = 1;
+
+releasestartvalue = 1;
+releaseindex = srate;
+
+function update() (
+	attacksamples = ceil(slider2*srate/1000);
+	releasesamples = ceil(slider3*srate/1000);
+	delaysamples = ceil(attacksamples);
+	limit = pow(10, slider1/20);
+	pregain_factor = pow(10, slider5/20);
+);
+// Starts at 0, goes to 1
+function attackwindow(ratio) (
+	0.5 - 0.5*cos(ratio*$pi);
+);
+function releasewindow(ratio) (
+	0.5 + 0.5*cos(ratio*$pi);
+);
+
+A = 0;
+B = 1;
+function dist(x) (
+	B*x/(A*abs(x) + 1);
+);
+function distortion_for_peak(peak, limit) (
+	A = (1 - pow(limit/oldpeak, slider4))/limit;
+);
+function scaling_for_peak(peak, limit) (
+	pow(limit/peak, 1 - slider4);
+);
+
+@slider
+
+update();
+
+@block
+
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+pdc_delay = delaysamples - 1;
+
+@sample
+spl0 *= pregain_factor;
+spl1 *= pregain_factor;
+truepeak = max(abs(spl0), abs(spl1));
+releasepeak = limit;
+releaseindex < releasesamples ? (
+	releasepeak = limit + (releasestartvalue - limit)*releasewindow(releaseindex/releasesamples);
+	releaseindex += 1;
+);
+peak = max(releasepeak, truepeak);
+//peak = max(peak - releasegradient, truepeak);
+
+peak < limit ? (
+	peak = limit;
+	releasestartvalue = limit;
+	releaseindex = srate;
+) : (truepeak == peak) ? (
+	// It's a new peak
+	peak *= overcorrect_factor; // Add just a little bit extra, in the hopes that we don't have to do this again soon
+
+	// For future decay
+	//releasegradient = (peak - limit)/releasesamples;
+	releasestartvalue = peak;
+	releaseindex = 0;
+	// Attempt to extend an existing attack
+	i = 1;
+	startpeak = limit;
+	foundabove = 0;
+	foundintersection = 0;
+
+	intersectionindex = -1;
+	bestcorrection = -1;
+	bestindex = delaysamples - 1;
+	beststartpeak = limit;
+	while (i < attacksamples && !foundintersection) (
+		window = attackwindow(1 - i/attacksamples);
+
+		readpos = writepos - i;
+		readpos < 0 ? readpos += bufferlength;
+		oldpeak = bufferpeak[readpos];
+
+		newstartpeak = peak + (oldpeak - peak)/(1 - window);
+		newstartpeak > startpeak ? (
+			// Keep track of the smallest alteration,
+			//	but with a bias towards f
+			diff = (newstartpeak - startpeak)*(1 - window);
+			(bestcorrection < 0 || diff < bestcorrection) ? (
+				bestcorrection = diff;
+				bestindex = i;
+				beststartpeak = newstartpeak;
+			);
+
+			startpeak = newstartpeak;
+			intersectionindex = i;
+			foundabove = 1;
+		) : (foundabove) ? (
+			foundintersection = 1;
+		);
+		i += 1;
+	);
+
+	foundintersection ? (
+		i = 0;
+		while (i < intersectionindex) (
+			window = attackwindow(1 - i/attacksamples);
+
+			readpos = writepos - i;
+			readpos < 0 ? readpos += bufferlength;
+			newpeak = startpeak + (peak - startpeak)*window;
+			bufferpeak[readpos] = newpeak;
+			i += 1;
+		);
+	) : (
+		i = 0;
+		while (i < bestindex) (
+			window = attackwindow(1 - i/attacksamples);
+
+			readpos = writepos - i;
+			readpos < 0 ? readpos += bufferlength;
+			newpeak = beststartpeak + (peak - beststartpeak)*window;
+
+			faderatio = (1 - i/bestindex);
+			fadewindow = 1 - (1 - faderatio)*(1 - faderatio);
+			bufferpeak[readpos] += (newpeak - bufferpeak[readpos])*fadewindow;
+			i += 1;
+		);
+	);
+);
+
+buffer0[writepos] = spl0;
+buffer1[writepos] = spl1;
+bufferpeak[writepos] = peak;
+
+writepos += 1;
+writepos >= bufferlength ? (
+	writepos = 0;
+);
+
+readpos = writepos - delaysamples;
+readpos < 0 ? readpos += bufferlength;
+reduction = limit/bufferpeak[readpos];
+
+oldpeak = bufferpeak[readpos];
+B = scaling_for_peak(oldpeak, limit);
+A = distortion_for_peak(oldpeak, limit);
+
+spl0 = dist(buffer0[readpos]);
+spl1 = dist(buffer1[readpos]);
+
+@gfx 620 460
+
+function value_to_y(v) (
+	ui_top() + max(0, min(1, 0.5*(1 - v)))*ui_height();
+);
+
+function draw_response() local(i, x, y, ref) (
+	ui_retina(1);
+	control_background_passive();
+	ui_push(0.2);
+		ref = limit*2;
+		ui_color(192, 0, 0);
+		y = value_to_y(limit/ref);
+		gfx_line(ui_left(), y, ui_right() - 1, y);
+		y = value_to_y(-limit/ref);
+		gfx_line(ui_left(), y, ui_right() - 1, y);
+	ui_pop();
+
+	i = 0;
+	while (i < ui_width()) (
+		x = 2*i/(ui_width() - 1) - 1;
+		y = value_to_y(dist(x*ref)/ref);
+
+		i == 0 ? (
+			gfx_x = ui_left() + i;
+			gfx_y = y;
+		) : (
+			gfx_lineto(ui_left() + i, y);
+		);
+		i += 1;
+	);
+	control_finish_passive();
+);
+
+function draw_buffer(buffer, startpos, multiplier) local(width, i, i2, N, lowindex, highindex, low, high, readpos, v, x, y1, y2) (
+	i = 0;
+	N = ceil(bufferlength*0.75);
+	width = ui_width();
+	while (i < ui_width()) (
+		lowindex = floor(i/width*N);
+		highindex = ceil((i + 1)/width*N);
+
+		i2 = lowindex;
+		step = ceil((highindex - lowindex)/10);
+		readpos = (startpos + lowindex - N);
+		readpos < 0 ? readpos += bufferlength;
+		low = high = buffer[readpos];
+		while (i2 < highindex) (
+			readpos = (startpos + i2 - N);
+			readpos < 0 ? readpos += bufferlength;
+			low = min(low, buffer[readpos]);
+			high = max(high, buffer[readpos]);
+			i2 += step;
+		);
+
+		x = ui_left() + i;
+		y1 = value_to_y(low*multiplier);
+		y2 = value_to_y(high*multiplier);
+
+		gfx_line(x, y1, x, y2);
+		i += 1;
+	);
+);
+
+function draw_peaks(scale) local(startpos, y) (
+	ui_retina(1);
+
+	ui_color(0, 0, 0);
+	ui_fill();
+
+	ui_color(255, 0, 0);
+	y = ui_top() + 0.5*(1 - limit*scale)*ui_height();
+	gfx_line(ui_left(), y, ui_right() - 1, y);
+	y = ui_top() + 0.5*(1 + limit*scale)*ui_height();
+	gfx_line(ui_left(), y, ui_right() - 1, y);
+
+	startpos = writepos;
+	ui_color(64, 128, 192);
+	draw_buffer(buffer0, startpos, scale);
+	ui_color(192, 128, 64);
+	draw_buffer(buffer1, startpos, scale);
+	ui_color(255, 255, 255);
+	draw_buffer(bufferpeak, startpos, scale);
+	draw_buffer(bufferpeak, startpos, -scale);
+
+	control_finish_passive();
+);
+
+control_start("main", "black");
+
+function labelled_dial(value, low, high, bias, label, formatvalue, format, default) (
+	ui_push();
+		ui_align(0.6, 0.5);
+		ui_push_width(40);
+			value = control_dial_left(value, low, high, bias);
+		ui_pop();
+		ui_push_leftof(50);
+			ui_align(1, 0.5);
+			ui_text(label);
+		ui_pop();
+		ui_push_rightof(50);
+			ui_align(0, 0.5);
+			value = control_hidden_textnumber(value, formatvalue, format);
+		ui_pop();
+		ui_click() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+	value;
+);
+
+ui_screen() == "main" ? (
+	control_navbar("Smooth Limiter", -1, -1);
+	ui_split_left(max(ui_width()*0.4, 200));
+		ui_height() > 200 ? (
+			ui_split_bottom(min(ui_width()*0.5, ui_height()*0.4));
+				draw_response();
+			ui_pop();
+		);
+		ui_split_topratio(1/5);
+			slider1 = labelled_dial(slider1, -20, -0.1, -3.5, "limit:", slider1, "%0.1fdB", -3);
+		ui_split_next();
+			slider5 = labelled_dial(slider5, -12, 12, 0, "pre-gain:", slider5 + (slider5 > 0 ? 0.002 : -0.002), abs(slider5) < 10 ? "%0.2fdB" : "%0.1fdB", 0);
+		ui_split_next();
+			slider2 = labelled_dial(slider2, 0.1, 100, 3, "attack:", slider2, "%0.1fms", 10);
+		ui_split_next();
+			slider3 = labelled_dial(slider3, 1, 500, 3, "release:", floor(slider3 + 0.5), "%ims", 100);
+		ui_split_next();
+			slider4 = labelled_dial(slider4, 0, 1, 0, "distortion:", floor(slider4*100 + 0.5), "%i%%", 0);
+		ui_pop();
+	ui_pop();
+	draw_peaks(0.5);
+) : control_system();
+
+ui_interacted() ? update();

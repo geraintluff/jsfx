@@ -7,9 +7,9 @@
 	<category name="Distortion">
 		<reapack name="Bad Connection" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-chaos.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-spring-box-glitch.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Bad%20Connection.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=pmjLZKVoBLo&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Bad Connection\b}\line\line Bad Connection has three features:\line\line {\par \bullet\tab randomly change the audio between two volume levels.  It can be used to imitate {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Bad%20Connection/radio-dropout.mp3&quot;}}{\fldrslt dodgy radios}} or {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Bad%20Connection/cpu-overload.mp3&quot;}}{\fldrslt glitchy CPU overloads}}.\line \bullet\tab apply volume-independent distortion (response curve has logarithmic ripples)\line \bullet\tab tempo-dependent feedback delay line, and the feedback line includes the {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-3-16-degrade.mp3&quot;}}{\fldrslt distortion}} and {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-4-16-clean-dissolve.mp3&quot;}}{\fldrslt volume variation}}.  It can create clean sounds, {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-chaos.mp3&quot;}}{\fldrslt destruction}}, or {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-spring-box-glitch.mp3&quot;}}{\fldrslt glitchy textures}}) (demo includes Spring Box for reverb).\line }\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Bad%20Connection.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-chaos.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-spring-box-glitch.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Bad%20Connection.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=pmjLZKVoBLo&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Bad Connection\b}\line\line Bad Connection has three features:\line\line {\par \bullet\tab randomly change the audio between two volume levels.  It can be used to imitate {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Bad%20Connection/radio-dropout.mp3&quot;}}{\fldrslt dodgy radios}} or {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Bad%20Connection/cpu-overload.mp3&quot;}}{\fldrslt glitchy CPU overloads}}.\line \bullet\tab apply volume-independent distortion (response curve has logarithmic ripples)\line \bullet\tab tempo-dependent feedback delay line, and the feedback line includes the {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-3-16-degrade.mp3&quot;}}{\fldrslt distortion}} and {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-4-16-clean-dissolve.mp3&quot;}}{\fldrslt volume variation}}.  It can create clean sounds, {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-chaos.mp3&quot;}}{\fldrslt destruction}}, or {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/bad-connection-spring-box-glitch.mp3&quot;}}{\fldrslt glitchy textures}}) (demo includes Spring Box for reverb).\line }\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Bad%20Connection.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Bad%20Connection.png</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Bad%20Connection.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Bad%20Connection.jsfx.rpl</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/bad-connection-chaos.mp3</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/bad-connection-spring-box-glitch.mp3</link>
 				<link rel="youtube">https://www.youtube.com/watch?v=pmjLZKVoBLo&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
@@ -69,13 +69,19 @@
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.0/Bad-Connection/delay-utils.jsfx-inc</source>
 				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
 			</version>
+			<version name="2.1.1" author="Geraint Luff" time="2018-06-09T22:00:28.698Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/delay-utils.jsfx-inc</source>
+				<source file="Bad-Connection/Bad Connection.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/Bad%20Connection.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Sandwich-Amp.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Sandwich%20Amp.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Sandwich Amp\b}\line\line Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/sandwich-amp.mp3&quot;}}{\fldrslt audio demo}})\line\line The underlying distortion function is \i\ul tanh()\ul0\i0  (which is a fairly &quot;soft&quot; distortion, as opposed to a hard clip), but it can be driven quite hard, and an offset can be added to get asymmetrical response.\line\line The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central while preserving the stereo feel of the sound.  Similarly, the &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.\line\line It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Sandwich%20Amp.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Sandwich-Amp.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Sandwich%20Amp.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Sandwich Amp\b}\line\line Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/sandwich-amp.mp3&quot;}}{\fldrslt audio demo}})\line\line The underlying distortion function is \i\ul tanh()\ul0\i0  (which is a fairly &quot;soft&quot; distortion, as opposed to a hard clip), but it can be driven quite hard, and an offset can be added to get asymmetrical response.\line\line The &quot;width&quot; parameter widens the sound before distortion and narrows it afterwards, so that the distortion sounds stable and central while preserving the stereo feel of the sound.  Similarly, the &quot;filter&quot; section applies a filter before the distortion, and then applies the inverse filter afterwards, which can provide distinctive distortion timbres.\line\line It is also possible to supply a secondary input to the effect (channels 3 and 4) - this audio is added in before the distortion, but then subtracted again afterwards.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Sandwich%20Amp.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Sandwich%20Amp.png</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Sandwich-Amp.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Sandwich%20Amp.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Sandwich%20Amp.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-01-11T02:56:00.189Z">
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.0/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
@@ -105,15 +111,20 @@
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.6/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
 				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.6/Sandwich-Amp/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.0.7" author="Geraint Luff" time="2018-06-09T22:03:25.579Z">
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
+				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/ui-lib.jsfx-inc</source>
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/Sandwich%20Amp.jsfx.rpl</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Utility">
 		<reapack name="Spectrum Matcher" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=QLh6b88OvFs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Spectrum Matcher\b}\line\line Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.\line\line The bottom half of the screen shows the short-term spectrum (green), the long-term spectrum (yellow), and the long-term reference spectrum (blue).\line\line The top half of the screen shows the current difference between the long-term spectrums (red).  If correction is enabled, it shows the correction curve (white) and phase (dotted brown).  If the correction is frozen, it shows the frozen correction values in blue.\line\line To disable correction and re-start/clear the long-term spectrum measurements, hit &quot;Reset&quot;.  To start correction, hit &quot;Correct&quot;.  Once correction is enabled, hit &quot;Freeze&quot; to set or update the fixed correction values.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher%201.png&quot;}}{\fldrslt screenshot}}\line\line It can learn new models from the incoming audio, and save this as a preset for later use:\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png&quot;}}{\fldrslt screenshot}}\line\line This effect is quite CPU-intensive, so if you&apos;re not using it it could be good to bypass it.\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=QLh6b88OvFs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Spectrum Matcher\b}\line\line Spectrum Matcher is a tool for comparing the spectrum/timbre of an input against a model, and optionally applying a correction filter.\line\line The bottom half of the screen shows the short-term spectrum (green), the long-term spectrum (yellow), and the long-term reference spectrum (blue).\line\line The top half of the screen shows the current difference between the long-term spectrums (red).  If correction is enabled, it shows the correction curve (white) and phase (dotted brown).  If the correction is frozen, it shows the frozen correction values in blue.\line\line To disable correction and re-start/clear the long-term spectrum measurements, hit &quot;Reset&quot;.  To start correction, hit &quot;Correct&quot;.  Once correction is enabled, hit &quot;Freeze&quot; to set or update the fixed correction values.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher%201.png&quot;}}{\fldrslt screenshot}}\line\line It can learn new models from the incoming audio, and save this as a preset for later use:\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png&quot;}}{\fldrslt screenshot}}\line\line This effect is quite CPU-intensive, so if you&apos;re not using it it could be good to bypass it.\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%201.png</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spectrum%20Matcher%202.png</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Spectrum%20Matcher.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Spectrum%20Matcher.jsfx.rpl</link>
 				<link rel="youtube">https://www.youtube.com/watch?v=QLh6b88OvFs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2016-09-22T14:07:10.452Z">
@@ -219,8 +230,8 @@
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Smooth%20Limiter.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Smooth Limiter\b}\line\line This is a brick-wall limiter that aims to keep the correction curve smooth while remaining responsive.\line\line It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal segment (\i\ul 1 + cos(x)\ul0\i0 ), with the goal of reducing cross-modulation.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Smooth%20Limiter.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.\line\line }</description>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Smooth%20Limiter.rpl</link>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Smooth%20Limiter.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Smooth Limiter\b}\line\line This is a brick-wall limiter that aims to keep the correction curve smooth while remaining responsive.\line\line It will recover completely from any peak in a fixed amount of time.  Both the attack and release follow a curve that is similar to a sinusoidal segment (\i\ul 1 + cos(x)\ul0\i0 ), with the goal of reducing cross-modulation.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Smooth%20Limiter.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.\line\line }</description>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Smooth%20Limiter.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-01-17T21:06:28.163Z">
 				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.0.0/Smooth-Limiter/ui-lib.jsfx-inc</source>
@@ -247,11 +258,16 @@
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.0/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 				<changelog><![CDATA[Declare inputs/outputs (2-channel)]]></changelog>
 			</version>
+			<version name="1.1.1" author="Geraint Luff" time="2018-06-09T22:03:46.040Z">
+				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/ui-lib.jsfx-inc</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/Smooth%20Limiter.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Panalysis" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Panalysis\b}\line\line This effect draws the incoming audio on a 2D plot, so you can visualise the stereo field.  You can also alter the width/pan using the controls.\line\line {\par \bullet\tab Centre-panned (mono) sounds will draw vertically\line \bullet\tab Left-panned sounds will draw angled to the left, right-panned will draw to the right\line \bullet\tab If the L+R channels are independent, the graph will have no defined clear direction (may appear round)\line }\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis.png&quot;}}{\fldrslt screenshot}}\line\line It&apos;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis%202.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Panalysis.rpl</link>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Panalysis\b}\line\line This effect draws the incoming audio on a 2D plot, so you can visualise the stereo field.  You can also alter the width/pan using the controls.\line\line {\par \bullet\tab Centre-panned (mono) sounds will draw vertically\line \bullet\tab Left-panned sounds will draw angled to the left, right-panned will draw to the right\line \bullet\tab If the L+R channels are independent, the graph will have no defined clear direction (may appear round)\line }\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis.png&quot;}}{\fldrslt screenshot}}\line\line It&apos;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis%202.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Panalysis.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-02-03T11:07:40.513Z">
 				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.0.0/Panalysis/Panalysis.jsfx</source>
@@ -282,6 +298,11 @@
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.4/Panalysis/ui-lib.jsfx-inc</source>
 				<changelog><![CDATA[Add "polar" display mode]]></changelog>
 			</version>
+			<version name="1.1.5" author="Geraint Luff" time="2018-06-09T22:03:06.691Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/ui-lib.jsfx-inc</source>
+				<source file="Panalysis/Panalysis.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/Panalysis.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Level Meter" type="effect">
 			<metadata>
@@ -301,11 +322,11 @@
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/spring-box.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spring-Box.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Spring-Box\b}\line\line Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/spring-box.mp3&quot;}}{\fldrslt audio demo}})\line\line Early echoes can be suppressed to get a smoother sound (the &quot;late bias&quot; control), by using two parallel delay structures with different feedback ratios, and subtracting the results.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spring-Box.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/spring-box.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spring-Box.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Spring-Box\b}\line\line Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/spring-box.mp3&quot;}}{\fldrslt audio demo}})\line\line Early echoes can be suppressed to get a smoother sound (the &quot;late bias&quot; control), by using two parallel delay structures with different feedback ratios, and subtracting the results.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Spring-Box.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/Spring-Box.png</link>
 				<link rel="youtube">https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/spring-box.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Spring-Box.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Spring-Box.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.2" author="Geraint Luff" time="2017-01-05T16:01:37.544Z">
 				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.0.2/Spring-Box/Spring-Box.jsfx</source>
@@ -355,6 +376,13 @@
 				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/ui-lib.jsfx-inc</source>
 				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/delay-utils.jsfx-inc</source>
 				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.2/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+			</version>
+			<version name="1.1.3" author="Geraint Luff" time="2018-06-09T22:04:20.853Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/Spring-Box.jsfx.rpl</source>
 			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">
@@ -413,11 +441,11 @@
 		</reapack>
 		<reapack name="Echo-Cycles" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Echo-Cycles.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=BZ-1z7IKYTs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Echo Cycles\b}\line\line This is a feedback delay effect where the echoes move through the stereo space.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3&quot;}}{\fldrslt audio demo}})\line\line This is not done using an LFO, it uses a feedback structure with three delay lines for two channels - this means that the stereo position of the echoes is independent, which is good for building up textures.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Echo-Cycles.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Echo-Cycles.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=BZ-1z7IKYTs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Echo Cycles\b}\line\line This is a feedback delay effect where the echoes move through the stereo space.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3&quot;}}{\fldrslt audio demo}})\line\line This is not done using an LFO, it uses a feedback structure with three delay lines for two channels - this means that the stereo position of the echoes is independent, which is good for building up textures.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Echo-Cycles.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="youtube">https://www.youtube.com/watch?v=BZ-1z7IKYTs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Echo-Cycles.png</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Echo-Cycles.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Echo-Cycles.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2018-04-01T21:20:55.768Z">
 				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.0.0/Echo-Cycles/Echo-Cycles.jsfx</source>
@@ -439,14 +467,22 @@
 				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.0/Echo-Cycles/delay-utils.jsfx-inc</source>
 				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.0/Echo-Cycles/filter-utils.jsfx-inc</source>
 			</version>
+			<version name="1.2.1" author="Geraint Luff" time="2018-06-09T22:00:30.674Z">
+				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/Echo-Cycles.jsfx</source>
+				<source file="Echo-Cycles/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/ui-lib.jsfx-inc</source>
+				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/delay-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/filter-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Vibrato" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato-ReaSynth.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Vibrato.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Vibrato\b}\line\line This effect it adds vibrato, using MIDI notes to produce a more natural envelope (compared to a constant LFO).  Each note resets the vibrato to zero, and it is slowly introduced.\line\line This is most useful for adding vibrato to synths that don&apos;t have already have it - for example, {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato-ReaSynth.mp3&quot;}}{\fldrslt ReaSynth}}.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Vibrato.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;Lookahead&quot; dial controls how much latency is added.  With this at 0, sometimes the start of a note can sometimes be momentarily detuned because of ongoing vibrato.  To prevent this completely, turn the dial to its maximum value (which scales according to the LFO Rate value).\line\line \i (background by Tom Barrett on {\field{\*\fldinst{HYPERLINK &quot;https://unsplash.com/photos/-bSucp2nUdQ&quot;}}{\fldrslt Unsplash}})\i0 \line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato-ReaSynth.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Vibrato.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Vibrato\b}\line\line This effect it adds vibrato, using MIDI notes to produce a more natural envelope (compared to a constant LFO).  Each note resets the vibrato to zero, and it is slowly introduced.\line\line This is most useful for adding vibrato to synths that don&apos;t have already have it - for example, {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vibrato-ReaSynth.mp3&quot;}}{\fldrslt ReaSynth}}.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Vibrato.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;Lookahead&quot; dial controls how much latency is added.  With this at 0, sometimes the start of a note can sometimes be momentarily detuned because of ongoing vibrato.  To prevent this completely, turn the dial to its maximum value (which scales according to the LFO Rate value).\line\line \i (background by Tom Barrett on {\field{\*\fldinst{HYPERLINK &quot;https://unsplash.com/photos/-bSucp2nUdQ&quot;}}{\fldrslt Unsplash}})\i0 \line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Vibrato.png</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Vibrato-ReaSynth.mp3</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Vibrato.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Vibrato.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Vibrato.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2018-04-30T09:46:21.341Z">
 				<source file="Vibrato/Vibrato.jsfx">https://geraintluff.github.io/jsfx/releases/Vibrato/1.0.0/Vibrato/Vibrato.jsfx</source>
@@ -469,6 +505,14 @@
 				<source file="Vibrato/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/delay-utils.jsfx-inc</source>
 				<source file="Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png</source>
 				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.1/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
+			</version>
+			<version name="1.1.2" author="Geraint Luff" time="2018-06-09T22:05:23.849Z">
+				<source file="Vibrato/Vibrato.jsfx">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/Vibrato.jsfx</source>
+				<source file="Vibrato/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/ui-lib.jsfx-inc</source>
+				<source file="Vibrato/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/delay-utils.jsfx-inc</source>
+				<source file="Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png</source>
+				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
+				<source file="Vibrato/Vibrato.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/Vibrato.jsfx.rpl</source>
 			</version>
 		</reapack>
 		<reapack name="Cross-Polyphonic-FM" type="effect">
@@ -493,6 +537,14 @@
 				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
 				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
 				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.0/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2018-06-09T22:00:10.553Z">
+				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
+				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
 			</version>
 		</reapack>
 	</category>
@@ -560,6 +612,12 @@
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.8/PadSynth/ui-lib.jsfx-inc</source>
 				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.8/PadSynth/ui-lib-compat.jsfx-inc</source>
 			</version>
+			<version name="1.1.9" author="Geraint Luff" time="2018-06-09T22:05:29.534Z">
+				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.9/PadSynth/pad-synth.jsfx</source>
+				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.9/PadSynth/ui-lib.jsfx-inc</source>
+				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.9/PadSynth/ui-lib-compat.jsfx-inc</source>
+				<source file="PadSynth/pad-synth.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.9/PadSynth/pad-synth.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Learning Sampler" type="effect">
 			<metadata>
@@ -618,9 +676,9 @@
 		</reapack>
 		<reapack name="Hammer And String" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Hammer And String\b}\line\line This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}})\line\line The portamento affects how quickly the resonator changes pitch.  The &quot;Anticipation&quot; control starts the portamento before the actual note (this adds latency), which can give more natural movement.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Hammer And String\b}\line\line This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}})\line\line The portamento affects how quickly the resonator changes pitch.  The &quot;Anticipation&quot; control starts the portamento before the actual note (this adds latency), which can give more natural movement.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Hammer%20And%20String.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Hammer%20And%20String.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-02-20T10:17:53.071Z">
 				<source file="Hammer-And-String/Hammer And String.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.0/Hammer-And-String/Hammer%20And%20String.jsfx</source>
@@ -649,7 +707,7 @@
 		</reapack>
 		<reapack name="Hammer And Chord" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20detune%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20resonator%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20ringmod%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord-expressive.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=0MmKuW2nEkk&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=E_3ILfZsrs4&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Hammer And Chord\b}\line\line This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord.mp3&quot;}}{\fldrslt audio demo}})\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.png&quot;}}{\fldrslt screenshot}}\line\line It has two resonators for each note (left and right) and they can be detuned ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20detune%20demo.mp3&quot;}}{\fldrslt audio demo}}).\line\line If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord%20ringmod%20demo.mp3&quot;}}{\fldrslt audio demo}})\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20detune%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20resonator%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20ringmod%20demo.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord-expressive.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=0MmKuW2nEkk&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=E_3ILfZsrs4&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Hammer And Chord\b}\line\line This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord.mp3&quot;}}{\fldrslt audio demo}})\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.png&quot;}}{\fldrslt screenshot}}\line\line It has two resonators for each note (left and right) and they can be detuned ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20detune%20demo.mp3&quot;}}{\fldrslt audio demo}}).\line\line If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20Chord%20ringmod%20demo.mp3&quot;}}{\fldrslt audio demo}})\line\line }</description>
 				<link rel="youtube">https://www.youtube.com/watch?v=0MmKuW2nEkk&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 				<link rel="youtube">https://www.youtube.com/watch?v=E_3ILfZsrs4&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20detune%20demo.mp3</link>
@@ -657,7 +715,7 @@
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Hammer%20And%20Chord%20ringmod%20demo.mp3</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord-expressive.mp3</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/hammer-and-chord.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Hammer%20And%20Chord.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-02-20T10:17:49.611Z">
 				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.0.0/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
@@ -800,16 +858,24 @@
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.5/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 				<changelog><![CDATA[Bugfix: uncleared buffer was causing clicks in channel 1]]></changelog>
 			</version>
+			<version name="1.4.6" author="Geraint Luff" time="2018-06-09T22:00:36.272Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/synth-framework-obj.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Humonica" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica-spring-box.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Humonica.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=eTiwH886nAc&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Humonica\b}\line\line This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica.mp3&quot;}}{\fldrslt audio demo}})\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Humonica.png&quot;}}{\fldrslt screenshot}}\line\line The resynthesised notes can sound very &quot;bare&quot;, because they are made up of exact frequencies, however they can be softened with chorus. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica-spring-box.mp3&quot;}}{\fldrslt audio demo}} with Spring-Box chorus and reverb)\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica-spring-box.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Humonica.jsfx.rpl&quot;}}{\fldrslt presets}} / {\field{\*\fldinst{HYPERLINK &quot;https://www.youtube.com/watch?v=eTiwH886nAc&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK&quot;}}{\fldrslt YouTube}}\line\line {\fs48\b Humonica\b}\line\line This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica.mp3&quot;}}{\fldrslt audio demo}})\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Humonica.png&quot;}}{\fldrslt screenshot}}\line\line The resynthesised notes can sound very &quot;bare&quot;, because they are made up of exact frequencies, however they can be softened with chorus. ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/humonica-spring-box.mp3&quot;}}{\fldrslt audio demo}} with Spring-Box chorus and reverb)\line\line }</description>
 				<link rel="youtube">https://www.youtube.com/watch?v=eTiwH886nAc&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Humonica%20retina.png</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Humonica.png</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/humonica-spring-box.mp3</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/humonica.mp3</link>
-				<link rel="presets">https://geraintluff.github.io/jsfx/Humonica.rpl</link>
+				<link rel="presets">https://geraintluff.github.io/jsfx/Humonica.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2017-07-12T22:08:31.873Z">
 				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/1.0.0/Humonica/Humonica.jsfx</source>
@@ -884,6 +950,13 @@
 				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/synth-framework.jsfx-inc</source>
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/ui-lib.jsfx-inc</source>
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.11/Humonica/filter-utils.jsfx-inc</source>
+			</version>
+			<version name="2.0.12" author="Geraint Luff" time="2018-06-09T22:00:52.455Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/Humonica.jsfx.rpl</source>
 			</version>
 			<version name="2.0.2" author="Geraint Luff" time="2018-02-27T01:52:55.217Z">
 				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.2/Humonica/Humonica.jsfx</source>
@@ -1048,8 +1121,8 @@
 		</reapack>
 		<reapack name="MIDI Harmony" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/MIDI%20Harmony.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b MIDI Harmony\b}\line\line This effect shifts MIDI notes up or down by octaves, to fit within a target range.  This can be used to fold whatever chord is being played by some other instrument into a particular region (e.g. one octave around Middle C).\line\line It has a single-note and a chord mode.  It also has a built-in sequencer, which can be used as an arpeggiator (so it will play a pattern, but only using octave-shifted notes that you are already holding down).\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/MIDI%20Harmony.png&quot;}}{\fldrslt screenshot}}\line\line It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. &quot;one octave around Middle C&quot;) it is defined by a second input on a different MIDI channel (channel 16 by default).\line\line This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.\line\line }</description>
-				<link rel="presets">https://geraintluff.github.io/jsfx/MIDI%20Harmony.rpl</link>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/MIDI%20Harmony.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b MIDI Harmony\b}\line\line This effect shifts MIDI notes up or down by octaves, to fit within a target range.  This can be used to fold whatever chord is being played by some other instrument into a particular region (e.g. one octave around Middle C).\line\line It has a single-note and a chord mode.  It also has a built-in sequencer, which can be used as an arpeggiator (so it will play a pattern, but only using octave-shifted notes that you are already holding down).\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/MIDI%20Harmony.png&quot;}}{\fldrslt screenshot}}\line\line It also has a MIDI-input mode - this way, instead of the target region or note being fixed (e.g. &quot;one octave around Middle C&quot;) it is defined by a second input on a different MIDI channel (channel 16 by default).\line\line This lets you very quickly take one MIDI input, and re-cast it into a different scale or a different chord.\line\line }</description>
+				<link rel="presets">https://geraintluff.github.io/jsfx/MIDI%20Harmony.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2018-01-23T09:36:52.311Z">
 				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.0/MIDI-Harmony/synth-framework.jsfx-inc</source>
@@ -1060,6 +1133,12 @@
 				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/synth-framework.jsfx-inc</source>
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
 				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.1/MIDI-Harmony/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.0.2" author="Geraint Luff" time="2018-06-09T22:00:57.560Z">
+				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
+				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/ui-lib.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
 			</version>
 		</reapack>
 	</category>

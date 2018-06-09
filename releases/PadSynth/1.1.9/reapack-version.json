@@ -1,0 +1,26 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"summary": "a synth that produces thick sounds, including per-note effects and modulators",
+	"sort": 0,
+	"files": {
+		"PadSynth/pad-synth.jsfx": {
+			"main": false
+		},
+		"PadSynth/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"PadSynth/ui-lib-compat.jsfx-inc": {
+			"main": false
+		},
+		"PadSynth/pad-synth.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.1.9",
+	"links": {
+		"youtube": "https://www.youtube.com/watch?v=hgSqq-SgSjs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"package": "PadSynth",
+	"time": "2018-06-09T22:05:29.534Z"
+}

@@ -18,7 +18,7 @@
 				"delay-utils.jsfx-inc": {
 					"main": false
 				},
-				"Bad Connection.rpl": {
+				"Bad Connection.jsfx.rpl": {
 					"main": false
 				}
 			},
@@ -26,7 +26,7 @@
 			"links": {
 				"screenshot": "Bad Connection.png",
 				"presets": [
-					"Bad Connection.rpl"
+					"Bad Connection.jsfx.rpl"
 				],
 				"audio": [
 					"audio-demos/bad-connection-chaos.mp3",
@@ -34,7 +34,7 @@
 				],
 				"youtube": "https://www.youtube.com/watch?v=pmjLZKVoBLo&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "2.1.0",
+			"version": "2.1.1",
 			"readme": "doc/Bad Connection.md"
 		},
 		"Sandwich Amp": {
@@ -49,7 +49,7 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				},
-				"Sandwich Amp.rpl": {
+				"Sandwich Amp.jsfx.rpl": {
 					"main": false
 				}
 			},
@@ -59,10 +59,10 @@
 					"audio-demos/Sandwich-Amp.mp3"
 				],
 				"presets": [
-					"Sandwich Amp.rpl"
+					"Sandwich Amp.jsfx.rpl"
 				]
 			},
-			"version": "1.0.6",
+			"version": "1.0.7",
 			"readme": "doc/Sandwich Amp.md"
 		},
 		"Spectrum Matcher": {
@@ -84,7 +84,7 @@
 					"Spectrum Matcher 2.png"
 				],
 				"presets": [
-					"Spectrum Matcher.rpl"
+					"Spectrum Matcher.jsfx.rpl"
 				],
 				"youtube": "https://www.youtube.com/watch?v=QLh6b88OvFs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
@@ -109,7 +109,7 @@
 				"themes/bitmap-simple/theme-cyan.png": {
 					"main": false
 				},
-				"Spring-Box.rpl": {
+				"Spring-Box.jsfx.rpl": {
 					"main": false
 				}
 			},
@@ -117,7 +117,7 @@
 				"screenshot": "Spring-Box.png",
 				"youtube": "https://www.youtube.com/watch?v=UqryhWXHbhA&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "1.1.2",
+			"version": "1.1.3",
 			"readme": "doc/Spring Box.md"
 		},
 		"PadSynth": {
@@ -135,11 +135,11 @@
 				"ui-lib-compat.jsfx-inc": {
 					"main": false
 				},
-				"pad-synth.rpl": {
+				"pad-synth.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.1.8",
+			"version": "1.1.9",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=hgSqq-SgSjs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -155,14 +155,14 @@
 				"Smooth Limiter.jsfx": {
 					"main": false
 				},
-				"Smooth Limiter.rpl": {
+				"Smooth Limiter.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.1.0",
+			"version": "1.1.1",
 			"links": {
 				"presets": [
-					"Smooth Limiter.rpl"
+					"Smooth Limiter.jsfx.rpl"
 				]
 			}
 		},
@@ -198,11 +198,11 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				},
-				"Panalysis.rpl": {
+				"Panalysis.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.1.4"
+			"version": "1.1.5"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -265,11 +265,11 @@
 				"filter-utils.jsfx-inc": {
 					"main": false
 				},
-				"Hammer And Chord.rpl": {
+				"Hammer And Chord.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.4.5",
+			"version": "1.4.6",
 			"links": {
 				"youtube": [
 					"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
@@ -312,11 +312,11 @@
 				"filter-utils.jsfx-inc": {
 					"main": false
 				},
-				"Humonica.rpl": {
+				"Humonica.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "2.0.11",
+			"version": "2.0.12",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -335,11 +335,11 @@
 				"ui-lib.jsfx-inc": {
 					"main": false
 				},
-				"MIDI Harmony.rpl": {
+				"MIDI Harmony.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		},
 		"Stereo Alignment Delay": {
 			"type": "effect",
@@ -392,11 +392,11 @@
 				"filter-utils.jsfx-inc": {
 					"main": false
 				},
-				"Echo-Cycles.rpl": {
+				"Echo-Cycles.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.2.0",
+			"version": "1.2.1",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=BZ-1z7IKYTs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -439,11 +439,11 @@
 				"themes/bitmap-simple/theme-dark-blue.png": {
 					"main": false
 				},
-				"Vibrato.rpl": {
+				"Vibrato.jsfx.rpl": {
 					"main": false
 				}
 			},
-			"version": "1.1.1"
+			"version": "1.1.2"
 		},
 		"Cross-Polyphonic-FM": {
 			"type": "effect",
@@ -469,7 +469,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
@@ -484,6 +484,6 @@
 	"globLinks": {
 		"screenshot": "doc/images/{package}*.png",
 		"audio": "audio-demos/{package}*.mp3",
-		"presets": "{package}.rpl"
+		"presets": "{package}.jsfx.rpl"
 	}
 }
