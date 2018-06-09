@@ -17,6 +17,9 @@
 				},
 				"delay-utils.jsfx-inc": {
 					"main": false
+				},
+				"Bad Connection.rpl": {
+					"main": false
 				}
 			},
 			"author": "Geraint Luff",
@@ -44,6 +47,9 @@
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Sandwich Amp.rpl": {
 					"main": false
 				}
 			},
@@ -102,6 +108,9 @@
 				},
 				"themes/bitmap-simple/theme-cyan.png": {
 					"main": false
+				},
+				"Spring-Box.rpl": {
+					"main": false
 				}
 			},
 			"links": {
@@ -125,6 +134,9 @@
 				},
 				"ui-lib-compat.jsfx-inc": {
 					"main": false
+				},
+				"pad-synth.rpl": {
+					"main": false
 				}
 			},
 			"version": "1.1.8",
@@ -141,6 +153,9 @@
 					"main": false
 				},
 				"Smooth Limiter.jsfx": {
+					"main": false
+				},
+				"Smooth Limiter.rpl": {
 					"main": false
 				}
 			},
@@ -181,6 +196,9 @@
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"Panalysis.rpl": {
 					"main": false
 				}
 			},
@@ -246,6 +264,9 @@
 				},
 				"filter-utils.jsfx-inc": {
 					"main": false
+				},
+				"Hammer And Chord.rpl": {
+					"main": false
 				}
 			},
 			"version": "1.4.5",
@@ -290,6 +311,9 @@
 				},
 				"filter-utils.jsfx-inc": {
 					"main": false
+				},
+				"Humonica.rpl": {
+					"main": false
 				}
 			},
 			"version": "2.0.11",
@@ -309,6 +333,9 @@
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"MIDI Harmony.rpl": {
 					"main": false
 				}
 			},
@@ -364,6 +391,9 @@
 				},
 				"filter-utils.jsfx-inc": {
 					"main": false
+				},
+				"Echo-Cycles.rpl": {
+					"main": false
 				}
 			},
 			"version": "1.2.0",
@@ -407,6 +437,9 @@
 					"main": false
 				},
 				"themes/bitmap-simple/theme-dark-blue.png": {
+					"main": false
+				},
+				"Vibrato.rpl": {
 					"main": false
 				}
 			},
