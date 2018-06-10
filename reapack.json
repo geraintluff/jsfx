@@ -473,7 +473,7 @@
 		},
 		"Soft-Bell": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Synth",
 			"files": {
 				"ui-lib.jsfx-inc": {
 					"main": false
@@ -485,6 +485,12 @@
 					"main": false
 				},
 				"filter-utils.jsfx-inc": {
+					"main": false
+				},
+				"themes/bitmap-simple/theme-dark-orange.png": {
+					"main": false
+				},
+				"themes/backgrounds/fancycrave-194878-unsplash.png": {
 					"main": false
 				}
 			}

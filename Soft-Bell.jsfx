@@ -5,24 +5,30 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:pulse_amp=1<0,1>pulse amplitude
-slider2:noise_amp=0.2<0,1>noise amplitude
-slider3:input_amp=1<0,1>input amplitude
-slider4:input_wet=0<0,1>input wet
-slider5:attack_ms=5<1,1000>attack (ms)
-slider6:release_ms=100<1,1000>release (ms)
-slider7:decay_ms=300<1,1000>decay (ms)
-slider8:sustain_level=0.3<0,1>sustain level
-slider9:resonance_wavelengths=30<1,100>resonance
-slider10:freq_multiplier=1<1,10,1>harmonic
+slider1:pulse_amp=1<0,1>-pulse amplitude
+slider2:noise_amp=0.2<0,1>-noise amplitude
+slider3:input_amp=1<0,2>-input amplitude
+slider4:input_wet=1<0,1>-input wet
+slider5:attack_ms=5<1,1000>-attack (ms)
+slider6:release_ms=100<1,1000>-release (ms)
+slider7:decay_ms=300<1,1000>-decay (ms)
+slider8:sustain_level=0.1<0,1>-sustain level
+slider9:resonance_wavelengths_log2=8<0,10>-resonance (1/oct)
+slider10:freq_multiplier=1<1,10,1>-harmonic
 
 import synth-framework-obj.jsfx-inc
 import filter-utils.jsfx-inc
+import ui-lib.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-dark-orange.png
+// Photo by Fancycrave on Unsplash: https://unsplash.com/photos/dLTpk6N31Fc
+filename:1,themes/backgrounds/fancycrave-194878-unsplash.png
 
 @init
 
 freemem = 0;
-freemem = synth_setup(freemem); // Request one slot to keep the phase in
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem);
 synth_setup_each(synth1);
 synth_setup_each(synth2);
 synth_setup_each(synth3);
@@ -88,20 +94,23 @@ function process_note(note*) (
 
 			slope_gain = 0.25*sqrt(1000/synth_freq(note)/freq_multiplier);
 
+			resonance_wavelengths = pow(2, resonance_wavelengths_log2);
 			resonance_seconds = resonance_wavelengths/synth_freq(note)/freq_multiplier;
 			resonance_samples = srate*resonance_seconds;
 			note.resonance_slew = 1 - exp(-1/resonance_samples);
 
-			note.cos0 = note.cos1 = slope_gain*(noise_amp*(rand() - 0.5));
-			note.sin0 = note.sin1 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
-
-			note.cos0_2 = slope_gain*noise_amp*(rand() - 0.5);
-			note.cos1_2 = slope_gain*noise_amp*(rand() - 0.5);
-			note.sin0_2 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
-			note.sin1_2 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
+			filter_freq = min(10000, synth_freq(note)/resonance_wavelengths);
+			note.filter_sin0.filter_init(slope_gain*(pulse_amp + noise_amp*(rand() - 0.5)));
+			note.filter_sin1.filter_init(slope_gain*(pulse_amp + noise_amp*(rand() - 0.5)));
+			note.filter_cos0.filter_init(slope_gain*noise_amp*(rand() - 0.5));
+			note.filter_cos1.filter_init(slope_gain*noise_amp*(rand() - 0.5));
+			note.filter_sin0.filter_lowpass(filter_freq, 2);
+			note.filter_sin1.filter_lowpass(filter_freq, 2);
+			note.filter_cos0.filter_lowpass(filter_freq, 2);
+			note.filter_cos1.filter_lowpass(filter_freq, 2);
 
 			note.noise_amp = slope_gain*noise_amp*sqrt(resonance_samples)*sqrt(12);
-			note.input_amp = input_amp*sqrt(min(12, 1 + resonance_wavelengths));
+			note.input_amp = input_amp*sqrt(min(12, resonance_wavelengths));
 
 			note.decay_factor = 1;
 		);
@@ -121,15 +130,10 @@ function process_note(note*) (
 		left_in *= sustain_level + (1 - sustain_level)*note.decay_factor;
 		right_in *= sustain_level + (1 - sustain_level)*note.decay_factor;
 
-		note.sin0 += (sin_value*left_in - note.sin0)*note.resonance_slew;
-		note.sin1 += (sin_value*right_in - note.sin1)*note.resonance_slew;
-		note.cos0 += (cos_value*left_in - note.cos0)*note.resonance_slew;
-		note.cos1 += (cos_value*right_in - note.cos1)*note.resonance_slew;
-
-		note.sin0_2 += (note.sin0 - note.sin0_2)*note.resonance_slew;
-		note.sin1_2 += (note.sin1 - note.sin1_2)*note.resonance_slew;
-		note.cos0_2 += (note.cos0 - note.cos0_2)*note.resonance_slew;
-		note.cos1_2 += (note.cos1 - note.cos1_2)*note.resonance_slew;
+		note.sin0 = note.filter_sin0.filter_sample(sin_value*left_in);
+		note.sin1 = note.filter_sin1.filter_sample(sin_value*right_in);
+		note.cos0 = note.filter_cos0.filter_sample(cos_value*left_in);
+		note.cos1 = note.filter_cos1.filter_sample(cos_value*right_in);
 
 		amp = 1;
 		amp *= synth_velocity(note)/127;
@@ -144,8 +148,8 @@ function process_note(note*) (
 			);
 		);
 
-		left += amp*(note.sin0_2*sin_value + note.cos0_2*cos_value);
-		right += amp*(note.sin1_2*sin_value + note.cos1_2*cos_value);
+		left += amp*(note.sin0*sin_value + note.cos0*cos_value);
+		right += amp*(note.sin1*sin_value + note.cos1*cos_value);
 
 	);
 	synth_continue(note);
@@ -170,3 +174,93 @@ process_note(synth1)
 
 spl0 = left + input_wet*spl0;
 spl1 = right + input_wet*spl1;
+
+@gfx 405 456
+
+control_start("main", "bitmap-simple", 0);
+
+gfx_a = 0.2;
+g_scale = max(gfx_w/700, gfx_h/467);
+gfx_x = (gfx_w - 700*g_scale)*0.5;
+gfx_y = (gfx_h - 467*g_scale)*0.5;
+gfx_mode = 6;
+gfx_blit(1, g_scale, 0);
+gfx_mode = 0;
+
+ui_color(32, 48, 64, 0.1);
+ui_fill();
+ui_color(255, 255, 255);
+
+function labels(label, value, number_format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+);
+function labels(label) local(h) (
+	labels(label, 0, "");
+);
+
+ui_screen() == "main" ? (
+	control_navbar("Soft Bell");
+
+	ui_split_topratio(1/3);
+		ui_split_rightratio(1/3);
+			control_group(-1);
+			labels("dry", floor(input_wet*100 + 0.5), "%i%%");
+			input_wet = control_dial(input_wet, 0, 1, 0, 1);
+		ui_pop();
+
+		control_group("Resonator");
+		ui_split_leftratio(1/2);
+			labels("tonality");
+			resonance_wavelengths_log2 = control_dial(resonance_wavelengths_log2, 0, 10, 0, 8);
+		ui_split_next();
+			labels("harmonic");
+			sprintf(#freq_multiplier, "%i", freq_multiplier);
+			freq_multiplier = control_selector(freq_multiplier, #freq_multiplier, min(10, freq_multiplier + 1), max(1, freq_multiplier - 1));
+		ui_pop();
+
+	ui_split_next();
+		control_group("Inputs");
+		ui_split_leftratio(1/3);
+			labels("impulse", floor(pulse_amp*100 + 0.5), "%i%%");
+			pulse_amp = control_dial(pulse_amp, 0, 1, 3, 1);
+		ui_split_next();
+			labels("noise", floor(noise_amp*100 + 0.5), "%i%%");
+			noise_amp = control_dial(noise_amp, 0, 1, 3, 1);
+		ui_split_next();
+			labels("audio", floor(input_amp*100 + 0.5), "%i%%");
+			input_amp = control_dial(input_amp, 0, 2, 3, 1);
+		ui_pop();
+	ui_split_next();
+		control_group("Envelope");
+		ui_split_leftratio(1/4);
+			labels("attack", floor(attack_ms + 0.5), "%ims");
+			attack_ms = control_dial(attack_ms, 1, 1000, 5, 5);
+		ui_split_next();
+			labels("decay", floor(decay_ms + 0.5), "%ims");
+			decay_ms = control_dial(decay_ms, 1, 1000, 5, 300);
+		ui_split_next();
+			labels("sustain", floor(sustain_level*100 + 0.5), "%i%%");
+			sustain_level = control_dial(sustain_level, 0, 1, 4, 0.1);
+		ui_split_next();
+			labels("release", floor(release_ms + 0.5), "%ims");
+			release_ms = control_dial(release_ms, 1, 1000, 5, 100);
+		ui_pop();
+	ui_pop();
+
+	resonance_wavelengths_log2
+) : control_system();
+
+@serialize
+
+preset_version = 0;
+file_var(0, preset_version);

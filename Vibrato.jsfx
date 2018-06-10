@@ -141,7 +141,9 @@ gfx_a = 0.8;
 g_scale = max(gfx_w/600, gfx_h/401);
 gfx_x = (gfx_w - 600*g_scale)*0.5;
 gfx_y = (gfx_h - 401*g_scale)*0.5;
+gfx_mode = 2;
 gfx_blit(1, g_scale, 0);
+gfx_mode = 0;
 
 ui_screen() == "main" ? (
 	control_navbar("Vibrato");
