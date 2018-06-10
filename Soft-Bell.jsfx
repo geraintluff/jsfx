@@ -1,0 +1,172 @@
+desc:Soft Bell Resonator (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:pulse_amp=1<0,1>pulse amplitude
+slider2:noise_amp=0.2<0,1>noise amplitude
+slider3:input_amp=1<0,1>input amplitude
+slider4:input_wet=0<0,1>input wet
+slider5:attack_ms=5<1,1000>attack (ms)
+slider6:release_ms=100<1,1000>release (ms)
+slider7:decay_ms=300<1,1000>decay (ms)
+slider8:sustain_level=0.3<0,1>sustain level
+slider9:resonance_wavelengths=30<1,100>resonance
+slider10:freq_multiplier=1<1,10,1>harmonic
+
+import synth-framework-obj.jsfx-inc
+import filter-utils.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = synth_setup(freemem); // Request one slot to keep the phase in
+synth_setup_each(synth1);
+synth_setup_each(synth2);
+synth_setup_each(synth3);
+synth_setup_each(synth4);
+synth_setup_each(synth5);
+synth_setup_each(synth6);
+synth_setup_each(synth7);
+synth_setup_each(synth8);
+synth_setup_each(synth9);
+synth_setup_each(synth10);
+synth_setup_each(synth11);
+synth_setup_each(synth12);
+synth_setup_each(synth13);
+synth_setup_each(synth14);
+synth_setup_each(synth15);
+synth_setup_each(synth16);
+
+attack_samples = 0.01*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_block();
+synth_block_each(synth1)
+&& synth_block_each(synth2)
+&& synth_block_each(synth3)
+&& synth_block_each(synth4)
+&& synth_block_each(synth5)
+&& synth_block_each(synth6)
+&& synth_block_each(synth7)
+&& synth_block_each(synth8)
+&& synth_block_each(synth9)
+&& synth_block_each(synth10)
+&& synth_block_each(synth11)
+&& synth_block_each(synth12)
+&& synth_block_each(synth13)
+&& synth_block_each(synth14)
+&& synth_block_each(synth15)
+&& synth_block_each(synth16);
+
+phase_step = 2*$pi/srate;
+attack_samples = srate*0.001*attack_ms;
+release_samples = srate*0.001*release_ms;
+decay_samples = srate*0.001*decay_ms;
+decay_factor = exp(-1/decay_samples);
+
+@sample
+
+function tapered_curve(r) (
+	r*r*(3 - 2*r);
+);
+
+function tapered_fade(r) (
+	r*r;
+);
+
+left = right = 0;
+
+function process_note(note*) (
+	synth_sample_each(note) ? (
+		synth_needs_init(note) ? (
+			note.phase = 0;
+
+			slope_gain = 0.25*sqrt(1000/synth_freq(note)/freq_multiplier);
+
+			resonance_seconds = resonance_wavelengths/synth_freq(note)/freq_multiplier;
+			resonance_samples = srate*resonance_seconds;
+			note.resonance_slew = 1 - exp(-1/resonance_samples);
+
+			note.cos0 = note.cos1 = slope_gain*(noise_amp*(rand() - 0.5));
+			note.sin0 = note.sin1 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
+
+			note.cos0_2 = slope_gain*noise_amp*(rand() - 0.5);
+			note.cos1_2 = slope_gain*noise_amp*(rand() - 0.5);
+			note.sin0_2 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
+			note.sin1_2 = slope_gain*(pulse_amp + noise_amp*(rand() - 0.5));
+
+			note.noise_amp = slope_gain*noise_amp*sqrt(resonance_samples)*sqrt(12);
+			note.input_amp = input_amp*sqrt(min(12, 1 + resonance_wavelengths));
+
+			note.decay_factor = 1;
+		);
+
+		note.phase += synth_freq(note)*phase_step*freq_multiplier;
+		sin_value = sin(note.phase);
+		cos_value = sin(note.phase);
+
+		left_in = note.input_amp*spl0;
+		right_in = note.input_amp*spl1;
+		note.noise_amp ? (
+			left_in += note.noise_amp*(rand() - 0.5);
+			right_in += note.noise_amp*(rand() - 0.5);
+		);
+
+		note.decay_factor *= decay_factor;
+		left_in *= sustain_level + (1 - sustain_level)*note.decay_factor;
+		right_in *= sustain_level + (1 - sustain_level)*note.decay_factor;
+
+		note.sin0 += (sin_value*left_in - note.sin0)*note.resonance_slew;
+		note.sin1 += (sin_value*right_in - note.sin1)*note.resonance_slew;
+		note.cos0 += (cos_value*left_in - note.cos0)*note.resonance_slew;
+		note.cos1 += (cos_value*right_in - note.cos1)*note.resonance_slew;
+
+		note.sin0_2 += (note.sin0 - note.sin0_2)*note.resonance_slew;
+		note.sin1_2 += (note.sin1 - note.sin1_2)*note.resonance_slew;
+		note.cos0_2 += (note.cos0 - note.cos0_2)*note.resonance_slew;
+		note.cos1_2 += (note.cos1 - note.cos1_2)*note.resonance_slew;
+
+		amp = 1;
+		amp *= synth_velocity(note)/127;
+		amp *= synth_controller(11)/127;
+		attack_samples && synth_attack(note) < attack_samples ? (
+			amp *= tapered_curve(synth_attack(note)/attack_samples);
+		);
+		synth_release(note) > 0 ? (
+			amp *= tapered_fade(1 - synth_release(note)/release_samples);
+			synth_release(note) >= release_samples ? (
+				synth_stop(note);
+			);
+		);
+
+		left += amp*(note.sin0_2*sin_value + note.cos0_2*cos_value);
+		right += amp*(note.sin1_2*sin_value + note.cos1_2*cos_value);
+
+	);
+	synth_continue(note);
+);
+
+process_note(synth1)
+&& process_note(synth2)
+&& process_note(synth3)
+&& process_note(synth4)
+&& process_note(synth5)
+&& process_note(synth6)
+&& process_note(synth7)
+&& process_note(synth8)
+&& process_note(synth9)
+&& process_note(synth10)
+&& process_note(synth11)
+&& process_note(synth12)
+&& process_note(synth13)
+&& process_note(synth14)
+&& process_note(synth15)
+&& process_note(synth16);
+
+spl0 = left + input_wet*spl0;
+spl1 = right + input_wet*spl1;

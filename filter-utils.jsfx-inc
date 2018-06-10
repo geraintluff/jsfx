@@ -16,8 +16,8 @@ function filter_buffer_size() (
 	9/*FILTER: A1, A2, B0, B1, B2, X1, X2, Y1, Y2*/;
 );
 
-function filter_init() (
-	this.x1 = this.x2 = this.y1 = this.y2 = 0;
+function filter_init(steady) (
+	this.x1 = this.x2 = this.y1 = this.y2 = steady;
 	this.b0 = 1;
 	this.b1 = this.b2 = this.a1 = this.a2 = 0;
 );

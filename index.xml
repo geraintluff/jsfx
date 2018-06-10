@@ -1251,5 +1251,9 @@
 			<metadata>
 			</metadata>
 		</reapack>
+		<reapack name="Soft-Bell" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>

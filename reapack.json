@@ -470,6 +470,24 @@
 				}
 			},
 			"version": "1.0.2"
+		},
+		"Soft-Bell": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"synth-framework-obj.jsfx-inc": {
+					"main": false
+				},
+				"Soft-Bell.jsfx": {
+					"main": false
+				},
+				"filter-utils.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
