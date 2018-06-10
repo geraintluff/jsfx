@@ -34,7 +34,7 @@
 				],
 				"youtube": "https://www.youtube.com/watch?v=pmjLZKVoBLo&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "2.1.1",
+			"version": "2.1.2",
 			"readme": "doc/Bad Connection.md"
 		},
 		"Sandwich Amp": {
@@ -62,7 +62,7 @@
 					"Sandwich Amp.jsfx.rpl"
 				]
 			},
-			"version": "1.0.7",
+			"version": "1.0.8",
 			"readme": "doc/Sandwich Amp.md"
 		},
 		"Spectrum Matcher": {
@@ -88,7 +88,7 @@
 				],
 				"youtube": "https://www.youtube.com/watch?v=QLh6b88OvFs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "1.7.0",
+			"version": "1.7.1",
 			"readme": "doc/Spectrum Matcher.md"
 		},
 		"Spring-Box": {
@@ -117,7 +117,7 @@
 				"screenshot": "Spring-Box.png",
 				"youtube": "https://www.youtube.com/watch?v=UqryhWXHbhA&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			},
-			"version": "1.1.3",
+			"version": "1.1.4",
 			"readme": "doc/Spring Box.md"
 		},
 		"PadSynth": {
@@ -139,7 +139,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.9",
+			"version": "1.1.10",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=hgSqq-SgSjs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -159,7 +159,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.1",
+			"version": "1.1.2",
 			"links": {
 				"presets": [
 					"Smooth Limiter.jsfx.rpl"
@@ -184,7 +184,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.8",
+			"version": "1.0.9",
 			"links": {}
 		},
 		"Panalysis": {
@@ -202,7 +202,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.5"
+			"version": "1.1.6"
 		},
 		"Learning Sampler": {
 			"type": "effect",
@@ -219,7 +219,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.9",
+			"version": "1.0.10",
 			"links": {},
 			"readme": "doc/Learning Sampler.md"
 		},
@@ -269,7 +269,7 @@
 					"main": false
 				}
 			},
-			"version": "1.4.6",
+			"version": "1.4.7",
 			"links": {
 				"youtube": [
 					"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
@@ -292,7 +292,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.1"
+			"version": "1.2.2"
 		},
 		"Humonica": {
 			"type": "effect",
@@ -316,7 +316,7 @@
 					"main": false
 				}
 			},
-			"version": "2.0.12",
+			"version": "2.0.13",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -339,7 +339,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.2"
+			"version": "1.0.3"
 		},
 		"Stereo Alignment Delay": {
 			"type": "effect",
@@ -353,7 +353,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.7",
+			"version": "1.2.8",
 			"links": {},
 			"readme": "doc/Stereo Alignment Delay.md"
 		},
@@ -396,7 +396,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.1",
+			"version": "1.2.2",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=BZ-1z7IKYTs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -443,7 +443,7 @@
 					"main": false
 				}
 			},
-			"version": "1.1.2"
+			"version": "1.1.3"
 		},
 		"Cross-Polyphonic-FM": {
 			"type": "effect",
@@ -469,7 +469,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.2"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

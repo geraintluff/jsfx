@@ -1,0 +1,23 @@
+{
+	"type": "effect",
+	"category": "Pitch Correction",
+	"summary": "a basic pitch-editing effect",
+	"files": {
+		"Warble/pitch-detection.jsfx-inc": {
+			"main": false
+		},
+		"Warble/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Warble/Warble.jsfx": {
+			"main": false
+		},
+		"Warble/delay-utils.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.9",
+	"links": {},
+	"package": "Warble",
+	"time": "2018-06-10T17:15:13.739Z"
+}

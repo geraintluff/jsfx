@@ -1,0 +1,30 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Distortion",
+	"summary": "distortion module with a before/after filter pair, width control and secondary input",
+	"files": {
+		"Sandwich-Amp/Sandwich Amp.jsfx": {
+			"main": false
+		},
+		"Sandwich-Amp/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Sandwich-Amp/Sandwich Amp.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "Sandwich Amp.png",
+		"audio": [
+			"audio-demos/Sandwich-Amp.mp3"
+		],
+		"presets": [
+			"Sandwich Amp.jsfx.rpl"
+		]
+	},
+	"version": "1.0.8",
+	"readme": "doc/Sandwich Amp.md",
+	"package": "Sandwich Amp",
+	"time": "2018-06-10T17:15:10.787Z"
+}

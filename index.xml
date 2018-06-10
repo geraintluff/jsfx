@@ -75,6 +75,12 @@
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/delay-utils.jsfx-inc</source>
 				<source file="Bad-Connection/Bad Connection.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.1/Bad-Connection/Bad%20Connection.jsfx.rpl</source>
 			</version>
+			<version name="2.1.2" author="Geraint Luff" time="2018-06-10T17:15:10.053Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/delay-utils.jsfx-inc</source>
+				<source file="Bad-Connection/Bad Connection.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/Bad%20Connection.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -115,6 +121,11 @@
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
 				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/ui-lib.jsfx-inc</source>
 				<source file="Sandwich-Amp/Sandwich Amp.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.7/Sandwich-Amp/Sandwich%20Amp.jsfx.rpl</source>
+			</version>
+			<version name="1.0.8" author="Geraint Luff" time="2018-06-10T17:15:10.787Z">
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.8/Sandwich-Amp/Sandwich%20Amp.jsfx</source>
+				<source file="Sandwich-Amp/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.8/Sandwich-Amp/ui-lib.jsfx-inc</source>
+				<source file="Sandwich-Amp/Sandwich Amp.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Sandwich-Amp/1.0.8/Sandwich-Amp/Sandwich%20Amp.jsfx.rpl</source>
 			</version>
 		</reapack>
 	</category>
@@ -227,6 +238,10 @@
 				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.7.0/Spectrum-Matcher/ui-lib.jsfx-inc</source>
 				<changelog><![CDATA[Allow negative correction amounts]]></changelog>
 			</version>
+			<version name="1.7.1" author="Geraint Luff" time="2018-06-10T17:15:11.344Z">
+				<source file="Spectrum-Matcher/Spectrum Matcher.jsfx">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.7.1/Spectrum-Matcher/Spectrum%20Matcher.jsfx</source>
+				<source file="Spectrum-Matcher/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spectrum-Matcher/1.7.1/Spectrum-Matcher/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Smooth Limiter" type="effect">
 			<metadata>
@@ -262,6 +277,11 @@
 				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/ui-lib.jsfx-inc</source>
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
 				<source file="Smooth-Limiter/Smooth Limiter.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.1/Smooth-Limiter/Smooth%20Limiter.jsfx.rpl</source>
+			</version>
+			<version name="1.1.2" author="Geraint Luff" time="2018-06-10T17:15:13.220Z">
+				<source file="Smooth-Limiter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.2/Smooth-Limiter/ui-lib.jsfx-inc</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.2/Smooth-Limiter/Smooth%20Limiter.jsfx</source>
+				<source file="Smooth-Limiter/Smooth Limiter.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Smooth-Limiter/1.1.2/Smooth-Limiter/Smooth%20Limiter.jsfx.rpl</source>
 			</version>
 		</reapack>
 		<reapack name="Panalysis" type="effect">
@@ -303,6 +323,11 @@
 				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/Panalysis.jsfx</source>
 				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/ui-lib.jsfx-inc</source>
 				<source file="Panalysis/Panalysis.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.5/Panalysis/Panalysis.jsfx.rpl</source>
+			</version>
+			<version name="1.1.6" author="Geraint Luff" time="2018-06-10T17:15:14.435Z">
+				<source file="Panalysis/Panalysis.jsfx">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.6/Panalysis/Panalysis.jsfx</source>
+				<source file="Panalysis/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.6/Panalysis/ui-lib.jsfx-inc</source>
+				<source file="Panalysis/Panalysis.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Panalysis/1.1.6/Panalysis/Panalysis.jsfx.rpl</source>
 			</version>
 		</reapack>
 		<reapack name="Level Meter" type="effect">
@@ -385,6 +410,13 @@
 				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
 				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.3/Spring-Box/Spring-Box.jsfx.rpl</source>
 			</version>
+			<version name="1.1.4" author="Geraint Luff" time="2018-06-10T17:15:11.878Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/Spring-Box.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">
 			<metadata>
@@ -439,6 +471,10 @@
 				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.7/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
 				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.7/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
 			</version>
+			<version name="1.2.8" author="Geraint Luff" time="2018-06-10T17:15:18.243Z">
+				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.8/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
+				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.8/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
+			</version>
 		</reapack>
 		<reapack name="Echo-Cycles" type="effect">
 			<metadata>
@@ -475,6 +511,14 @@
 				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/delay-utils.jsfx-inc</source>
 				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/filter-utils.jsfx-inc</source>
 				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.1/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
+			</version>
+			<version name="1.2.2" author="Geraint Luff" time="2018-06-10T17:15:18.765Z">
+				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/Echo-Cycles.jsfx</source>
+				<source file="Echo-Cycles/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/ui-lib.jsfx-inc</source>
+				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/delay-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/filter-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
 			</version>
 		</reapack>
 		<reapack name="Vibrato" type="effect">
@@ -515,6 +559,14 @@
 				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
 				<source file="Vibrato/Vibrato.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.2/Vibrato/Vibrato.jsfx.rpl</source>
 			</version>
+			<version name="1.1.3" author="Geraint Luff" time="2018-06-10T17:15:19.515Z">
+				<source file="Vibrato/Vibrato.jsfx">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/Vibrato.jsfx</source>
+				<source file="Vibrato/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/ui-lib.jsfx-inc</source>
+				<source file="Vibrato/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/delay-utils.jsfx-inc</source>
+				<source file="Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/themes/backgrounds/tom-barrett-512968-unsplash-small-denoised.png</source>
+				<source file="Vibrato/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/themes/bitmap-simple/theme-dark-blue.png</source>
+				<source file="Vibrato/Vibrato.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Vibrato/1.1.3/Vibrato/Vibrato.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Cross-Polyphonic-FM" type="effect">
 			<metadata>
@@ -546,6 +598,14 @@
 				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
 				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
 				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.1/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
+			</version>
+			<version name="1.0.2" author="Geraint Luff" time="2018-06-10T17:15:20.166Z">
+				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
+				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.2/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
 			</version>
 		</reapack>
 	</category>
@@ -581,6 +641,12 @@
 			<version name="1.1.1" author="Geraint Luff" time="2017-07-20T21:02:56.776Z">
 				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.1/PadSynth/pad-synth.jsfx</source>
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.1/PadSynth/ui-lib.jsfx-inc</source>
+			</version>
+			<version name="1.1.10" author="Geraint Luff" time="2018-06-10T17:15:12.546Z">
+				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/pad-synth.jsfx</source>
+				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/ui-lib.jsfx-inc</source>
+				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/ui-lib-compat.jsfx-inc</source>
+				<source file="PadSynth/pad-synth.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/pad-synth.jsfx.rpl</source>
 			</version>
 			<version name="1.1.2" author="Geraint Luff" time="2017-08-19T21:32:38.954Z">
 				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.2/PadSynth/pad-synth.jsfx</source>
@@ -633,6 +699,11 @@
 				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.1/Learning-Sampler/Learning%20Sampler.jsfx</source>
 				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.1/Learning-Sampler/ui-lib.jsfx-inc</source>
 				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.1/Learning-Sampler/synth-framework.jsfx-inc</source>
+			</version>
+			<version name="1.0.10" author="Geraint Luff" time="2018-06-10T17:15:14.961Z">
+				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.10/Learning-Sampler/Learning%20Sampler.jsfx</source>
+				<source file="Learning-Sampler/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.10/Learning-Sampler/ui-lib.jsfx-inc</source>
+				<source file="Learning-Sampler/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.10/Learning-Sampler/synth-framework.jsfx-inc</source>
 			</version>
 			<version name="1.0.2" author="Geraint Luff" time="2017-02-17T01:16:35.754Z">
 				<source file="Learning-Sampler/Learning Sampler.jsfx">https://geraintluff.github.io/jsfx/releases/Learning-Sampler/1.0.2/Learning-Sampler/Learning%20Sampler.jsfx</source>
@@ -867,6 +938,14 @@
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.6/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
 			</version>
+			<version name="1.4.7" author="Geraint Luff" time="2018-06-10T17:15:15.545Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/synth-framework-obj.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.4.7/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Humonica" type="effect">
 			<metadata>
@@ -958,6 +1037,13 @@
 				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/ui-lib.jsfx-inc</source>
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/filter-utils.jsfx-inc</source>
 				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.12/Humonica/Humonica.jsfx.rpl</source>
+			</version>
+			<version name="2.0.13" author="Geraint Luff" time="2018-06-10T17:15:16.851Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.13/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.13/Humonica/synth-framework.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.13/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.13/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.13/Humonica/Humonica.jsfx.rpl</source>
 			</version>
 			<version name="2.0.2" author="Geraint Luff" time="2018-02-27T01:52:55.217Z">
 				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.2/Humonica/Humonica.jsfx</source>
@@ -1074,6 +1160,12 @@
 				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/Warble.jsfx</source>
 				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.8/Warble/delay-utils.jsfx-inc</source>
 			</version>
+			<version name="1.0.9" author="Geraint Luff" time="2018-06-10T17:15:13.739Z">
+				<source file="Warble/pitch-detection.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.9/Warble/pitch-detection.jsfx-inc</source>
+				<source file="Warble/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.9/Warble/ui-lib.jsfx-inc</source>
+				<source file="Warble/Warble.jsfx">https://geraintluff.github.io/jsfx/releases/Warble/1.0.9/Warble/Warble.jsfx</source>
+				<source file="Warble/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Warble/1.0.9/Warble/delay-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="MIDI">
@@ -1119,6 +1211,11 @@
 				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.1/MIDI-Gate/synth-framework.jsfx-inc</source>
 				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.1/MIDI-Gate/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.2.2" author="Geraint Luff" time="2018-06-10T17:15:16.287Z">
+				<source file="MIDI-Gate/MIDI Gate.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.2/MIDI-Gate/MIDI%20Gate.jsfx</source>
+				<source file="MIDI-Gate/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.2/MIDI-Gate/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Gate/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Gate/1.2.2/MIDI-Gate/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="MIDI Harmony" type="effect">
 			<metadata>
@@ -1140,6 +1237,12 @@
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
 				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/ui-lib.jsfx-inc</source>
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.2/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
+			</version>
+			<version name="1.0.3" author="Geraint Luff" time="2018-06-10T17:15:17.595Z">
+				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.3/MIDI-Harmony/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.3/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
+				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.3/MIDI-Harmony/ui-lib.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.3/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
 			</version>
 		</reapack>
 	</category>

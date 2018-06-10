@@ -1,0 +1,32 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"summary": "a delay effect where the feedback system moves echoes through the stereo field",
+	"sort": 4,
+	"files": {
+		"Echo-Cycles/Echo-Cycles.jsfx": {
+			"main": false
+		},
+		"Echo-Cycles/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png": {
+			"main": false
+		},
+		"Echo-Cycles/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Echo-Cycles/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Echo-Cycles/Echo-Cycles.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.2.2",
+	"links": {
+		"youtube": "https://www.youtube.com/watch?v=BZ-1z7IKYTs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"package": "Echo-Cycles",
+	"time": "2018-06-10T17:15:18.765Z"
+}

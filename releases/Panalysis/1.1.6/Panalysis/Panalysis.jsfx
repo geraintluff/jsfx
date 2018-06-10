@@ -1,0 +1,224 @@
+desc:Panalysis (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:1<0,2,0.01>-Width
+slider2:0<-1,1,0.01>-Rotation
+slider3:0<0,1,1{no,yes}>-Invert width
+
+import ui-lib.jsfx-inc
+
+@init
+
+gfx_ext_retina = 1;
+
+freemem = ui_setup(0);
+buffer_length = ceil(srate*0.15);
+freemem = (buffer0 = freemem) + buffer_length;
+freemem = (buffer1 = freemem) + buffer_length;
+buffer_index = 0;
+
+DISPLAY_SCREEN = 5;
+ui_reserve_image(DISPLAY_SCREEN);
+
+last_update_time = 0;
+last_index = 0;
+
+!fade_time ? fade_time = 0.1;
+!display_mode_squared ? (
+	display_mode_squared = 0; // Default value
+);
+
+@sample
+
+rot_sin = slider2*sqrt(0.5);
+rot_cos = sqrt(1 - rot_sin*rot_sin);
+
+mid = (spl0 + spl1)*0.5;
+side = (spl1 - spl0)*0.5*slider1*(slider3 ? -1 : 1);
+
+left = mid - side;
+right = mid + side;
+
+spl0 = left*rot_cos - right*rot_sin;
+spl1 = left*rot_sin + right*rot_cos;
+
+buffer0[buffer_index] = spl0;
+buffer1[buffer_index] = spl1;
+
+buffer_index += 1;
+buffer_index >= buffer_length ? (
+	buffer_index = 0;
+);
+
+@gfx 510 660
+
+function update_display() local(dest, imgW, imgH, t, dt, i, x, y, cx, cy, cr, mag, alpha, xx, xy, yy, xy_inv_mag) (
+	control_background_technical();
+	ui_push_clip();
+		ui_retina(1);
+		dest = gfx_dest;
+		gfx_getimgdim(DISPLAY_SCREEN, imgW, imgH);
+		imgW != ui_width() || imgH != ui_height() ? (
+			gfx_setimgdim(DISPLAY_SCREEN, imgW = ui_width(), imgH = ui_height());
+			gfx_dest = DISPLAY_SCREEN;
+			ui_color(0, 0, 0);
+			gfx_rect(0, 0, imgW, imgH);
+		);
+		gfx_dest = DISPLAY_SCREEN;
+
+		t = time_precise();
+		dt = t - last_update_time;
+		last_update_time = t;
+
+		// Fade
+		alpha = 1 - exp(-dt/fade_time);
+		gfx_gradrect(0, 0, imgW, imgH, 0, 0, 0, alpha);
+		gfx_a = sqrt(alpha);
+
+		mag = pow(10, reference_db/20);
+		cx = imgW*0.5;
+		cy = imgH*0.5;
+		cr = min(imgW, imgH)*0.45/2;
+		i = 0;
+		while (i < buffer_index) (
+			x = (buffer1[i] - buffer0[i]);
+			y = (buffer0[i] + buffer1[i]);
+			display_mode_squared ? (
+				xx = x*x;
+				yy = y*y;
+				xy = x*y;
+				xy_inv_mag = 1/sqrt(xx + yy);
+				y = (yy - xx)*xy_inv_mag;
+				x = 2*xy*xy_inv_mag;
+			);
+			x = cx + x*cr/mag;
+			y = cy - y*cr/mag;
+			i ? (
+				gfx_lineto(x, y, 1);
+			) : (
+				gfx_x = x;
+				gfx_y = y;
+			);
+			i += 1;
+		);
+		buffer_index = 0;
+
+		gfx_dest = dest;
+		gfx_x = ui_left();
+		gfx_y = ui_top();
+		gfx_a = 1;
+		gfx_blit(DISPLAY_SCREEN, 1, 0);
+
+		cx += ui_left();
+		cy += ui_top();
+		display_mode_squared ? (
+			ui_color(255, 255, 255, 0.35);
+			//gfx_arc(cx, cy, cr*1.8, $pi*0.5, $pi*1.5);
+			gfx_line(cx - cr*1.8, cy, cx + cr*1.8, cy);
+
+			ui_color(255, 255, 255, 0.75);
+			gfx_arc(cx, cy, cr*1.8, 0, -$pi*0.5);
+			ui_color(256, 64, 64, 1);
+			gfx_arc(cx, cy, cr*1.8, 0, $pi*0.5);
+
+			width_angle = atan2(1 + slider1, 1 - slider1);
+			rotation_angle = asin(slider2*sqrt(0.5))*2;
+			left_angle = width_angle*-2 + $pi*0.5 + rotation_angle;
+			right_angle = width_angle*2 - $pi*0.5 + rotation_angle;
+
+			ui_color(64, 192, 256, 0.5*min(1, 0.6 + slider1/0.2));
+			gfx_arc(cx, cy, cr*1.7, left_angle, right_angle);
+			gfx_line(cx + cr*1.7*sin(left_angle), cy - cr*1.7*cos(left_angle), cx, cy);
+			gfx_line(cx + cr*1.7*sin(right_angle), cy - cr*1.7*cos(right_angle), cx, cy);
+		) : (
+			ui_push();
+				ui_color(64, 192, 256, 0.7*min(1, 0.4 + slider1/0.2));
+				gfx_line(cx + 2*cr*slider1*rot_cos, cy + 2*cr*slider1*rot_sin, cx - 2*cr*rot_sin, cy + 2*cr*rot_cos);
+				gfx_line(cx - 2*cr*slider1*rot_cos, cy - 2*cr*slider1*rot_sin, cx - 2*cr*rot_sin, cy + 2*cr*rot_cos);
+				gfx_line(cx - 2*cr*slider1*rot_cos, cy - 2*cr*slider1*rot_sin, cx + 2*cr*rot_sin, cy - 2*cr*rot_cos);
+				gfx_line(cx + 2*cr*slider1*rot_cos, cy + 2*cr*slider1*rot_sin, cx + 2*cr*rot_sin, cy - 2*cr*rot_cos);
+			ui_pop();
+
+			ui_push();
+				ui_color(255, 255, 255, 0.75);
+				gfx_line(cx - 2*cr, cy, cx, cy - 2*cr);
+				gfx_line(cx + 2*cr, cy, cx, cy + 2*cr);
+				ui_color(256, 64, 64, 1);
+				gfx_line(cx + 2*cr, cy, cx, cy - 2*cr);
+				gfx_line(cx - 2*cr, cy, cx, cy + 2*cr);
+			ui_pop();
+		);
+	ui_pop();
+	control_finish_technical();
+);
+
+function labelled_dial_vertical(value, low, high, bias, label, formatvalue, formatstring, default, maxValue) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+		ui_click() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		value > maxValue ? ui_color(255, 64, 64);
+		ui_textnumber(formatvalue, formatstring);
+	ui_pop();
+	value;
+);
+
+function labelled_switch_vertical(value, label, valuestring) (
+	ui_push_height(30);
+		ui_push_width(60);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_text(valuestring);
+	ui_pop();
+	value;
+);
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	ui_split_top(150);
+		ui_split_rightratio(3/6);
+			control_group("display");
+			ui_split_leftratio(1/3);
+				reference_db = labelled_dial_vertical(reference_db, -40, 0, 2, "Reference", floor(reference_db + 0.5), "%idB", 0, 1000000);
+			ui_split_next();
+				fade_time = labelled_dial_vertical(fade_time, 0.01, 1, 4.6, "Fade", floor(fade_time*1000 + 0.5), "%ims", 0.1, 1000000);
+			ui_split_next();
+				display_mode_squared = labelled_switch_vertical(display_mode_squared, "Mode", display_mode_squared ? "polar" : "L/R plot");
+			ui_pop();
+		ui_pop();
+
+		control_group("stereo field");
+		ui_split_leftratio(1/3);
+			default_width = (rot_cos + rot_sin > 0) ? (rot_cos - abs(rot_sin))/(rot_cos + abs(rot_sin)) : 0;
+			slider1 = labelled_dial_vertical(slider1, 0, 2, 0, "Width", floor(slider1*100 + 0.5), "%i%%", default_width, default_width);
+		ui_split_next();
+			slider2 = labelled_dial_vertical(slider2, -1, 1, 0, "Rotate", abs(slider2*100), slider2 < 0 ? "%i%% L" : slider2 > 0 ? "%i%% R" : "0%%", 0, 1000000);
+		ui_split_next();
+			slider3 = labelled_switch_vertical(slider3, "Invert", slider3 ? "on" : "off");
+		ui_pop();
+	ui_pop();
+
+	update_display();
+) : control_system();
+
+@serialize
+
+file_var(0, fade_time);
+file_var(0, reference_db);
+file_var(0, display_mode_squared);

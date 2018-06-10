@@ -1,0 +1,35 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"summary": "a polyphonic string resonator/synth",
+	"sort": 1,
+	"files": {
+		"Hammer-And-Chord/Hammer And Chord.jsfx": {
+			"main": false
+		},
+		"Hammer-And-Chord/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/synth-framework-obj.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Hammer-And-Chord/Hammer And Chord.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.4.7",
+	"links": {
+		"youtube": [
+			"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
+			"https://www.youtube.com/watch?v=E_3ILfZsrs4&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+		]
+	},
+	"package": "Hammer And Chord",
+	"time": "2018-06-10T17:15:15.545Z"
+}

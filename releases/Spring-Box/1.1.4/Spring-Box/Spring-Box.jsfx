@@ -1,0 +1,350 @@
+desc:Spring-Box Delay-Reverb (by Geraint Luff)
+
+in_pin:Ch1
+in_pin:Ch2
+out_pin:Ch1
+out_pin:Ch2
+
+slider1:50<1,1000,1>-density (ms)
+slider2:60<0,99,1>-feedback
+slider3:80<0,95,1>-late-bias (%)
+slider4:25<0,100,1>-wet (%)
+slider5:100<0,100,1>-dry (%)
+slider6:0<0,1,1{even,long}>-room shape
+slider7:8000<100,20000,1>-filter (lowpass Hz)
+slider8:10<0,100,1>-detuning (cents)
+slider9:2.5<0.1,10,0.1>-chorus speed (Hz)
+slider10:chorus_alignment=0<0,1,1{independent,linked}>-chorus phase
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-cyan.png
+
+@init
+
+freemem = ui_setup(0);
+gfx_ext_retina = 1;
+
+maxdetunefactor = pow(2, 110/1200)*exp(0.15); // 110 cents plus variation
+mindetunefreq = 0.1;
+max_delay_samples = ceil(srate*exp(0.3) + maxdetunefactor/mindetunefreq/(2*$pi)*srate + 1); // Longest possible delay, plus 100 samples
+
+freemem = delay1a.delay_init(freemem, max_delay_samples);
+freemem = delay1b.delay_init(freemem, max_delay_samples);
+freemem = delay2a.delay_init(freemem, max_delay_samples);
+freemem = delay2b.delay_init(freemem, max_delay_samples);
+freemem = delay3a.delay_init(freemem, max_delay_samples);
+freemem = delay3b.delay_init(freemem, max_delay_samples);
+freemem = delay4a.delay_init(freemem, max_delay_samples);
+freemem = delay4b.delay_init(freemem, max_delay_samples);
+
+filterLx1 = filterLx2 = 0;
+filterRx1 = filterRx2 = 0;
+filterLy1 = filterLy2 = 0;
+filterRy1 = filterRy2 = 0;
+
+writepos = 0;
+delaysamples1 = delaysamples2 = delaysamples3 = delaysamples4 = 0;
+chorusphase1 = rand()*2*$pi;
+chorusphase2 = rand()*2*$pi;
+chorusphase3 = rand()*2*$pi;
+chorusphase4 = rand()*2*$pi;
+
+function update() local(delay, chorus, chorusfactor) (
+	delayfactor1 = exp(0.3);
+	delayfactor2 = exp(0.1);
+	delayfactor3 = exp(-0.1);
+	delayfactor4 = exp(-0.3);
+
+	slider6 == 1 ? (
+		delayfactor1 = exp(0.0);
+		delayfactor2 = exp(0.04);
+		delayfactor3 = exp(-0.09);
+		delayfactor4 = exp(0.13);
+	);
+
+	delay = slider1*srate/1000;
+	delaysamples1 = min(max_delay_samples - 1, delay*delayfactor1);
+	delaysamples2 = min(max_delay_samples - 1, delay*delayfactor2);
+	delaysamples3 = min(max_delay_samples - 1, delay*delayfactor3);
+	delaysamples4 = min(max_delay_samples - 1, delay*delayfactor4);
+	delaysamples1i = ceil(delaysamples1);
+	delaysamples2i = ceil(delaysamples2);
+	delaysamples3i = ceil(delaysamples3);
+	delaysamples4i = ceil(delaysamples4);
+
+	chorus = slider9*2*$pi/srate;
+	chorus_alignment ? (
+		chorusphasespeed1 = chorusphasespeed2 = chorusphasespeed3 = chorusphasespeed4 = chorus;
+	) : (
+		chorusphasespeed1 = chorus*exp(-0.15);
+		chorusphasespeed2 = chorus*exp(-0.05);
+		chorusphasespeed3 = chorus*exp(0.05);
+		chorusphasespeed4 = chorus*exp(0.15);
+	);
+
+	chorusfactor = pow(2, slider8/1200) - 1;
+	chorussamples = chorusfactor*srate/(slider9*2*$pi);
+
+	feedbackA = slider2/100;
+	feedbackRatio = slider3/100;
+	feedbackB = feedbackA*feedbackRatio;
+	dry = slider5/100;
+	wet = slider4/100;
+	// Feedback-racing compensation
+	amp = (1 - feedbackA*feedbackRatio)/(1 - feedbackRatio);
+
+	ampB = amp*min(1, feedbackRatio*1.1);
+);
+
+/*
+// Create an orthogonal matrix for the mixing
+coeff_a = 1;
+coeff_b = exp(0);
+coeff_c = -coeff_a;
+coeff_d = 1/coeff_b;
+
+coeff_scale = sqrt(coeff_a*coeff_a + coeff_b*coeff_b + coeff_c*coeff_c + coeff_d*coeff_d);
+coeff_a /= coeff_scale;
+coeff_b /= coeff_scale;
+coeff_c /= coeff_scale;
+coeff_d /= coeff_scale;
+
+mat11 = coeff_a;
+mat12 = coeff_b;
+mat13 = coeff_c;
+mat14 = coeff_d;
+mat21 = -coeff_d;
+mat22 = -coeff_a;
+mat23 = -coeff_b;
+mat24 = -coeff_c;
+mat31 = -coeff_c;
+mat32 = -coeff_d;
+mat33 = -coeff_a;
+mat34 = -coeff_b;
+mat41 = coeff_b;
+mat42 = coeff_c;
+mat43 = coeff_d;
+mat44 = coeff_a;
+
+0 ? (
+	matA = 1;
+	matB = 1;
+	matC = -1;
+	matScaling = 1/sqrt(matA*matA + matB*matB + matC*matC);
+	matA *= matScaling;
+	matB *= matScaling;
+	matC *= matScaling;
+
+	mat11 = 0; mat12 = matA; mat13 = matB; mat14 = matC;
+	mat21 = -matA; mat22 = 0; mat23 = -matC; mat24 = matB;
+	mat31 = matB; mat32 = -matC; mat33 = 0; mat34 = matA;
+	mat41 = matC; mat42 = matB; mat43 = -matA; mat44 = 0;
+);
+*/
+
+@slider
+
+update();
+
+@block
+
+filter_Q = 0.5;
+filter_freq = slider7;
+filter_w0 = 2*$pi*min(0.49, filter_freq/srate);
+filter_cosW0 = cos(filter_w0);
+filter_alpha = sin(filter_w0)/(2*filter_Q);
+
+filter_a0 = 1 + filter_alpha;
+filter_a1 = (-2*filter_cosW0)/filter_a0;
+filter_a2 = (1 - filter_alpha)/filter_a0;
+filter_b1 = (1 - filter_cosW0)/filter_a0;
+filter_b0 = filter_b1/2;
+filter_b2 = filter_b0;
+
+@sample
+
+chorus_alignment ? (
+	chorusphase1 += chorusphasespeed1;
+	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
+
+	//chorusphase2 = chorusphase1 + 0.5*$pi;
+	//chorusphase3 = chorusphase1 + $pi;
+	//chorusphase4 = chorusphase1 + 1.5*$pi;
+
+	sine1 = sin(chorusphase1);
+	sine2 = cos(chorusphase2);
+	sine3 = -sine1;
+	sine4 = -sine2;
+) : (
+	chorusphase1 += chorusphasespeed1;
+	chorusphase1 > 2*$pi ? chorusphase1 -= 2*$pi;
+	chorusphase2 += chorusphasespeed2;
+	chorusphase2 > 2*$pi ? chorusphase2 -= 2*$pi;
+	chorusphase3 += chorusphasespeed3;
+	chorusphase3 > 2*$pi ? chorusphase3 -= 2*$pi;
+	chorusphase4 += chorusphasespeed4;
+	chorusphase4 > 2*$pi ? chorusphase4 -= 2*$pi;
+
+	sine1 = sin(chorusphase1);
+	sine2 = sin(chorusphase2);
+	sine3 = sin(chorusphase3);
+	sine4 = sin(chorusphase4);
+);
+
+d = delaysamples1 + (1 + sine1)*0.5*chorussamples - 1;
+echo1a = delay1a.delay_output_linear(d);
+echo1b = delay1b.delay_output_linear(d);
+
+d = delaysamples2 + (1 + sine2)*0.5*chorussamples - 1;
+echo2a = delay2a.delay_output_linear(d);
+echo2b = delay2b.delay_output_linear(d);
+
+d = delaysamples3 + (1 + sine3)*0.5*chorussamples - 1;
+echo3a = delay3a.delay_output_linear(d);
+echo3b = delay3b.delay_output_linear(d);
+
+d = delaysamples4 + (1 + sine4)*0.5*chorussamples - 1;
+echo4a = delay4a.delay_output_linear(d);
+echo4b = delay4b.delay_output_linear(d);
+
+y1a = 0.5*(echo1a + echo2a - echo3a + echo4a);
+y1b = 0.5*(echo1b + echo2b - echo3b + echo4b);
+y2a = -0.5*(echo1a + echo2a + echo3a - echo4a);
+y2b = -0.5*(echo1b + echo2b + echo3b - echo4b);
+y3a = 0.5*(echo1a - echo2a - echo3a - echo4a);
+y3b = 0.5*(echo1b - echo2b - echo3b - echo4b);
+y4a = 0.5*(echo1a - echo2a + echo3a + echo4a);
+y4b = 0.5*(echo1b - echo2b + echo3b + echo4b);
+
+left = spl0;
+right = spl1;
+
+delay1a.delay_input(y1a*feedbackA + left*amp);
+delay1b.delay_input(y1b*feedbackB + left*ampB);
+delay2a.delay_input(y2a*feedbackA + right*amp);
+delay2b.delay_input(y2b*feedbackB + right*ampB);
+delay3a.delay_input(y3a*feedbackA + left*amp);
+delay3b.delay_input(y3b*feedbackB + left*ampB);
+delay4a.delay_input(y4a*feedbackA + right*amp);
+delay4b.delay_input(y4b*feedbackB + right*ampB);
+
+left = (y1a - y1b + y3a - y3b)*0.71;
+right = (y2a - y2b + y4a - y4b)*0.71;
+
+// Filter
+
+x = left;
+left = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
+filterLx2 = filterLx1;
+filterLx1 = x;
+filterLy2 = filterLy1;
+filterLy1 = left;
+
+x = right;
+right = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
+filterRx2 = filterRx1;
+filterRx1 = x;
+filterRy2 = filterRy1;
+filterRy1 = right;
+
+spl0 = spl0*dry + left*wet;
+spl1 = spl1*dry + right*wet;
+
+writepos += 1;
+writepos >= buffersize ? writepos = 0;
+
+@gfx 500 350
+
+function labelled_dial(value, low, high, bias, label, number_format) (
+	ui_push_height(60);
+		value = control_dial(value, low, high, bias);
+	ui_pop();
+	ui_push_above(60);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(60);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+	value;
+);
+
+control_start("main", "bitmap-simple", 0);
+
+ui_screen() == "main" ? (
+	control_navbar("Spring-Box Delay", -1, -1);
+	ui_split_rightratio(0.7);
+		ui_split_topratio(0.55);
+			control_group("Delay");
+			ui_split_bottomratio(0.25);
+				ui_split_leftratio(1/2);
+					ui_split_right(50);
+						slider6 = control_radio(slider6, 1);
+					ui_pop();
+					ui_align(1, 0.5);
+					ui_text("clustered");
+				ui_split_next();
+					ui_split_right(50);
+						slider6 = control_radio(slider6, 0);
+					ui_pop();
+					ui_align(1, 0.5);
+					ui_text("smooth");
+				ui_pop();
+			ui_pop();
+
+			ui_split_leftratio(1/3);
+				slider1 = labelled_dial(slider1, 1, 1000, 4, "density", "%ims");
+			ui_split_next();
+				slider2 = labelled_dial(slider2, 0, 99, -1, "feedback", "%i%%");
+			ui_split_next();
+				slider3 = labelled_dial(slider3, 0, 95, 0, "late-bias", "%i%%");
+			ui_pop();
+		ui_split_next();
+			control_group("Output");
+			ui_split_leftratio(1/3);
+				slider4 = labelled_dial(slider4, 0, 100, 0, "wet", "%i%%");
+			ui_split_next();
+				slider5 = labelled_dial(slider5, 0, 100, 0, "dry", "%i%%");
+			ui_split_next();
+				slider7 = labelled_dial(slider7, 100, 20000, 2, "filter", "%iHz");
+			ui_pop();
+		ui_pop();
+	ui_split_next();
+		control_group("Chorus");
+		ui_split_leftratio(1);
+			ui_split_topratio(0.42);
+				slider8 = labelled_dial(slider8, 0, 100, 2, "detuning", "%i cents");
+			ui_split_next();
+				slider9 = labelled_dial(slider9, 0.1, 10, 0, "speed", "%.1fHz");
+			ui_pop();
+
+			ui_split_topratio(1/2);
+				ui_align(0.5, 1);
+				ui_split_right(35);
+					chorus_alignment = control_radio(chorus_alignment, 1);
+				ui_pop();
+				ui_align(1, -1);
+				ui_text("balanced");
+			ui_split_next();
+				ui_align(0.5, 0);
+				ui_split_right(35);
+					chorus_alignment = control_radio(chorus_alignment, 0);
+				ui_pop();
+				ui_align(1, -1);
+				ui_text("independent");
+			ui_pop();
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+ui_interacted() ? update();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);

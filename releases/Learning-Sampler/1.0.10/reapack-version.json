@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"summary": "a basic sampler that records incoming audio and plays it back",
+	"files": {
+		"Learning-Sampler/Learning Sampler.jsfx": {
+			"main": false
+		},
+		"Learning-Sampler/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Learning-Sampler/synth-framework.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.10",
+	"links": {},
+	"readme": "doc/Learning Sampler.md",
+	"package": "Learning Sampler",
+	"time": "2018-06-10T17:15:14.961Z"
+}

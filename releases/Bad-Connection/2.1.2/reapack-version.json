@@ -1,0 +1,36 @@
+{
+	"type": "effect",
+	"category": "Distortion",
+	"summary": "simulate poor connections by random volume variation, distortion, and a feedback delay line",
+	"sort": 5,
+	"files": {
+		"Bad-Connection/Bad Connection.jsfx": {
+			"main": false
+		},
+		"Bad-Connection/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Bad-Connection/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Bad-Connection/Bad Connection.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"author": "Geraint Luff",
+	"links": {
+		"screenshot": "Bad Connection.png",
+		"presets": [
+			"Bad Connection.jsfx.rpl"
+		],
+		"audio": [
+			"audio-demos/bad-connection-chaos.mp3",
+			"audio-demos/bad-connection-spring-box-glitch.mp3"
+		],
+		"youtube": "https://www.youtube.com/watch?v=pmjLZKVoBLo&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"version": "2.1.2",
+	"readme": "doc/Bad Connection.md",
+	"package": "Bad Connection",
+	"time": "2018-06-10T17:15:10.053Z"
+}

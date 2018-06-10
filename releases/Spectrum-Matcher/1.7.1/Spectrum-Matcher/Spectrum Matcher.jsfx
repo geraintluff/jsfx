@@ -1,0 +1,2253 @@
+desc:Spectrum Matcher (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:30<10,50,10>-bands
+slider2:4<1,10,0.1>-peak bias
+slider3:40<10,200>-smoothing period (ms)
+slider4:1<0.5,1.5>-sharpness (Q)
+slider5:6<-12,20>-hard limit (dB)
+slider6:correction_gain_db=0<-24,12,0.1>-correction gain (dB)
+slider7:correction_resolution=50<1,50,1>-correction resolution
+slider8:correction_strength=1<-1,1>-correction strength
+slider9:correction_range_low=20<10,18000,1>-correction range low (Hz)
+slider10:correction_range_high=18000<20,20000,1>-correction range high (Hz)
+slider11:correction_boundary_low=0<0,2,1{highpass,flat,zero}>-correction boundary low
+slider12:correction_boundary_high=1<0,2,1{lowpass,flat,zero}>-correction boundary high
+
+import ui-lib.jsfx-inc
+
+@init
+gfx_ext_retina = 1;
+option_show_grouped_correction = 0;
+
+MODEL_MAX_N = 100;
+POLE_ZERO_LIMIT = 0.995;
+
+allocated_end = allocated_start = ui_setup(0);
+function allocate(N) local(result) (
+	result = allocated_end;
+	allocated_end += N;
+	result;
+);
+function allocate_reset() (
+	allocated_end = allocated_start;
+	model_target = allocate(MODEL_MAX_N);
+	model_shortperiod = allocate(MODEL_MAX_N);
+	model_longpower = allocate(MODEL_MAX_N);
+
+	correction_amp = allocate(MODEL_MAX_N);
+
+	correction_group_num = allocate(MODEL_MAX_N);
+	correction_group_size = allocate(MODEL_MAX_N);
+	correction_group_logamp = allocate(MODEL_MAX_N);
+	correction_group_logamp2 = allocate(MODEL_MAX_N);
+
+	correction_a1 = allocate(MODEL_MAX_N);
+	correction_a2 = allocate(MODEL_MAX_N);
+	correction_b0 = allocate(MODEL_MAX_N);
+	correction_b1 = allocate(MODEL_MAX_N);
+	correction_b2 = allocate(MODEL_MAX_N);
+);
+allocate_reset();
+
+function filter_sample(x0) local(y0) (
+	y0 = this.b0*x0 + this.b1*this.x1 + this.b2*this.x2 - this.a1*this.y1 - this.a2*this.y2;
+	this.x2 = this.x1;
+	this.x1 = x0;
+	this.y2 = this.y1;
+	this.y1 = y0;
+);
+function filter_sample_even(x0) local(y0) (
+	y0 = this.b0*x0 + this.b1*this.x1 + this.b2*this.x2 - this.a1*this.y1 - this.a2*this.y2;
+	this.x2 = x0;
+	this.y2 = y0; // Next one will be odd, where they'll be swapped around
+);
+function filter_sample_odd(x0) local(y0) (
+	y0 = this.b0*x0 + this.b1*this.x2 + this.b2*this.x1 - this.a1*this.y2 - this.a2*this.y1;
+	this.x1 = x0;
+	this.y1 = y0;
+);
+function filter_set_coefficients(b0, b1, b2, a1, a2) (
+	this.b0 = b0;
+	this.b1 = b1;
+	this.b2 = b2;
+	this.a1 = a1;
+	this.a2 = a2;
+);
+function filter_reset_coefficients() (
+	this.filter_set_coefficients(1, 0, 0, 0, 0);
+);
+function filter_clear() (
+	this.x1 = this.x2 = this.y1 = this.y2 = 0;
+);
+
+function sinh(x) (
+	(exp(x) - exp(-x))*0.5;
+);
+
+low_freq = 20;
+high_freq = 18000;
+
+//bands_N = 0;
+function reset_analysis_bands(N) local(i, freq, octaves, bw, period, alpha, w0, a0, filter_i) (
+	allocate_reset();
+	bands_N = N ? N : model_N;
+
+	bands_total_energy = 0;
+
+	filter_a1 = allocate(bands_N);
+	filter_a2 = allocate(bands_N);
+	filter_b0 = allocate(bands_N);
+	filter_b1 = allocate(bands_N);
+	filter_b2 = allocate(bands_N);
+
+	average1_unsharpenedvalue = allocate(bands_N);
+	average1_smoothed = allocate(bands_N);
+	average1_value = allocate(bands_N);
+
+	average2_counter = allocate(bands_N);
+	average2_sum = allocate(bands_N);
+
+	octaves = log(high_freq/low_freq)/log(2);
+	bw = octaves/(bands_N - 1);
+
+	i = 0;
+	while (i < bands_N) (
+		freq = low_freq*exp(log(high_freq/low_freq)*(i + 0.5)/bands_N);
+
+		w0 = 2*$pi*freq/srate;
+		alpha = sin(w0)*sinh(log(2)/2*bw*w0/sin(w0));
+
+		a0 = 1 + alpha;
+		filter_a1[i] = -2*cos(w0)/a0;
+		filter_a2[i] = (1 - alpha)/a0;
+		filter_b0[i] = alpha/a0;
+		filter_b1[i] = 0;
+		filter_b2[i] = -alpha/a0;
+
+		average1_unsharpenedvalue[i] = 0;
+		average1_value[i] = 0;
+		average2_counter[i] = 0;
+		average2_sum[i] = 0;
+
+		i += 1;
+	);
+
+	period = slider3/1000;
+	average1_slew = 1 - exp(-1/period/srate);
+	average1_period = period;
+	average2_power = slider2;
+	sum_interval_samples = ceil(period*srate*0.05);
+
+	bands_interconnect_db = -6*octaves/(bands_N - 1);
+	bands_interconnect = pow(10, bands_interconnect_db/10); // power calc
+	bands_subtraction_factor = 3.5/bands_N;
+
+	// Copy to static analysis bands
+
+	analysis_filter_block32_active = bands_N&32;
+	analysis_filter_block16_active = bands_N&16;
+	analysis_filter_block8_active = bands_N&8;
+	analysis_filter_block4_active = bands_N&4;
+	analysis_filter_block2_active = bands_N&2;
+	analysis_filter_block1_active = bands_N&1;
+
+	filter_i = 0;
+	analysis_filter_block32_active ? (
+		analysis_filter_block32_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_1_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_1_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_2_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_2_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_3_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_3_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_4_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_4_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_5_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_5_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_6_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_6_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_7_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_7_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_8_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_8_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_9_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_9_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_10_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_10_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_11_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_11_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_12_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_12_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_13_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_13_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_14_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_14_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_15_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_15_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_16_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_16_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_17_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_17_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_18_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_18_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_19_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_19_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_20_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_20_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_21_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_21_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_22_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_22_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_23_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_23_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_24_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_24_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_25_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_25_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_26_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_26_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_27_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_27_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_28_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_28_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_29_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_29_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_30_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_30_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block32_31_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block32_31_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+	analysis_filter_block16_active ? (
+		analysis_filter_block16_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_1_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_1_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_2_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_2_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_3_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_3_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_4_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_4_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_5_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_5_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_6_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_6_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_7_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_7_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_8_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_8_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_9_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_9_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_10_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_10_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_11_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_11_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_12_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_12_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_13_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_13_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_14_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_14_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block16_15_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block16_15_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+	analysis_filter_block8_active ? (
+		analysis_filter_block8_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_1_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_1_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_2_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_2_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_3_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_3_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_4_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_4_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_5_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_5_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_6_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_6_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block8_7_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block8_7_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+	analysis_filter_block4_active ? (
+		analysis_filter_block4_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block4_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block4_1_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block4_1_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block4_2_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block4_2_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block4_3_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block4_3_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+	analysis_filter_block2_active ? (
+		analysis_filter_block2_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block2_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+		analysis_filter_block2_1_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block2_1_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+	analysis_filter_block1_active ? (
+		analysis_filter_block1_0_l.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		analysis_filter_block1_0_r.filter_set_coefficients(filter_b0[filter_i], filter_b1[filter_i], filter_b2[filter_i], filter_a1[filter_i], filter_a2[filter_i]);
+		filter_i += 1;
+	);
+
+	// Clear filters
+	analysis_filter_block32_0_l.filter_clear();
+	analysis_filter_block32_0_r.filter_clear();
+	analysis_filter_block32_1_l.filter_clear();
+	analysis_filter_block32_1_r.filter_clear();
+	analysis_filter_block32_2_l.filter_clear();
+	analysis_filter_block32_2_r.filter_clear();
+	analysis_filter_block32_3_l.filter_clear();
+	analysis_filter_block32_3_r.filter_clear();
+	analysis_filter_block32_4_l.filter_clear();
+	analysis_filter_block32_4_r.filter_clear();
+	analysis_filter_block32_5_l.filter_clear();
+	analysis_filter_block32_5_r.filter_clear();
+	analysis_filter_block32_6_l.filter_clear();
+	analysis_filter_block32_6_r.filter_clear();
+	analysis_filter_block32_7_l.filter_clear();
+	analysis_filter_block32_7_r.filter_clear();
+	analysis_filter_block32_8_l.filter_clear();
+	analysis_filter_block32_8_r.filter_clear();
+	analysis_filter_block32_9_l.filter_clear();
+	analysis_filter_block32_9_r.filter_clear();
+	analysis_filter_block32_10_l.filter_clear();
+	analysis_filter_block32_10_r.filter_clear();
+	analysis_filter_block32_11_l.filter_clear();
+	analysis_filter_block32_11_r.filter_clear();
+	analysis_filter_block32_12_l.filter_clear();
+	analysis_filter_block32_12_r.filter_clear();
+	analysis_filter_block32_13_l.filter_clear();
+	analysis_filter_block32_13_r.filter_clear();
+	analysis_filter_block32_14_l.filter_clear();
+	analysis_filter_block32_14_r.filter_clear();
+	analysis_filter_block32_15_l.filter_clear();
+	analysis_filter_block32_15_r.filter_clear();
+	analysis_filter_block32_16_l.filter_clear();
+	analysis_filter_block32_16_r.filter_clear();
+	analysis_filter_block32_17_l.filter_clear();
+	analysis_filter_block32_17_r.filter_clear();
+	analysis_filter_block32_18_l.filter_clear();
+	analysis_filter_block32_18_r.filter_clear();
+	analysis_filter_block32_19_l.filter_clear();
+	analysis_filter_block32_19_r.filter_clear();
+	analysis_filter_block32_20_l.filter_clear();
+	analysis_filter_block32_20_r.filter_clear();
+	analysis_filter_block32_21_l.filter_clear();
+	analysis_filter_block32_21_r.filter_clear();
+	analysis_filter_block32_22_l.filter_clear();
+	analysis_filter_block32_22_r.filter_clear();
+	analysis_filter_block32_23_l.filter_clear();
+	analysis_filter_block32_23_r.filter_clear();
+	analysis_filter_block32_24_l.filter_clear();
+	analysis_filter_block32_24_r.filter_clear();
+	analysis_filter_block32_25_l.filter_clear();
+	analysis_filter_block32_25_r.filter_clear();
+	analysis_filter_block32_26_l.filter_clear();
+	analysis_filter_block32_26_r.filter_clear();
+	analysis_filter_block32_27_l.filter_clear();
+	analysis_filter_block32_27_r.filter_clear();
+	analysis_filter_block32_28_l.filter_clear();
+	analysis_filter_block32_28_r.filter_clear();
+	analysis_filter_block32_29_l.filter_clear();
+	analysis_filter_block32_29_r.filter_clear();
+	analysis_filter_block32_30_l.filter_clear();
+	analysis_filter_block32_30_r.filter_clear();
+	analysis_filter_block32_31_l.filter_clear();
+	analysis_filter_block32_31_r.filter_clear();
+	analysis_filter_block16_0_l.filter_clear();
+	analysis_filter_block16_0_r.filter_clear();
+	analysis_filter_block16_1_l.filter_clear();
+	analysis_filter_block16_1_r.filter_clear();
+	analysis_filter_block16_2_l.filter_clear();
+	analysis_filter_block16_2_r.filter_clear();
+	analysis_filter_block16_3_l.filter_clear();
+	analysis_filter_block16_3_r.filter_clear();
+	analysis_filter_block16_4_l.filter_clear();
+	analysis_filter_block16_4_r.filter_clear();
+	analysis_filter_block16_5_l.filter_clear();
+	analysis_filter_block16_5_r.filter_clear();
+	analysis_filter_block16_6_l.filter_clear();
+	analysis_filter_block16_6_r.filter_clear();
+	analysis_filter_block16_7_l.filter_clear();
+	analysis_filter_block16_7_r.filter_clear();
+	analysis_filter_block16_8_l.filter_clear();
+	analysis_filter_block16_8_r.filter_clear();
+	analysis_filter_block16_9_l.filter_clear();
+	analysis_filter_block16_9_r.filter_clear();
+	analysis_filter_block16_10_l.filter_clear();
+	analysis_filter_block16_10_r.filter_clear();
+	analysis_filter_block16_11_l.filter_clear();
+	analysis_filter_block16_11_r.filter_clear();
+	analysis_filter_block16_12_l.filter_clear();
+	analysis_filter_block16_12_r.filter_clear();
+	analysis_filter_block16_13_l.filter_clear();
+	analysis_filter_block16_13_r.filter_clear();
+	analysis_filter_block16_14_l.filter_clear();
+	analysis_filter_block16_14_r.filter_clear();
+	analysis_filter_block16_15_l.filter_clear();
+	analysis_filter_block16_15_r.filter_clear();
+	analysis_filter_block8_0_l.filter_clear();
+	analysis_filter_block8_0_r.filter_clear();
+	analysis_filter_block8_1_l.filter_clear();
+	analysis_filter_block8_1_r.filter_clear();
+	analysis_filter_block8_2_l.filter_clear();
+	analysis_filter_block8_2_r.filter_clear();
+	analysis_filter_block8_3_l.filter_clear();
+	analysis_filter_block8_3_r.filter_clear();
+	analysis_filter_block8_4_l.filter_clear();
+	analysis_filter_block8_4_r.filter_clear();
+	analysis_filter_block8_5_l.filter_clear();
+	analysis_filter_block8_5_r.filter_clear();
+	analysis_filter_block8_6_l.filter_clear();
+	analysis_filter_block8_6_r.filter_clear();
+	analysis_filter_block8_7_l.filter_clear();
+	analysis_filter_block8_7_r.filter_clear();
+	analysis_filter_block4_0_l.filter_clear();
+	analysis_filter_block4_0_r.filter_clear();
+	analysis_filter_block4_1_l.filter_clear();
+	analysis_filter_block4_1_r.filter_clear();
+	analysis_filter_block4_2_l.filter_clear();
+	analysis_filter_block4_2_r.filter_clear();
+	analysis_filter_block4_3_l.filter_clear();
+	analysis_filter_block4_3_r.filter_clear();
+	analysis_filter_block2_0_l.filter_clear();
+	analysis_filter_block2_0_r.filter_clear();
+	analysis_filter_block2_1_l.filter_clear();
+	analysis_filter_block2_1_r.filter_clear();
+	analysis_filter_block1_0_l.filter_clear();
+	analysis_filter_block1_0_r.filter_clear();
+);
+!bands_N ? reset_analysis_bands(model_N);
+
+function reset_model(N) local(i, freq) (
+	model_N = N;
+	model_shortperiod = 0.05;
+	model_longpower = 4;
+	i = 0;
+	while (i < model_N) (
+		freq = low_freq*exp(log(high_freq/low_freq)*(i + 0.5)/model_N);
+		model_target[i] = min(1, pow(freq/100, 3))*1/pow(freq, 0);
+		model_target[i] = min(1, pow(freq/50, 4))*min(1, freq/120)/pow(freq, 0.9);
+		i += 1;
+	);
+);
+!model_N ? reset_model(floor(slider1 + 0.5));
+
+function copy_to_model() local(i) (
+	model_N = bands_N;
+	model_shortperiod = average1_period;
+	model_longpower = average2_power;
+
+	i = 0;
+	while (i < bands_N) (
+		model_target[i] = pow(average2_sum[i]/average2_counter[i], 1/average2_power);
+		i += 1;
+	);
+);
+
+function model_adjustment(i) (
+	sqrt(model_target[i]/pow(average2_sum[i]/average2_counter[i], 1/average2_power));
+);
+
+function clear_correction_filters() local(i) (
+	correction_filter_block32_0_l.filter_clear();
+	correction_filter_block32_0_r.filter_clear();
+	correction_filter_block32_1_l.filter_clear();
+	correction_filter_block32_1_r.filter_clear();
+	correction_filter_block32_2_l.filter_clear();
+	correction_filter_block32_2_r.filter_clear();
+	correction_filter_block32_3_l.filter_clear();
+	correction_filter_block32_3_r.filter_clear();
+	correction_filter_block32_4_l.filter_clear();
+	correction_filter_block32_4_r.filter_clear();
+	correction_filter_block32_5_l.filter_clear();
+	correction_filter_block32_5_r.filter_clear();
+	correction_filter_block32_6_l.filter_clear();
+	correction_filter_block32_6_r.filter_clear();
+	correction_filter_block32_7_l.filter_clear();
+	correction_filter_block32_7_r.filter_clear();
+	correction_filter_block32_8_l.filter_clear();
+	correction_filter_block32_8_r.filter_clear();
+	correction_filter_block32_9_l.filter_clear();
+	correction_filter_block32_9_r.filter_clear();
+	correction_filter_block32_10_l.filter_clear();
+	correction_filter_block32_10_r.filter_clear();
+	correction_filter_block32_11_l.filter_clear();
+	correction_filter_block32_11_r.filter_clear();
+	correction_filter_block32_12_l.filter_clear();
+	correction_filter_block32_12_r.filter_clear();
+	correction_filter_block32_13_l.filter_clear();
+	correction_filter_block32_13_r.filter_clear();
+	correction_filter_block32_14_l.filter_clear();
+	correction_filter_block32_14_r.filter_clear();
+	correction_filter_block32_15_l.filter_clear();
+	correction_filter_block32_15_r.filter_clear();
+	correction_filter_block32_16_l.filter_clear();
+	correction_filter_block32_16_r.filter_clear();
+	correction_filter_block32_17_l.filter_clear();
+	correction_filter_block32_17_r.filter_clear();
+	correction_filter_block32_18_l.filter_clear();
+	correction_filter_block32_18_r.filter_clear();
+	correction_filter_block32_19_l.filter_clear();
+	correction_filter_block32_19_r.filter_clear();
+	correction_filter_block32_20_l.filter_clear();
+	correction_filter_block32_20_r.filter_clear();
+	correction_filter_block32_21_l.filter_clear();
+	correction_filter_block32_21_r.filter_clear();
+	correction_filter_block32_22_l.filter_clear();
+	correction_filter_block32_22_r.filter_clear();
+	correction_filter_block32_23_l.filter_clear();
+	correction_filter_block32_23_r.filter_clear();
+	correction_filter_block32_24_l.filter_clear();
+	correction_filter_block32_24_r.filter_clear();
+	correction_filter_block32_25_l.filter_clear();
+	correction_filter_block32_25_r.filter_clear();
+	correction_filter_block32_26_l.filter_clear();
+	correction_filter_block32_26_r.filter_clear();
+	correction_filter_block32_27_l.filter_clear();
+	correction_filter_block32_27_r.filter_clear();
+	correction_filter_block32_28_l.filter_clear();
+	correction_filter_block32_28_r.filter_clear();
+	correction_filter_block32_29_l.filter_clear();
+	correction_filter_block32_29_r.filter_clear();
+	correction_filter_block32_30_l.filter_clear();
+	correction_filter_block32_30_r.filter_clear();
+	correction_filter_block32_31_l.filter_clear();
+	correction_filter_block32_31_r.filter_clear();
+
+	correction_filter_block16_0_l.filter_clear();
+	correction_filter_block16_0_r.filter_clear();
+	correction_filter_block16_1_l.filter_clear();
+	correction_filter_block16_1_r.filter_clear();
+	correction_filter_block16_2_l.filter_clear();
+	correction_filter_block16_2_r.filter_clear();
+	correction_filter_block16_3_l.filter_clear();
+	correction_filter_block16_3_r.filter_clear();
+	correction_filter_block16_4_l.filter_clear();
+	correction_filter_block16_4_r.filter_clear();
+	correction_filter_block16_5_l.filter_clear();
+	correction_filter_block16_5_r.filter_clear();
+	correction_filter_block16_6_l.filter_clear();
+	correction_filter_block16_6_r.filter_clear();
+	correction_filter_block16_7_l.filter_clear();
+	correction_filter_block16_7_r.filter_clear();
+	correction_filter_block16_8_l.filter_clear();
+	correction_filter_block16_8_r.filter_clear();
+	correction_filter_block16_9_l.filter_clear();
+	correction_filter_block16_9_r.filter_clear();
+	correction_filter_block16_10_l.filter_clear();
+	correction_filter_block16_10_r.filter_clear();
+	correction_filter_block16_11_l.filter_clear();
+	correction_filter_block16_11_r.filter_clear();
+	correction_filter_block16_12_l.filter_clear();
+	correction_filter_block16_12_r.filter_clear();
+	correction_filter_block16_13_l.filter_clear();
+	correction_filter_block16_13_r.filter_clear();
+	correction_filter_block16_14_l.filter_clear();
+	correction_filter_block16_14_r.filter_clear();
+	correction_filter_block16_15_l.filter_clear();
+	correction_filter_block16_15_r.filter_clear();
+
+	correction_filter_block8_0_l.filter_clear();
+	correction_filter_block8_0_r.filter_clear();
+	correction_filter_block8_1_l.filter_clear();
+	correction_filter_block8_1_r.filter_clear();
+	correction_filter_block8_2_l.filter_clear();
+	correction_filter_block8_2_r.filter_clear();
+	correction_filter_block8_3_l.filter_clear();
+	correction_filter_block8_3_r.filter_clear();
+	correction_filter_block8_4_l.filter_clear();
+	correction_filter_block8_4_r.filter_clear();
+	correction_filter_block8_5_l.filter_clear();
+	correction_filter_block8_5_r.filter_clear();
+	correction_filter_block8_6_l.filter_clear();
+	correction_filter_block8_6_r.filter_clear();
+	correction_filter_block8_7_l.filter_clear();
+	correction_filter_block8_7_r.filter_clear();
+
+	correction_filter_block4_0_l.filter_clear();
+	correction_filter_block4_0_r.filter_clear();
+	correction_filter_block4_1_l.filter_clear();
+	correction_filter_block4_1_r.filter_clear();
+	correction_filter_block4_2_l.filter_clear();
+	correction_filter_block4_2_r.filter_clear();
+	correction_filter_block4_3_l.filter_clear();
+	correction_filter_block4_3_r.filter_clear();
+
+	correction_filter_block2_0_l.filter_clear();
+	correction_filter_block2_0_r.filter_clear();
+	correction_filter_block2_1_l.filter_clear();
+	correction_filter_block2_1_r.filter_clear();
+
+	correction_filter_block1_0_l.filter_clear();
+	correction_filter_block1_0_r.filter_clear();
+);
+
+function reset_correction_coefficients() local(i) (
+	i = 0;
+	while (i < MODEL_MAX_N) (
+		correction_amp[i] = 1;
+		correction_a1[i] = 0;
+		correction_a2[i] = 0;
+		correction_b0[i] = 1;
+		correction_b1[i] = 0;
+		correction_b2[i] = 0;
+		i += 1;
+	);
+	correction_filter_block32_0_l.filter_reset_coefficients();
+	correction_filter_block32_0_r.filter_reset_coefficients();
+	correction_filter_block32_1_l.filter_reset_coefficients();
+	correction_filter_block32_1_r.filter_reset_coefficients();
+	correction_filter_block32_2_l.filter_reset_coefficients();
+	correction_filter_block32_2_r.filter_reset_coefficients();
+	correction_filter_block32_3_l.filter_reset_coefficients();
+	correction_filter_block32_3_r.filter_reset_coefficients();
+	correction_filter_block32_4_l.filter_reset_coefficients();
+	correction_filter_block32_4_r.filter_reset_coefficients();
+	correction_filter_block32_5_l.filter_reset_coefficients();
+	correction_filter_block32_5_r.filter_reset_coefficients();
+	correction_filter_block32_6_l.filter_reset_coefficients();
+	correction_filter_block32_6_r.filter_reset_coefficients();
+	correction_filter_block32_7_l.filter_reset_coefficients();
+	correction_filter_block32_7_r.filter_reset_coefficients();
+	correction_filter_block32_8_l.filter_reset_coefficients();
+	correction_filter_block32_8_r.filter_reset_coefficients();
+	correction_filter_block32_9_l.filter_reset_coefficients();
+	correction_filter_block32_9_r.filter_reset_coefficients();
+	correction_filter_block32_10_l.filter_reset_coefficients();
+	correction_filter_block32_10_r.filter_reset_coefficients();
+	correction_filter_block32_11_l.filter_reset_coefficients();
+	correction_filter_block32_11_r.filter_reset_coefficients();
+	correction_filter_block32_12_l.filter_reset_coefficients();
+	correction_filter_block32_12_r.filter_reset_coefficients();
+	correction_filter_block32_13_l.filter_reset_coefficients();
+	correction_filter_block32_13_r.filter_reset_coefficients();
+	correction_filter_block32_14_l.filter_reset_coefficients();
+	correction_filter_block32_14_r.filter_reset_coefficients();
+	correction_filter_block32_15_l.filter_reset_coefficients();
+	correction_filter_block32_15_r.filter_reset_coefficients();
+	correction_filter_block32_16_l.filter_reset_coefficients();
+	correction_filter_block32_16_r.filter_reset_coefficients();
+	correction_filter_block32_17_l.filter_reset_coefficients();
+	correction_filter_block32_17_r.filter_reset_coefficients();
+	correction_filter_block32_18_l.filter_reset_coefficients();
+	correction_filter_block32_18_r.filter_reset_coefficients();
+	correction_filter_block32_19_l.filter_reset_coefficients();
+	correction_filter_block32_19_r.filter_reset_coefficients();
+	correction_filter_block32_20_l.filter_reset_coefficients();
+	correction_filter_block32_20_r.filter_reset_coefficients();
+	correction_filter_block32_21_l.filter_reset_coefficients();
+	correction_filter_block32_21_r.filter_reset_coefficients();
+	correction_filter_block32_22_l.filter_reset_coefficients();
+	correction_filter_block32_22_r.filter_reset_coefficients();
+	correction_filter_block32_23_l.filter_reset_coefficients();
+	correction_filter_block32_23_r.filter_reset_coefficients();
+	correction_filter_block32_24_l.filter_reset_coefficients();
+	correction_filter_block32_24_r.filter_reset_coefficients();
+	correction_filter_block32_25_l.filter_reset_coefficients();
+	correction_filter_block32_25_r.filter_reset_coefficients();
+	correction_filter_block32_26_l.filter_reset_coefficients();
+	correction_filter_block32_26_r.filter_reset_coefficients();
+	correction_filter_block32_27_l.filter_reset_coefficients();
+	correction_filter_block32_27_r.filter_reset_coefficients();
+	correction_filter_block32_28_l.filter_reset_coefficients();
+	correction_filter_block32_28_r.filter_reset_coefficients();
+	correction_filter_block32_29_l.filter_reset_coefficients();
+	correction_filter_block32_29_r.filter_reset_coefficients();
+	correction_filter_block32_30_l.filter_reset_coefficients();
+	correction_filter_block32_30_r.filter_reset_coefficients();
+	correction_filter_block32_31_l.filter_reset_coefficients();
+	correction_filter_block32_31_r.filter_reset_coefficients();
+
+	correction_filter_block16_0_l.filter_reset_coefficients();
+	correction_filter_block16_0_r.filter_reset_coefficients();
+	correction_filter_block16_1_l.filter_reset_coefficients();
+	correction_filter_block16_1_r.filter_reset_coefficients();
+	correction_filter_block16_2_l.filter_reset_coefficients();
+	correction_filter_block16_2_r.filter_reset_coefficients();
+	correction_filter_block16_3_l.filter_reset_coefficients();
+	correction_filter_block16_3_r.filter_reset_coefficients();
+	correction_filter_block16_4_l.filter_reset_coefficients();
+	correction_filter_block16_4_r.filter_reset_coefficients();
+	correction_filter_block16_5_l.filter_reset_coefficients();
+	correction_filter_block16_5_r.filter_reset_coefficients();
+	correction_filter_block16_6_l.filter_reset_coefficients();
+	correction_filter_block16_6_r.filter_reset_coefficients();
+	correction_filter_block16_7_l.filter_reset_coefficients();
+	correction_filter_block16_7_r.filter_reset_coefficients();
+	correction_filter_block16_8_l.filter_reset_coefficients();
+	correction_filter_block16_8_r.filter_reset_coefficients();
+	correction_filter_block16_9_l.filter_reset_coefficients();
+	correction_filter_block16_9_r.filter_reset_coefficients();
+	correction_filter_block16_10_l.filter_reset_coefficients();
+	correction_filter_block16_10_r.filter_reset_coefficients();
+	correction_filter_block16_11_l.filter_reset_coefficients();
+	correction_filter_block16_11_r.filter_reset_coefficients();
+	correction_filter_block16_12_l.filter_reset_coefficients();
+	correction_filter_block16_12_r.filter_reset_coefficients();
+	correction_filter_block16_13_l.filter_reset_coefficients();
+	correction_filter_block16_13_r.filter_reset_coefficients();
+	correction_filter_block16_14_l.filter_reset_coefficients();
+	correction_filter_block16_14_r.filter_reset_coefficients();
+	correction_filter_block16_15_l.filter_reset_coefficients();
+	correction_filter_block16_15_r.filter_reset_coefficients();
+
+	correction_filter_block8_0_l.filter_reset_coefficients();
+	correction_filter_block8_0_r.filter_reset_coefficients();
+	correction_filter_block8_1_l.filter_reset_coefficients();
+	correction_filter_block8_1_r.filter_reset_coefficients();
+	correction_filter_block8_2_l.filter_reset_coefficients();
+	correction_filter_block8_2_r.filter_reset_coefficients();
+	correction_filter_block8_3_l.filter_reset_coefficients();
+	correction_filter_block8_3_r.filter_reset_coefficients();
+	correction_filter_block8_4_l.filter_reset_coefficients();
+	correction_filter_block8_4_r.filter_reset_coefficients();
+	correction_filter_block8_5_l.filter_reset_coefficients();
+	correction_filter_block8_5_r.filter_reset_coefficients();
+	correction_filter_block8_6_l.filter_reset_coefficients();
+	correction_filter_block8_6_r.filter_reset_coefficients();
+	correction_filter_block8_7_l.filter_reset_coefficients();
+	correction_filter_block8_7_r.filter_reset_coefficients();
+
+	correction_filter_block4_0_l.filter_reset_coefficients();
+	correction_filter_block4_0_r.filter_reset_coefficients();
+	correction_filter_block4_1_l.filter_reset_coefficients();
+	correction_filter_block4_1_r.filter_reset_coefficients();
+	correction_filter_block4_2_l.filter_reset_coefficients();
+	correction_filter_block4_2_r.filter_reset_coefficients();
+	correction_filter_block4_3_l.filter_reset_coefficients();
+	correction_filter_block4_3_r.filter_reset_coefficients();
+
+	correction_filter_block2_0_l.filter_reset_coefficients();
+	correction_filter_block2_0_r.filter_reset_coefficients();
+	correction_filter_block2_1_l.filter_reset_coefficients();
+	correction_filter_block2_1_r.filter_reset_coefficients();
+
+	correction_filter_block1_0_l.filter_reset_coefficients();
+	correction_filter_block1_0_r.filter_reset_coefficients();
+
+	clear_correction_filters();
+);
+
+function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
+	hr = 1;
+	hi = 0;
+	wr = cos(2*$pi*freq/srate);
+	wi = sin(2*$pi*freq/srate);
+	w2r = cos(4*$pi*freq/srate);
+	w2i = sin(4*$pi*freq/srate);
+
+	i = 0;
+	while (i < correction_N) (
+		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
+		zi = correction_b1[i]*wi + correction_b2[i]*w2i;
+		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
+		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
+		pm2 = pr*pr + pi*pi;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*zr - ti*zi;
+		hi = tr*zi + ti*zr;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*pr + ti*pi;
+		hi = ti*pr - tr*pi;
+		hr /= pm2;
+		hi /= pm2;
+		i += 1;
+	);
+	sqrt(hr*hr + hi*hi);
+);
+
+function correction_phase(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
+	hr = 1;
+	hi = 0;
+	wr = cos(2*$pi*freq/srate);
+	wi = sin(2*$pi*freq/srate);
+	w2r = cos(4*$pi*freq/srate);
+	w2i = sin(4*$pi*freq/srate);
+
+	i = 0;
+	while (i < correction_N) (
+		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
+		zi = correction_b1[i]*wi + correction_b2[i]*w2i;
+		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
+		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
+		pm2 = pr*pr + pi*pi;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*zr - ti*zi;
+		hi = tr*zi + ti*zr;
+
+		tr = hr;
+		ti = hi;
+		hr = tr*pr + ti*pi;
+		hi = ti*pr - tr*pi;
+		hr /= pm2;
+		hi /= pm2;
+		i += 1;
+	);
+	atan2(hi, hr);
+);
+
+function copy_correction_from_analysis() local(i) (
+	i = 0;
+	while (i < model_N) (
+		correction_amp[i] = model_adjustment(i);
+		i += 1;
+	);
+);
+
+function calculate_correction_coefficients() local(i, logMerged, logA, logB, sizeA, sizeB, sizeMerged, boundary_freq, prev_amp, amp, Q, A, w0, alpha, a0, gain, sqrtA2alpha, active_bands, merge_score, best_merge_score, best_merge_groupA, best_merge_groupB, best_merge_size, best_merge_logamp, best_merge_logamp2) (
+	!correction_resolution ? correction_resolution = model_N;
+	correction_resolution = max(1, min(floor(correction_resolution + 0.5), model_N));
+
+	correction_index_low = max(0, floor(log(correction_range_low/low_freq)/log(high_freq/low_freq)*model_N));
+	correction_index_high = min(model_N, ceil(log(correction_range_high/low_freq)/log(high_freq/low_freq)*model_N));
+	correction_index_low == correction_index_high ? (
+		correction_index_high = min(model_N, correction_index_low + 1);
+		correction_index_low = correction_index_high - 1;
+	);
+
+	// Simplify correction model
+	i = 0;
+	while (i < model_N) (
+		correction_group_num[i] = i;
+		correction_group_size[i] = 1;
+		correction_group_logamp[i] = log(correction_amp[i]);
+		correction_group_logamp2[i] = correction_group_logamp[i]*correction_group_logamp[i];
+		i += 1;
+	);
+	active_bands = model_N;
+	while (active_bands > correction_resolution) (
+		best_merge_score = 1000000000000;
+		i = 1;
+		while (i < model_N) (
+			correction_group_num[i] != correction_group_num[i - 1] ? (
+				// Should we merge the bands?
+				logA = correction_group_logamp[i];
+				logA2 = correction_group_logamp2[i];
+				sizeA = correction_group_size[i];
+				logB = correction_group_logamp[i - 1];
+				logB2 = correction_group_logamp2[i - 1];
+				sizeB = correction_group_size[i - 1];
+
+				sizeMerged = sizeA + sizeB;
+				logMerged = logA + logB;
+				logMerged2 = logA2 + logB2;
+
+				merge_score = (logMerged2 - logMerged*logMerged/sizeMerged) - (logA2 - logA*logA/sizeA) - (logB2 - logB*logB/sizeB);
+
+				merge_score < best_merge_score ? (
+					best_merge_score = merge_score;
+					best_merge_size = sizeMerged;
+					best_merge_logamp = logMerged;
+					best_merge_logamp2 = logMerged2;
+					best_merge_groupA = correction_group_num[i];
+					best_merge_groupB = correction_group_num[i - 1];
+				);
+			);
+			i += 1;
+		);
+
+		// Merge the two groups with lowest cost
+		i = 0;
+		while (i < model_N) (
+			correction_group_num[i] == best_merge_groupA || correction_group_num[i] == best_merge_groupB ? (
+				correction_group_num[i] = best_merge_groupA;
+				correction_group_size[i] = best_merge_size;
+				correction_group_logamp[i] = best_merge_logamp;
+				correction_group_logamp2[i] = best_merge_logamp2;
+			);
+			i += 1;
+		);
+		active_bands -= 1;
+	);
+
+	i = correction_index_low;
+	prev_amp = 1;
+
+	gain = 1;
+	global_gain = pow(10, correction_gain_db*correction_strength/20);
+	correction_boundary_low == 1 ? (
+		// First band is just flat gain
+		prev_amp = exp(correction_group_logamp[i]/correction_group_size[i]*correction_strength)*global_gain;
+		gain = prev_amp;
+		i += 1;
+	) : correction_boundary_low == 2 ? (
+		prev_amp = 1;
+		gain = 1;
+	);
+
+	filter_i = 0;
+	while (i < correction_index_high) (
+		filter_i == 0 || correction_group_num[i] != correction_group_num[i - 1] ? (
+			boundary_freq = low_freq*exp(log(high_freq/low_freq)*i/model_N);
+			amp = exp(correction_group_logamp[i]/correction_group_size[i]*correction_strength)*global_gain;
+
+			filter_i == 0 && correction_boundary_low == 0 ? ( // Highpass
+				boundary_freq = correction_range_low;
+				Q = 0.71;
+				w0 = 2*$pi*boundary_freq/srate;
+				alpha = sin(w0)/(2*Q);
+
+				a0 = (1 + alpha);
+				correction_a1[filter_i] = -2*cos(w0)/a0;
+				correction_a2[filter_i] = (1 - alpha)/a0;
+				correction_b0[filter_i] = amp*(1 + cos(w0))/2/a0;
+				correction_b1[filter_i] = -amp*(1 + cos(w0))/a0;
+				correction_b2[filter_i] = amp*(1 + cos(w0))/2/a0;
+			) : (
+				Q = filter_i == 0 ? 0.8 : slider4;
+				A = sqrt(amp/prev_amp);
+				w0 = 2*$pi*boundary_freq/srate;
+				alpha = sin(w0)/(2*Q);
+				sqrtA2alpha = 2*sqrt(A)*alpha;
+
+				a0 = (A + 1) - (A - 1)*cos(w0) + sqrtA2alpha;
+				correction_a1[filter_i] = 2*((A - 1) - (A + 1)*cos(w0))/a0;
+				correction_a2[filter_i] = (a0 - 2*sqrtA2alpha)/a0;
+				correction_b0[filter_i] = gain*A*((A + 1) + (A - 1)*cos(w0) + sqrtA2alpha)/a0;
+				correction_b1[filter_i] = gain*-2*A*((A - 1) + (A + 1)*cos(w0))/a0;
+				correction_b2[filter_i] = gain*A*((A + 1) + (A - 1)*cos(w0) - sqrtA2alpha)/a0;
+			);
+			gain = 1;
+			filter_i += 1;
+
+			prev_amp = amp;
+		);
+		i += 1;
+	);
+
+	correction_boundary_high != 1 ? (
+		boundary_freq = correction_range_high;
+
+		correction_boundary_high == 0 ? ( // Lowpass
+			Q = 0.71;
+			w0 = 2*$pi*boundary_freq/srate;
+			alpha = sin(w0)/(2*Q);
+			a0 = (1 + alpha);
+
+			correction_a1[filter_i] = -2*cos(w0)/a0;
+			correction_a2[filter_i] = (1 - alpha)/a0;
+			correction_b0[filter_i] = (1 - cos(w0))/2/a0;
+			correction_b1[filter_i] = (1 - cos(w0))/a0;
+			correction_b2[filter_i] = (1 - cos(w0))/2/a0;
+		) : (
+			Q = 0.8;
+			A = sqrt(1/prev_amp);
+			w0 = 2*$pi*boundary_freq/srate;
+			alpha = sin(w0)/(2*Q);
+			sqrtA2alpha = 2*sqrt(A)*alpha;
+
+			a0 = (A + 1) - (A - 1)*cos(w0) + sqrtA2alpha;
+			correction_a1[filter_i] = 2*((A - 1) - (A + 1)*cos(w0))/a0;
+			correction_a2[filter_i] = (a0 - 2*sqrtA2alpha)/a0;
+			correction_b0[filter_i] = A*((A + 1) + (A - 1)*cos(w0) + sqrtA2alpha)/a0;
+			correction_b1[filter_i] = -2*A*((A - 1) + (A + 1)*cos(w0))/a0;
+			correction_b2[filter_i] = A*((A + 1) + (A - 1)*cos(w0) - sqrtA2alpha)/a0;
+		);
+		filter_i += 1;
+	);
+
+	correction_N = filter_i;
+
+	correction_filter_block32_active = correction_N&32;
+	correction_filter_block16_active = correction_N&16;
+	correction_filter_block8_active = correction_N&8;
+	correction_filter_block4_active = correction_N&4;
+	correction_filter_block2_active = correction_N&2;
+	correction_filter_block1_active = correction_N&1;
+
+	filter_i = 0;
+	correction_filter_block32_active ? (
+		correction_filter_block32_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_1_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_1_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_2_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_2_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_3_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_3_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_4_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_4_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_5_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_5_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_6_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_6_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_7_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_7_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_8_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_8_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_9_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_9_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_10_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_10_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_11_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_11_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_12_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_12_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_13_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_13_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_14_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_14_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_15_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_15_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_16_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_16_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_17_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_17_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_18_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_18_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_19_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_19_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_20_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_20_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_21_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_21_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_22_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_22_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_23_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_23_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_24_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_24_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_25_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_25_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_26_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_26_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_27_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_27_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_28_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_28_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_29_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_29_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_30_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_30_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block32_31_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block32_31_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+	correction_filter_block16_active ? (
+		correction_filter_block16_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_1_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_1_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_2_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_2_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_3_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_3_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_4_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_4_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_5_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_5_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_6_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_6_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_7_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_7_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_8_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_8_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_9_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_9_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_10_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_10_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_11_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_11_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_12_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_12_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_13_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_13_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_14_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_14_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block16_15_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block16_15_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+	correction_filter_block8_active ? (
+		correction_filter_block8_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_1_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_1_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_2_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_2_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_3_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_3_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_4_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_4_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_5_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_5_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_6_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_6_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block8_7_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block8_7_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+	correction_filter_block4_active ? (
+		correction_filter_block4_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block4_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block4_1_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block4_1_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block4_2_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block4_2_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block4_3_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block4_3_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+	correction_filter_block2_active ? (
+		correction_filter_block2_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block2_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+		correction_filter_block2_1_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block2_1_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+	correction_filter_block1_active ? (
+		correction_filter_block1_0_l.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		correction_filter_block1_0_r.filter_set_coefficients(correction_b0[filter_i], correction_b1[filter_i], correction_b2[filter_i], correction_a1[filter_i], correction_a2[filter_i]);
+		filter_i += 1;
+	);
+);
+calculate_correction_coefficients();
+
+last_srate != srate ? (
+	last_srate = srate;
+	calculate_correction_coefficients();
+	clear_correction_filters();
+);
+
+new_correction_resolution = correction_resolution;
+
+@block
+
+action_recalculate ? (
+	action_recalculate = 0;
+	calculate_correction_coefficients();
+);
+
+action_reset ? (
+	action_reset = 0;
+	reset_analysis_bands();
+	reset_correction_coefficients();
+	correction_learning = 0;
+	correction_active = 0;
+	correction_resolution = 0;
+);
+
+action_reset_bands ? (
+	action_reset_bands = 0;
+	reset_analysis_bands(floor(slider1 + 0.5));
+	reset_correction_coefficients();
+	correction_learning = 0;
+);
+
+action_correct ? (
+	action_correct = 0;
+	clear_correction_filters();
+	copy_correction_from_analysis();
+	correction_resolution = 0;
+	calculate_correction_coefficients();
+	correction_active = 1;
+	correction_strength = 1;
+	correction_learning = 1;
+);
+
+action_freeze ? (
+	action_freeze = 0;
+
+	correction_learning = 0;
+	!correction_resolution ? correction_resolution = bands_N;
+
+	clear_correction_filters();
+	calculate_correction_coefficients();
+);
+
+correction_learning && correction_viable ? (
+	copy_correction_from_analysis();
+	calculate_correction_coefficients();
+);
+correction_viable = model_N == bands_N && bands_total_energy >= 0.3;
+correction_learning && !correction_viable ? (
+	// Not frozen, but we shouldn't be correcting either
+	correction_active = 0;
+);
+
+slider4 != last_sharpness ? (
+	action_recalculate = 1;
+);
+last_sharpness = slider4;
+
+correction_strength != last_correction_strength ? (
+	action_recalculate = 1;
+);
+last_correction_strength = correction_strength;
+
+model_N && action_recalculate ? (
+	action_recalculate = 0;
+	calculate_correction_coefficients();
+);
+
+hard_limit = pow(10, slider5/20);
+
+@sample
+
+even_sample = !even_sample;
+
+spl0 || spl1 ? (
+	bands_total_energy += 1/srate;
+);
+
+!correction_active || correction_learning ? (
+	analysis_i = 0;
+	analysis_filter_block32_active ? (
+		filtered0 = analysis_filter_block32_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_1_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_1_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_2_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_2_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_3_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_3_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_4_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_4_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_5_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_5_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_6_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_6_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_7_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_7_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_8_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_8_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_9_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_9_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_10_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_10_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_11_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_11_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_12_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_12_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_13_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_13_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_14_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_14_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_15_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_15_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_16_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_16_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_17_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_17_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_18_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_18_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_19_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_19_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_20_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_20_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_21_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_21_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_22_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_22_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_23_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_23_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_24_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_24_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_25_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_25_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_26_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_26_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_27_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_27_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_28_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_28_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_29_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_29_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_30_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_30_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block32_31_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block32_31_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+	analysis_filter_block16_active ? (
+		filtered0 = analysis_filter_block16_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_1_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_1_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_2_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_2_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_3_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_3_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_4_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_4_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_5_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_5_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_6_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_6_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_7_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_7_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_8_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_8_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_9_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_9_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_10_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_10_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_11_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_11_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_12_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_12_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_13_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_13_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_14_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_14_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block16_15_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block16_15_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+	analysis_filter_block8_active ? (
+		filtered0 = analysis_filter_block8_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_1_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_1_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_2_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_2_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_3_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_3_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_4_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_4_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_5_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_5_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_6_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_6_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block8_7_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block8_7_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+	analysis_filter_block4_active ? (
+		filtered0 = analysis_filter_block4_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block4_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block4_1_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block4_1_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block4_2_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block4_2_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block4_3_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block4_3_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+	analysis_filter_block2_active ? (
+		filtered0 = analysis_filter_block2_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block2_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+		filtered0 = analysis_filter_block2_1_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block2_1_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+	analysis_filter_block1_active ? (
+		filtered0 = analysis_filter_block1_0_l.filter_sample(spl0);
+		filtered1 = analysis_filter_block1_0_r.filter_sample(spl1);
+		average1_unsharpenedvalue[analysis_i] += ((filtered0*filtered0 + filtered1*filtered1)*0.5 - average1_unsharpenedvalue[analysis_i])*average1_slew;
+		analysis_i += 1;
+	);
+
+	sum_interval_counter += 1;
+	sum_interval_counter >= sum_interval_samples ? (
+		i = 0;
+		avg = average1_unsharpenedvalue[0]*bands_subtraction_factor;
+		while (i < bands_N) (
+			avg = average1_unsharpenedvalue[i] + (avg - average1_unsharpenedvalue[i])*bands_interconnect;
+
+			average1_smoothed[i] = avg*bands_subtraction_factor;
+			i += 1;
+		);
+		avg *= bands_subtraction_factor;
+		while (i > 0) (
+			i -= 1;
+			avg = average1_smoothed[i] + (avg - average1_smoothed[i])*bands_interconnect;
+			average1_smoothed[i] = avg;
+
+			average1_value[i] = max(0.0, average1_unsharpenedvalue[i] - avg);
+
+			average2_counter[i] += 1;
+			average2_sum[i] += pow(average1_unsharpenedvalue[i], average2_power);
+		);
+	);
+);
+
+correction_active ? (
+	even_sample ? (
+		correction_filter_block32_active ? (
+			spl0 = correction_filter_block32_31_l.filter_sample_even(correction_filter_block32_30_l.filter_sample_even(correction_filter_block32_29_l.filter_sample_even(correction_filter_block32_28_l.filter_sample_even(correction_filter_block32_27_l.filter_sample_even(correction_filter_block32_26_l.filter_sample_even(correction_filter_block32_25_l.filter_sample_even(correction_filter_block32_24_l.filter_sample_even(correction_filter_block32_23_l.filter_sample_even(correction_filter_block32_22_l.filter_sample_even(correction_filter_block32_21_l.filter_sample_even(correction_filter_block32_20_l.filter_sample_even(correction_filter_block32_19_l.filter_sample_even(correction_filter_block32_18_l.filter_sample_even(correction_filter_block32_17_l.filter_sample_even(correction_filter_block32_16_l.filter_sample_even(correction_filter_block32_15_l.filter_sample_even(correction_filter_block32_14_l.filter_sample_even(correction_filter_block32_13_l.filter_sample_even(correction_filter_block32_12_l.filter_sample_even(correction_filter_block32_11_l.filter_sample_even(correction_filter_block32_10_l.filter_sample_even(correction_filter_block32_9_l.filter_sample_even(correction_filter_block32_8_l.filter_sample_even(correction_filter_block32_7_l.filter_sample_even(correction_filter_block32_6_l.filter_sample_even(correction_filter_block32_5_l.filter_sample_even(correction_filter_block32_4_l.filter_sample_even(correction_filter_block32_3_l.filter_sample_even(correction_filter_block32_2_l.filter_sample_even(correction_filter_block32_1_l.filter_sample_even(correction_filter_block32_0_l.filter_sample_even(spl0))))))))))))))))))))))))))))))));
+
+			spl1 = correction_filter_block32_31_r.filter_sample_even(correction_filter_block32_30_r.filter_sample_even(correction_filter_block32_29_r.filter_sample_even(correction_filter_block32_28_r.filter_sample_even(correction_filter_block32_27_r.filter_sample_even(correction_filter_block32_26_r.filter_sample_even(correction_filter_block32_25_r.filter_sample_even(correction_filter_block32_24_r.filter_sample_even(correction_filter_block32_23_r.filter_sample_even(correction_filter_block32_22_r.filter_sample_even(correction_filter_block32_21_r.filter_sample_even(correction_filter_block32_20_r.filter_sample_even(correction_filter_block32_19_r.filter_sample_even(correction_filter_block32_18_r.filter_sample_even(correction_filter_block32_17_r.filter_sample_even(correction_filter_block32_16_r.filter_sample_even(correction_filter_block32_15_r.filter_sample_even(correction_filter_block32_14_r.filter_sample_even(correction_filter_block32_13_r.filter_sample_even(correction_filter_block32_12_r.filter_sample_even(correction_filter_block32_11_r.filter_sample_even(correction_filter_block32_10_r.filter_sample_even(correction_filter_block32_9_r.filter_sample_even(correction_filter_block32_8_r.filter_sample_even(correction_filter_block32_7_r.filter_sample_even(correction_filter_block32_6_r.filter_sample_even(correction_filter_block32_5_r.filter_sample_even(correction_filter_block32_4_r.filter_sample_even(correction_filter_block32_3_r.filter_sample_even(correction_filter_block32_2_r.filter_sample_even(correction_filter_block32_1_r.filter_sample_even(correction_filter_block32_0_r.filter_sample_even(spl1))))))))))))))))))))))))))))))));
+		);
+		correction_filter_block16_active ? (
+			spl0 = correction_filter_block16_15_l.filter_sample_even(correction_filter_block16_14_l.filter_sample_even(correction_filter_block16_13_l.filter_sample_even(correction_filter_block16_12_l.filter_sample_even(correction_filter_block16_11_l.filter_sample_even(correction_filter_block16_10_l.filter_sample_even(correction_filter_block16_9_l.filter_sample_even(correction_filter_block16_8_l.filter_sample_even(correction_filter_block16_7_l.filter_sample_even(correction_filter_block16_6_l.filter_sample_even(correction_filter_block16_5_l.filter_sample_even(correction_filter_block16_4_l.filter_sample_even(correction_filter_block16_3_l.filter_sample_even(correction_filter_block16_2_l.filter_sample_even(correction_filter_block16_1_l.filter_sample_even(correction_filter_block16_0_l.filter_sample_even(spl0))))))))))))))));
+
+			spl1 = correction_filter_block16_15_r.filter_sample_even(correction_filter_block16_14_r.filter_sample_even(correction_filter_block16_13_r.filter_sample_even(correction_filter_block16_12_r.filter_sample_even(correction_filter_block16_11_r.filter_sample_even(correction_filter_block16_10_r.filter_sample_even(correction_filter_block16_9_r.filter_sample_even(correction_filter_block16_8_r.filter_sample_even(correction_filter_block16_7_r.filter_sample_even(correction_filter_block16_6_r.filter_sample_even(correction_filter_block16_5_r.filter_sample_even(correction_filter_block16_4_r.filter_sample_even(correction_filter_block16_3_r.filter_sample_even(correction_filter_block16_2_r.filter_sample_even(correction_filter_block16_1_r.filter_sample_even(correction_filter_block16_0_r.filter_sample_even(spl1))))))))))))))));
+		);
+		correction_filter_block8_active ? (
+			spl0 = correction_filter_block8_7_l.filter_sample_even(correction_filter_block8_6_l.filter_sample_even(correction_filter_block8_5_l.filter_sample_even(correction_filter_block8_4_l.filter_sample_even(correction_filter_block8_3_l.filter_sample_even(correction_filter_block8_2_l.filter_sample_even(correction_filter_block8_1_l.filter_sample_even(correction_filter_block8_0_l.filter_sample_even(spl0))))))));
+			spl1 = correction_filter_block8_7_r.filter_sample_even(correction_filter_block8_6_r.filter_sample_even(correction_filter_block8_5_r.filter_sample_even(correction_filter_block8_4_r.filter_sample_even(correction_filter_block8_3_r.filter_sample_even(correction_filter_block8_2_r.filter_sample_even(correction_filter_block8_1_r.filter_sample_even(correction_filter_block8_0_r.filter_sample_even(spl1))))))));
+		);
+		correction_filter_block4_active ? (
+			spl0 = correction_filter_block4_3_l.filter_sample_even(correction_filter_block4_2_l.filter_sample_even(correction_filter_block4_1_l.filter_sample_even(correction_filter_block4_0_l.filter_sample_even(spl0))));
+			spl1 = correction_filter_block4_3_r.filter_sample_even(correction_filter_block4_2_r.filter_sample_even(correction_filter_block4_1_r.filter_sample_even(correction_filter_block4_0_r.filter_sample_even(spl1))));
+		);
+		correction_filter_block2_active ? (
+			spl0 = correction_filter_block2_1_l.filter_sample_even(correction_filter_block2_0_l.filter_sample_even(spl0));
+			spl1 = correction_filter_block2_1_r.filter_sample_even(correction_filter_block2_0_r.filter_sample_even(spl1));
+		);
+		correction_filter_block1_active ? (
+			spl0 = correction_filter_block1_0_l.filter_sample_even(spl0);
+			spl1 = correction_filter_block1_0_r.filter_sample_even(spl1);
+		);
+	) : (
+		correction_filter_block32_active ? (
+			spl0 = correction_filter_block32_31_l.filter_sample_odd(correction_filter_block32_30_l.filter_sample_odd(correction_filter_block32_29_l.filter_sample_odd(correction_filter_block32_28_l.filter_sample_odd(correction_filter_block32_27_l.filter_sample_odd(correction_filter_block32_26_l.filter_sample_odd(correction_filter_block32_25_l.filter_sample_odd(correction_filter_block32_24_l.filter_sample_odd(correction_filter_block32_23_l.filter_sample_odd(correction_filter_block32_22_l.filter_sample_odd(correction_filter_block32_21_l.filter_sample_odd(correction_filter_block32_20_l.filter_sample_odd(correction_filter_block32_19_l.filter_sample_odd(correction_filter_block32_18_l.filter_sample_odd(correction_filter_block32_17_l.filter_sample_odd(correction_filter_block32_16_l.filter_sample_odd(correction_filter_block32_15_l.filter_sample_odd(correction_filter_block32_14_l.filter_sample_odd(correction_filter_block32_13_l.filter_sample_odd(correction_filter_block32_12_l.filter_sample_odd(correction_filter_block32_11_l.filter_sample_odd(correction_filter_block32_10_l.filter_sample_odd(correction_filter_block32_9_l.filter_sample_odd(correction_filter_block32_8_l.filter_sample_odd(correction_filter_block32_7_l.filter_sample_odd(correction_filter_block32_6_l.filter_sample_odd(correction_filter_block32_5_l.filter_sample_odd(correction_filter_block32_4_l.filter_sample_odd(correction_filter_block32_3_l.filter_sample_odd(correction_filter_block32_2_l.filter_sample_odd(correction_filter_block32_1_l.filter_sample_odd(correction_filter_block32_0_l.filter_sample_odd(spl0))))))))))))))))))))))))))))))));
+
+			spl1 = correction_filter_block32_31_r.filter_sample_odd(correction_filter_block32_30_r.filter_sample_odd(correction_filter_block32_29_r.filter_sample_odd(correction_filter_block32_28_r.filter_sample_odd(correction_filter_block32_27_r.filter_sample_odd(correction_filter_block32_26_r.filter_sample_odd(correction_filter_block32_25_r.filter_sample_odd(correction_filter_block32_24_r.filter_sample_odd(correction_filter_block32_23_r.filter_sample_odd(correction_filter_block32_22_r.filter_sample_odd(correction_filter_block32_21_r.filter_sample_odd(correction_filter_block32_20_r.filter_sample_odd(correction_filter_block32_19_r.filter_sample_odd(correction_filter_block32_18_r.filter_sample_odd(correction_filter_block32_17_r.filter_sample_odd(correction_filter_block32_16_r.filter_sample_odd(correction_filter_block32_15_r.filter_sample_odd(correction_filter_block32_14_r.filter_sample_odd(correction_filter_block32_13_r.filter_sample_odd(correction_filter_block32_12_r.filter_sample_odd(correction_filter_block32_11_r.filter_sample_odd(correction_filter_block32_10_r.filter_sample_odd(correction_filter_block32_9_r.filter_sample_odd(correction_filter_block32_8_r.filter_sample_odd(correction_filter_block32_7_r.filter_sample_odd(correction_filter_block32_6_r.filter_sample_odd(correction_filter_block32_5_r.filter_sample_odd(correction_filter_block32_4_r.filter_sample_odd(correction_filter_block32_3_r.filter_sample_odd(correction_filter_block32_2_r.filter_sample_odd(correction_filter_block32_1_r.filter_sample_odd(correction_filter_block32_0_r.filter_sample_odd(spl1))))))))))))))))))))))))))))))));
+		);
+		correction_filter_block16_active ? (
+			spl0 = correction_filter_block16_15_l.filter_sample_odd(correction_filter_block16_14_l.filter_sample_odd(correction_filter_block16_13_l.filter_sample_odd(correction_filter_block16_12_l.filter_sample_odd(correction_filter_block16_11_l.filter_sample_odd(correction_filter_block16_10_l.filter_sample_odd(correction_filter_block16_9_l.filter_sample_odd(correction_filter_block16_8_l.filter_sample_odd(correction_filter_block16_7_l.filter_sample_odd(correction_filter_block16_6_l.filter_sample_odd(correction_filter_block16_5_l.filter_sample_odd(correction_filter_block16_4_l.filter_sample_odd(correction_filter_block16_3_l.filter_sample_odd(correction_filter_block16_2_l.filter_sample_odd(correction_filter_block16_1_l.filter_sample_odd(correction_filter_block16_0_l.filter_sample_odd(spl0))))))))))))))));
+
+			spl1 = correction_filter_block16_15_r.filter_sample_odd(correction_filter_block16_14_r.filter_sample_odd(correction_filter_block16_13_r.filter_sample_odd(correction_filter_block16_12_r.filter_sample_odd(correction_filter_block16_11_r.filter_sample_odd(correction_filter_block16_10_r.filter_sample_odd(correction_filter_block16_9_r.filter_sample_odd(correction_filter_block16_8_r.filter_sample_odd(correction_filter_block16_7_r.filter_sample_odd(correction_filter_block16_6_r.filter_sample_odd(correction_filter_block16_5_r.filter_sample_odd(correction_filter_block16_4_r.filter_sample_odd(correction_filter_block16_3_r.filter_sample_odd(correction_filter_block16_2_r.filter_sample_odd(correction_filter_block16_1_r.filter_sample_odd(correction_filter_block16_0_r.filter_sample_odd(spl1))))))))))))))));
+		);
+		correction_filter_block8_active ? (
+			spl0 = correction_filter_block8_7_l.filter_sample_odd(correction_filter_block8_6_l.filter_sample_odd(correction_filter_block8_5_l.filter_sample_odd(correction_filter_block8_4_l.filter_sample_odd(correction_filter_block8_3_l.filter_sample_odd(correction_filter_block8_2_l.filter_sample_odd(correction_filter_block8_1_l.filter_sample_odd(correction_filter_block8_0_l.filter_sample_odd(spl0))))))));
+			spl1 = correction_filter_block8_7_r.filter_sample_odd(correction_filter_block8_6_r.filter_sample_odd(correction_filter_block8_5_r.filter_sample_odd(correction_filter_block8_4_r.filter_sample_odd(correction_filter_block8_3_r.filter_sample_odd(correction_filter_block8_2_r.filter_sample_odd(correction_filter_block8_1_r.filter_sample_odd(correction_filter_block8_0_r.filter_sample_odd(spl1))))))));
+		);
+		correction_filter_block4_active ? (
+			spl0 = correction_filter_block4_3_l.filter_sample_odd(correction_filter_block4_2_l.filter_sample_odd(correction_filter_block4_1_l.filter_sample_odd(correction_filter_block4_0_l.filter_sample_odd(spl0))));
+			spl1 = correction_filter_block4_3_r.filter_sample_odd(correction_filter_block4_2_r.filter_sample_odd(correction_filter_block4_1_r.filter_sample_odd(correction_filter_block4_0_r.filter_sample_odd(spl1))));
+		);
+		correction_filter_block2_active ? (
+			spl0 = correction_filter_block2_1_l.filter_sample_odd(correction_filter_block2_0_l.filter_sample_odd(spl0));
+			spl1 = correction_filter_block2_1_r.filter_sample_odd(correction_filter_block2_0_r.filter_sample_odd(spl1));
+		);
+		correction_filter_block1_active ? (
+			spl0 = correction_filter_block1_0_l.filter_sample_odd(spl0);
+			spl1 = correction_filter_block1_0_r.filter_sample_odd(spl1);
+		);
+	);
+);
+
+spl0 = max(-hard_limit, min(hard_limit, spl0));
+spl1 = max(-hard_limit, min(hard_limit, spl1));
+
+@gfx 620 490
+
+function labelled_dial(value, default, low, high, bias, label, displayvalue, displayformat) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias);
+		ui_mouse_down() && ui_clickcount() == 2 ? (
+			value = default;
+		);
+	ui_pop();
+
+	ui_push_below(50);
+		ui_align(0.5, 0);
+		ui_text(label);
+	ui_pop();
+
+	ui_push_above(50);
+		ui_align(0.5, 1);
+		ui_textnumber(displayvalue, displayformat);
+	ui_pop();
+
+	value;
+);
+
+function draw_frequency_grid() local(fi, fmag, freq, xratio) (
+	ui_push();
+		ui_retina(1);
+		fi = 1;
+		fmag = 10;
+		while (fi*fmag < high_freq) (
+			freq = fi*fmag;
+			freq > low_freq ? (
+				xratio = log(freq/low_freq)/log(high_freq/low_freq);
+				gfx_x = ui_left() + xratio*ui_width();
+				gfx_y = ui_top();
+				ui_color(255, 255, 255, 0.3);
+				gfx_lineto(gfx_x, ui_bottom());
+
+				fi == 1 ? (
+					ui_fontsize(10*gfx_ext_retina);
+					ui_color(255, 255, 255, 0.5);
+					gfx_x += ui_texth()*0.5;
+					gfx_y = ui_bottom() - ui_texth()*1.5;
+					fmag >= 1000 ? (
+						gfx_printf("%ikHz", freq/1000);
+					) : (
+						gfx_printf("%iHz", freq);
+					);
+				);
+			);
+			fi += 1;
+			fi >= 10 ? (
+				fi /= 10;
+				fmag *= 10;
+			);
+		);
+	ui_pop();
+);
+
+function correction_db_yratio(db) (
+	max(0, min(1, (20 - db)/40));
+);
+
+function draw_correction() local(gi, g_x, g_ratio, g_db, g_y_ratio, g_y, freq) (
+	ui_retina(1);
+	ui_color(0, 0, 0);
+	ui_fill();
+	ui_fontsize(ui_fontsize()*0.75);
+
+	draw_frequency_grid();
+	ui_color(255, 255, 255, 0.5);
+	g_y = ui_top() + correction_db_yratio(0)*ui_height();
+	gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+	g_db = 3;
+	while (g_db <= 24) (
+		g_y = ui_top() + correction_db_yratio(g_db)*ui_height();
+		ui_color(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_y = ui_top() + correction_db_yratio(-g_db)*ui_height();
+		ui_color(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		g_db *= 2;
+	);
+
+	correction_active ? (
+		ui_push();
+			g_left = ui_left() + max(0, min(1, log(correction_range_low/low_freq)/log(high_freq/low_freq)))*ui_width();
+			ui_color(80, 80, 48, 0.4);
+			gfx_rect(ui_left(), ui_top(), g_left - ui_left(), ui_height());
+			ui_color(255, 255, 192);
+			gfx_line(g_left, ui_top(), g_left, ui_bottom());
+
+			g_left = ui_left() + max(0, min(1, log(correction_range_high/low_freq)/log(high_freq/low_freq)))*ui_width();
+			ui_color(80, 80, 48, 0.4);
+			gfx_rect(g_left, ui_top(), ui_right() - g_left, ui_height());
+			ui_color(255, 255, 192);
+			gfx_line(g_left, ui_top(), g_left, ui_bottom());
+		ui_pop();
+	);
+
+	correction_active ? (
+		ui_hover() ? (
+			ui_color(255, 255, 255);
+			freq = low_freq*exp(log(high_freq/low_freq)*ui_mouse_xratio());
+			gfx_x = ui_left() + ui_texth();
+			gfx_y = ui_top() + ui_texth()*1.5;
+			gfx_printf("%iHz", freq);
+
+			g_ratio = correction_amp(freq);
+			g_db = log(g_ratio)*20/log(10);
+			gfx_x = ui_left() + ui_texth();
+			gfx_y = ui_top() + ui_texth()*0.5;
+			gfx_printf("%0.1fdB", g_db);
+		);
+	);
+
+	( // Draw correction bands
+		gi = 0;
+		while (gi < bands_N) (
+			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/bands_N);
+			g_left = ui_left() + (gi/bands_N)*ui_width();
+			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+			g_ratio = correction_active ? correction_amp[gi] : model_adjustment(gi);
+			g_db = log(g_ratio)*20/log(10);
+			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+			g_y = ui_top() + g_y_ratio*ui_height();
+
+			(!correction_active || correction_learning) ? ui_color(255, 0, 0) : ui_color(64, 192, 256);
+			gfx_line(g_left, g_y, g_right, g_y, 1);
+
+			(!correction_active || correction_learning) ? ui_color(255, 10, 10) : ui_color(74, 202, 256);
+			correction_viable && ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
+				gfx_x = ui_left() + ui_texth();
+				gfx_y = ui_bottom() - ui_texth()*2.5;
+				gfx_printf("%0.1fdB", g_db + correction_gain_db);
+
+				g_freq_low = low_freq*pow(high_freq/low_freq, gi/bands_N);
+				g_freq_high = low_freq*pow(high_freq/low_freq, (gi + 1)/bands_N);
+
+				gfx_x = ui_left() + ui_texth();
+				gfx_y = ui_bottom() - ui_texth()*1.5;
+				gfx_printf("%iHz - %iHz", g_freq_low, g_freq_high);
+			);
+
+			gi += 1;
+		);
+	);
+
+	correction_active ? (
+		gi = 0;
+		while (gi < ui_width()) (
+			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+			g_y_ratio = 0.5 - correction_phase(freq)/2/$pi;
+			g_y = ui_top() + g_y_ratio*ui_height();
+			ui_color(192, 128, 64, (gi%4) < 2 ? 0.5 : 0);
+
+			g_x = ui_left() + gi;
+			gi > 0 ? (
+				gfx_lineto(g_x, g_y);
+			) : (
+				gfx_x = g_x;
+				gfx_y = g_y;
+			);
+
+			gi += 1;
+		);
+
+		gi = 0;
+		while (gi < ui_width()) (
+			freq = low_freq*exp(log(high_freq/low_freq)*(gi + 0.5)/ui_width());
+			g_ratio = correction_amp(freq);
+			g_db = log(g_ratio)*20/log(10);
+			g_y_ratio = correction_db_yratio(g_db);
+			g_y = ui_top() + g_y_ratio*ui_height();
+			ui_color(192, 192, 192);
+
+			g_x = ui_left() + gi;
+			gi > 0 ? (
+				gfx_lineto(g_x, g_y);
+			) : (
+				gfx_x = g_x;
+				gfx_y = g_y;
+			);
+
+			gi += 1;
+		);
+		gi = 0;
+	);
+
+	option_show_grouped_correction && !correction_learning && correction_active ? (
+		gi = 0;
+		while (gi < bands_N) (
+			g_left = ui_left() + (gi/bands_N)*ui_width();
+			g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+			g_ratio = exp(correction_group_logamp[gi]/correction_group_size[gi]);
+			g_db = log(g_ratio)*20/log(10);
+			g_y_ratio = correction_db_yratio(g_db + correction_gain_db);
+
+			g_y = ui_top() + g_y_ratio*ui_height();
+			ui_color(64, 255, 64);
+			gfx_line(g_left, g_y, g_right, g_y, 1);
+
+			correction_viable && ui_hover() && mouse_x >= g_left && mouse_x < g_right ? (
+				gfx_x = ui_left() + ui_width()/3;
+				gfx_y = ui_top() + ui_texth();
+				gfx_printf("%0.1fdB", g_db + correction_gain_db);
+			);
+
+			gi += 1;
+		);
+	);
+
+	control_finish_enabled(1);
+);
+
+function averages_db_yratio(db) (
+	max(0, min(1, (15 - db)/60));
+);
+
+function draw_averages(draw_model) local(gi, g_left, g_right, g_avg, g_avg_db, g_y_ratio, g_y) (
+	ui_color(0, 0, 0);
+	ui_fill();
+	ui_retina(1);
+
+	draw_frequency_grid();
+
+	g_db = 15;
+	while (g_db > -60) (
+		g_y = ui_top() + averages_db_yratio(g_db)*ui_height();
+		ui_color(255, 255, 255, 0.15);
+		gfx_line(ui_left(), g_y, ui_right(), g_y);
+
+		gfx_x = ui_left() + ui_texth()*0.5;
+
+		g_db -= 6;
+	);
+
+	gi = 0;
+	while (gi < bands_N) (
+		g_left = ui_left() + (gi/bands_N)*ui_width();
+		g_right = ui_left() + ((gi + 1)/bands_N)*ui_width();
+
+		!correction_active || correction_learning ? (
+			g_avg = bands_N*average1_value[gi];
+			g_avg_db = log(max(g_avg, 0.000000001))*10/log(10);
+			g_y_ratio = averages_db_yratio(g_avg_db);
+			g_y = ui_top() + g_y_ratio*ui_height();
+			ui_color(0, 255, 0);
+			gfx_line(g_left, g_y, g_right, g_y, 1);
+		);
+
+		g_avg = bands_N*pow(average2_sum[gi]/average2_counter[gi], 1/average2_power);
+		g_avg_db = log(g_avg)*10/log(10);
+		g_y_ratio = averages_db_yratio(g_avg_db);
+		g_y = ui_top() + g_y_ratio*ui_height();
+		ui_color(192, 192, 0);
+		gfx_line(g_left, g_y, g_right, g_y, 1);
+
+		gi += 1;
+	);
+
+	gi = 0;
+	while (draw_model && gi < model_N) (
+		g_left = ui_left() + (gi/model_N)*ui_width();
+		g_right = ui_left() + ((gi + 1)/model_N)*ui_width();
+
+		g_avg = bands_N*model_target[gi];
+		g_avg_db = log(g_avg)*10/log(10);
+		g_y_ratio = averages_db_yratio(g_avg_db);
+		g_y = ui_top() + g_y_ratio*ui_height();
+		ui_color(64, 192, 256);
+		gfx_line(g_left, g_y, g_right, g_y, 1);
+
+		gi += 1;
+	);
+
+	control_finish_enabled(1);
+);
+
+ui_start("main");
+
+ui_screen() == "main" ? (
+	control_navbar("Spectrum Matcher", "Learn", "learn");
+
+	g_bar_height = ui_push_height(80);
+		ui_split_leftratio(0.2);
+			ui_split_topratio(1/2);
+				control_button("Reset") ? (
+					action_reset = 1;
+				);
+			ui_split_next();
+				bands_N == model_N && correction_viable && !correction_active ? (
+					control_button("Correct") ? (
+						action_correct = 1;
+					);
+				) : bands_N == model_N && correction_viable && correction_active ? (
+					correction_learning ? (
+						control_button("Freeze") ? (
+							new_correction_resolution = correction_resolution = bands_N;
+							action_freeze = 1;
+						);
+						flash_phase = time_precise()/4;
+						flash_phase_index = floor((flash_phase - floor(flash_phase))*25);
+						flash_phase_index == 0 || flash_phase_index == 2 ? (
+							ui_color(128, 192, 255, 0.2);
+							ui_fill();
+						);
+					) : (
+						control_button("Freeze", 0);
+					);
+				) : (
+					control_button("Correct", 0);
+				);
+			ui_pop();
+		ui_pop();
+
+		ui_fontsize(13);
+		ui_padding(ui_padding_x()*0.8, ui_padding_y()*0.8);
+		ui_pad(-0.5, -0.5);
+		ui_split_topratio(0.5);
+			ui_pad(-0.5, -0.5);
+			ui_split_leftratio(0.2);
+				correction_active && !correction_learning ? (
+					ui_split_left(ui_height());
+						!new_correction_resolution ? new_correction_resolution = correction_resolution;
+						new_correction_resolution = min(new_correction_resolution, bands_N);
+						new_correction_resolution = control_dial(new_correction_resolution, 5, bands_N, 2);
+						floor(new_correction_resolution + 0.5) != correction_resolution ? (
+							correction_resolution = floor(new_correction_resolution + 0.5);
+							action_freeze = 1;
+						);
+					ui_pop();
+
+					ui_align(0, 0.5);
+					ui_pad(2, 0, 0, 0);
+					ui_split_topratio(0.5);
+						ui_fontbold(1);
+						ui_text("Bands");
+					ui_split_next();
+						ui_textnumber(correction_resolution, "%i");
+					ui_pop();
+				);
+			ui_split_next();
+				correction_active ? (
+					//ui_padleft(ui_height()*0.15);
+					ui_split_left(ui_height()*1.15);
+						slider4 = control_dial(slider4, 0.5, 1.5, 0);
+					ui_pop();
+
+					ui_align(0, 0.5);
+					ui_pad(2, 0, 0, 0);
+					ui_split_topratio(0.5);
+						ui_fontbold(1);
+						ui_text("Q");
+					ui_split_next();
+						ui_textnumber(slider4, "%0.1f");
+					ui_pop();
+				);
+			ui_split_next();
+				correction_active ? (
+					// Relative shift
+					ui_set_rect(ui_left() - 8, ui_top(), ui_width(), ui_height());
+
+					ui_split_left(ui_height());
+						correction_strength = control_dial(correction_strength, -1, 1, 0, 0);
+					ui_pop();
+
+					ui_align(0, 0.5);
+					ui_pad(2, 0, 0, 0);
+					ui_split_topratio(0.5);
+						ui_fontbold(1);
+						ui_text("Amount");
+					ui_split_next();
+						ui_textnumber(floor(correction_strength*100 + 0.5), "%i%%");
+					ui_pop();
+				);
+			ui_split_next();
+				ui_split_left(ui_height());
+					old_correction_gain_db = correction_gain_db;
+					correction_gain_db = control_dial(correction_gain_db, -24, 12, -1.5);
+					ui_click() && ui_clickcount() == 2 ? (
+						correction_gain_db = 0;
+					);
+
+					old_correction_gain_db != correction_gain_db ? (
+						correction_active && !correction_learning ? (
+							action_freeze = 1; // Recalculate filters
+						);
+					);
+				ui_pop();
+
+				ui_align(0, 0.5);
+				ui_pad(2, 0, 0, 0);
+				ui_split_topratio(0.5);
+					ui_fontbold(1);
+					ui_text("Gain");
+				ui_split_next();
+					ui_textnumber(floor(correction_gain_db*10 + 0.4)*0.1, "%0.1fdB");
+				ui_pop();
+			ui_split_next();
+				ui_split_left(ui_height());
+					slider5 = control_dial(slider5, -12, 20, 1);
+				ui_pop();
+
+				ui_align(0, 0.5);
+				ui_pad(2, 0, 0, 0);
+				ui_split_topratio(0.5);
+					ui_fontbold(1);
+					ui_text("Clip");
+				ui_split_next();
+					ui_textnumber(slider5, "%0.1fdB");
+				ui_pop();
+			ui_pop();
+		ui_split_next();
+			ui_color(0, 0, 0, 0.5);
+			ui_border_top();
+			ui_color(0, 0, 0);
+
+			correction_active ? (
+				old_correction_range_low = correction_range_low;
+				old_correction_range_high = correction_range_high;
+				old_correction_boundary_low = correction_boundary_low;
+				old_correction_boundary_high = correction_boundary_high;
+
+				ui_pad(-0.5, -0.5);
+				ui_split_leftratio(0.5);
+					ui_split_leftratio(0.25);
+						ui_padtop();
+						ui_align(0.8, 0.5);
+						ui_fontbold(1);
+						ui_text("Low");
+					ui_pop();
+					ui_split_leftratio(0.5);
+						ui_padright();
+						ui_split_left(ui_height());
+							correction_range_low = control_dial(correction_range_low, 10, correction_range_high, log(correction_range_high/10), 20);
+						ui_pop();
+						ui_align(0.2, 0.5);
+						ui_padtop();
+						correction_range_low < 1000 ? (
+							ui_textnumber(floor(correction_range_low + 0.5), "%i Hz");
+						) : (
+							ui_textnumber(correction_range_low*0.001 + 0.005, "%.1f kHz");
+						);
+					ui_pop();
+					ui_padtop(-0.5);
+					ui_align(0.5, 0.6);
+					boundary_text = (correction_boundary_low == 0) ? "highpass" : (correction_boundary_low == 1) ? "flat" : "zero";
+					correction_boundary_low = control_selector(correction_boundary_low, boundary_text, (correction_boundary_low + 1)%3, (correction_boundary_low + 2)%3);
+				ui_split_next();
+					ui_split_leftratio(0.25);
+						ui_padtop();
+						ui_align(0.8, 0.5);
+						ui_fontbold(1);
+						ui_text("High");
+					ui_pop();
+					ui_split_leftratio(0.5);
+						ui_split_left(ui_height());
+							correction_range_high = control_dial(correction_range_high, correction_range_low, 20000, log(20000/correction_range_low), 18000);
+						ui_pop();
+						ui_align(0.2, 0.5);
+						ui_padtop();
+						correction_range_high < 1000 ? (
+							ui_textnumber(floor(correction_range_high + 0.5), "%i Hz");
+						) : (
+							ui_textnumber(correction_range_high*0.001 + 0.005, "%.1f kHz");
+						);
+					ui_pop();
+					ui_padtop(-0.5);
+					ui_align(0.5, 0.6);
+					boundary_text = (correction_boundary_high == 0) ? "lowpass" : (correction_boundary_high == 1) ? "flat" : "zero";
+					correction_boundary_high = control_selector(correction_boundary_high, boundary_text, (correction_boundary_high + 1)%3, (correction_boundary_high + 2)%3);
+				ui_pop();
+
+				!correction_learning && (old_correction_range_low != correction_range_low
+						|| old_correction_range_high != correction_range_high
+						|| old_correction_boundary_low != correction_boundary_low
+						|| old_correction_boundary_high != correction_boundary_high) ? (
+					action_freeze = 1;
+				);
+			);
+		ui_pop();
+	ui_pop();
+
+	ui_push_above(g_bar_height);
+		draw_correction(1);
+	ui_pop();
+
+	ui_push_below(g_bar_height);
+		draw_averages(1);
+	ui_pop();
+) : ui_screen() == "learn" ? (
+	control_navbar("Learn Spectrum", -1, -1);
+
+	ui_split_top(130);
+		ui_split_leftratio(0.7);
+			control_group("Analysis");
+			ui_split_leftratio(1/3);
+				slider1 = labelled_dial(slider1, 30, 10, 50, 0, "Resolution", log(high_freq/low_freq)/log(2)/slider1, "%0.2f octaves");
+			ui_split_next();
+				slider2 = labelled_dial(slider2, 4, 1, 10, 1.2, "Peak bias", slider2, "%0.1f");
+			ui_split_next();
+				slider3 = labelled_dial(slider3, 40, 10, 125, 2.9, "Period", slider3, "%ims");
+			ui_pop();
+		ui_pop();
+
+		ui_split_topratio(0.5);
+			ui_pad();
+			control_button("Reset") ? (
+				reset_correction_coefficients();
+				action_reset_bands = 1;
+			);
+		ui_split_next();
+			ui_pad();
+			control_button("Save") ? (
+				copy_to_model();
+				reset_correction_coefficients();
+				ui_screen_close();
+			);
+		ui_pop();
+	ui_pop();
+
+	draw_averages(0);
+) : ui_system();
+
+@serialize
+
+file_var(0, correction_active);
+file_var(0, low_freq);
+file_var(0, high_freq);
+file_var(0, model_N);
+file_var(0, model_shortperiod);
+file_var(0, model_longpower);
+
+si = 0;
+while (si < model_N) (
+	file_var(0, model_target[si]);
+	si += 1;
+);
+
+si = 0;
+while (si < model_N) (
+	file_var(0, correction_amp[si]);
+	si += 1;
+);
+
+model_N != bands_N || !model_N ? (
+	reset_analysis_bands();
+);
+
+file_var(0, correction_learning);
+
+action_recalculate = 1;
+
+preset_version = 4;
+file_avail(0) == 0 ? preset_version = 1 : file_var(0, preset_version);
+preset_version < 2 ? (
+	correction_strength = 1;
+);
+preset_version < 3 ? (
+	// Gain used to be unaffected by correction strength, but now it is
+	correction_strength > 0 ? (
+		correction_gain_db /= correction_strength;
+	);
+);
+preset_version < 4 ? (
+	correction_range_low = 20;
+	correction_range_high = 18000;
+	correction_boundary_low = 0;
+	correction_boundary_high = 1;
+);

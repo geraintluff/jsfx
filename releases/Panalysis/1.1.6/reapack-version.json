@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "visualise and manipulate the stereo field of the audio",
+	"files": {
+		"Panalysis/Panalysis.jsfx": {
+			"main": false
+		},
+		"Panalysis/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Panalysis/Panalysis.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.1.6",
+	"package": "Panalysis",
+	"time": "2018-06-10T17:15:14.435Z"
+}

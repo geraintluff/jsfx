@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"category": "MIDI",
+	"summary": "a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in \"mute\" mode).",
+	"files": {
+		"MIDI-Gate/MIDI Gate.jsfx": {
+			"main": false
+		},
+		"MIDI-Gate/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"MIDI-Gate/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.2.2",
+	"package": "MIDI Gate",
+	"time": "2018-06-10T17:15:16.287Z"
+}

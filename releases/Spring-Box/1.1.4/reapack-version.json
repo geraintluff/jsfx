@@ -1,0 +1,31 @@
+{
+	"type": "effect",
+	"author": "Geraint Luff",
+	"category": "Delay",
+	"summary": "an echo/chorus effect",
+	"files": {
+		"Spring-Box/Spring-Box.jsfx": {
+			"main": false
+		},
+		"Spring-Box/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Spring-Box/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Spring-Box/themes/bitmap-simple/theme-cyan.png": {
+			"main": false
+		},
+		"Spring-Box/Spring-Box.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"links": {
+		"screenshot": "Spring-Box.png",
+		"youtube": "https://www.youtube.com/watch?v=UqryhWXHbhA&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+	},
+	"version": "1.1.4",
+	"readme": "doc/Spring Box.md",
+	"package": "Spring-Box",
+	"time": "2018-06-10T17:15:11.878Z"
+}
