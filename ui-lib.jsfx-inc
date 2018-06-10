@@ -260,6 +260,10 @@ function ui_start(defaultScreen) local(i, click, clickdelta, imgW, imgH, retina_
 		uix_setgfxfont();
 
 		uix_interacted = (!!mouse_cap) || (mouse_cap != uix_mousecap_prev);
+		uix_undo_pending ? (
+			sliderchange(-1);
+			uix_undo_pending = 0;
+		);
 
 		uix_prev_mouse_x = uix_mouse_x;
 		uix_prev_mouse_y = uix_mouse_y;
@@ -361,6 +365,15 @@ function ui_system() local(text, error, screen) (
 			gfx_drawstr("Current screen is 0 - are you calling ui_start() first?");
 		);
 	);
+);
+
+function uix_undo_point(soft) local(time) (
+	time = time_precise();
+	// "Soft" means it only registers an undo point after 1.5s of no changes
+	!soft || uix_last_unto_time < (time - 1500) ? (
+		uix_undo_pending = 1;
+	);
+	uix_last_undo_time = time;
 );
 
 function ui_left() (
@@ -822,10 +835,10 @@ function uix_push_screen() local(oldscreen, newscreen) (
 	ui_push();
 	uix_drawconfig_current[15/*uix_DRAWCONFIG:CLIP_ALPHA*/] = 1;
 	gfx_dest = uix_drawconfig_current[10/*uix_DRAWCONFIG:CLIP_SCREEN*/] = newscreen;
-	-
 	gfx_a = 1;
-	gfx_x = prev[11/*uix_DRAWCONFIG:CLIP_LEFT*/];
-	gfx_y = prev[13/*uix_DRAWCONFIG:CLIP_TOP*/];
+	gfx_mode = 0;
+	gfx_x = uix_drawconfig_current[11/*uix_DRAWCONFIG:CLIP_LEFT*/];
+	gfx_y = uix_drawconfig_current[13/*uix_DRAWCONFIG:CLIP_TOP*/];
 	gfx_blit(oldscreen, 1, 0, uix_drawconfig_current[11/*uix_DRAWCONFIG:CLIP_LEFT*/], uix_drawconfig_current[13/*uix_DRAWCONFIG:CLIP_TOP*/], uix_drawconfig_current[12/*uix_DRAWCONFIG:CLIP_WIDTH*/], uix_drawconfig_current[14/*uix_DRAWCONFIG:CLIP_HEIGHT*/]);
 	uix_setgfxcolor();
 );
@@ -1142,6 +1155,16 @@ function ui_click_clear() (
 function ui_drag(i) local(dragtime) (
 	!i ? i = 1;
 	mouse_cap&i && uix_clickwasinside(i) ? (
+		dragtime = time_precise() - uix_click_t(i);
+		dragtime >= uix_doubleclicktime || abs(uix_click_x(i) - uix_mouse_x) >= uix_draglimit || abs(uix_click_y(i) - uix_mouse_y) >= uix_draglimit ? (
+			dragtime;
+		) : 0;
+	) : 0;
+);
+
+function ui_drag_up(i) local(dragtime) (
+	!i ? i = 1;
+	uix_unclick(i) && uix_clickwasinside(i) ? (
 		dragtime = time_precise() - uix_click_t(i);
 		dragtime >= uix_doubleclicktime || abs(uix_click_x(i) - uix_mouse_x) >= uix_draglimit || abs(uix_click_y(i) - uix_mouse_y) >= uix_draglimit ? (
 			dragtime;
@@ -1824,7 +1847,7 @@ function control_finish_technical(state) (
 
 function control_group(text) local(texth, textw, textl, textr, textv) (
 	uix_control_theme == 2/*uix_THEME:TRON*/ ? (
-		ui_fontsize(16);
+		ui_fontsize(min(min(16, ui_height()*0.2), ui_padding_y()*2));
 
 		ui_pad(ui_padding_x()/2, ui_padding_y()/2);
 
@@ -1847,9 +1870,9 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 	) : (
 		ui_push();
 			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
-				ui_fontsize(18);
+				ui_fontsize(min(min(18, ui_height()*0.2), ui_padding_y()*2));
 			) : (
-				ui_fontsize(16);
+				ui_fontsize(min(min(16, ui_height()*0.22), ui_padding_y()*3));
 			);
 
 			texth = textw = 0;
@@ -2002,12 +2025,20 @@ function control_selector(value, text, next_value, prev_value) local(buttonwidth
 				next_value != value ? control_background_enabled() : control_background_disabled();
 				control_arrow("up");
 				next_value != value ? control_finish_enabled() : control_finish_disabled();
-				ui_click() ? value = next_value;
+				ui_click() ? (
+					value = next_value;
+					uix_undo_point(1);
+					ui_click_clear();
+				);
 			ui_split_next();
 				prev_value != value ? control_background_enabled() : control_background_disabled();
 				control_arrow("down");
 				prev_value != value ? control_finish_enabled() : control_finish_disabled();
-				ui_click() ? value = prev_value;
+				ui_click() ? (
+					value = prev_value;
+					uix_undo_point(1);
+					ui_click_clear();
+				);
 			ui_pop();
 		ui_pop();
 
@@ -2123,7 +2154,10 @@ function uix_control_slider_h(value, range_low, range_high, curve_bias, hasDefau
 	);
 	hasDefault && ui_click() && ui_clickcount() == 2 ? (
 		value = defaultValue;
+		uix_undo_point();
 	);
+	ui_scroll_y() ? uix_undo_point(1);
+	ui_drag_up() ? uix_undo_point();
 	value;
 );
 function control_slider_left(value, range_low, range_high, curve_bias, default) (
@@ -2198,7 +2232,10 @@ function uix_control_slider_v(value, range_low, range_high, curve_bias, hasDefau
 	);
 	hasDefault && ui_click() && ui_clickcount() == 2 ? (
 		value = defaultValue;
+		uix_undo_point();
 	);
+	ui_scroll_y() ? uix_undo_point(1);
+	ui_drag_up() ? uix_undo_point();
 	value;
 );
 function control_slider_bottom(value, range_low, range_high, curve_bias, default) (
@@ -2226,6 +2263,8 @@ function uix_control_dragvalue(value, range_low, range_high, curve_bias) local(v
 		deltay = ui_mouse_dy()/uix_drag_scale*exp(-abs(ui_drag_x())/uix_drag_scale) - ui_scroll_y()/5000;
 		value = uix_slider_ratio_to_value(valueratio - deltay, range_low, range_high, curve_bias);
 	);
+	ui_scroll_y() ? uix_undo_point(1);
+	ui_drag_up() ? uix_undo_point();
 	value;
 );
 
@@ -2399,6 +2438,11 @@ function control_dialog(title, width, height, doneText, cancelText) local(accept
 		);
 	ui_pop();
 
+	ui_key() == 27 ? (
+		accepted = (cancelText >= 0) ? -1 : 1;
+	);
+	ui_key() == 13 ? accepted = 1;
+
 	doneText >= 0 || cancelText >= 0 ? (
 		ui_split_bottomtext(-1);
 			cancelText >= 0 && doneText < 0 ? (
@@ -2451,10 +2495,13 @@ function control_dialog(title) local(accepted) (
 );
 
 function control_switch(value) local(state) (
-	ui_click() ? value = !value;
+	ui_click() ? (
+		value = !value;
+		uix_undo_point();
+	);
 
 	ui_push_height(ui_texth()*2);
-		ui_push_width(ui_texth()*4);
+		ui_push_width(min(ui_texth()*4, ui_height()*2.5));
 
 			control_background_inset();
 			control_finish_inset();
@@ -2470,7 +2517,10 @@ function control_switch(value) local(state) (
 );
 
 function control_radio(value, option_value) local(state) (
-	ui_click() ? value = option_value;
+	ui_click() ? (
+		value = option_value;
+		uix_undo_point();
+	);
 
 	ui_push_height(ui_texth());
 		ui_push_width(ui_texth());
@@ -2525,10 +2575,6 @@ function uix_control_textinput_unpack_cursor(packed) (
 function uix_control_textinput_unpack_trail(packed) (
 	packed > 0 ? floor((packed - 1)/67108864) : floor(-packed/67108864);
 );
-
-////////////////
-// TODO: make sure I didn't typo "trail" as "tail" here
-////////////////
 
 function control_textinput_hasfocus(prompt_selectpacked) (
 	uix_control_textinput_unpack_focused(prompt_selectpacked);
@@ -2600,6 +2646,7 @@ function control_textinput(text, packed) local(text_length, prompt_selectlow, pr
 		);
 		ui_mouse_down_outside() ? (
 			prompt_focused = 0;
+			uix_undo_point();
 		);
 
 		ui_push();
@@ -2648,7 +2695,6 @@ function control_textinput(text, packed) local(text_length, prompt_selectlow, pr
 			keyinterested = prompt_focused;
 			while (prompt_focused && ui_key()) (
 				char = ui_key();
-				debug.char = char;
 				ui_key_printable() ? (
 					strcpy_substr(#control_tmp1, text, 0, prompt_selectlow);
 					str_setchar(#control_tmp1, prompt_selectlow, char);
@@ -2659,6 +2705,7 @@ function control_textinput(text, packed) local(text_length, prompt_selectlow, pr
 					prompt_selectcursor += 1;
 					prompt_selecttrail = prompt_selectcursor;
 					text_length = strlen(text);
+					uix_undo_point(1);
 				) : char == 8 || char == 6579564 ? ( // Backspace and Delete
 					prompt_selectlow == prompt_selecthigh ? (
 						char == 8 ? (
@@ -2674,6 +2721,7 @@ function control_textinput(text, packed) local(text_length, prompt_selectlow, pr
 
 					prompt_selectcursor = prompt_selecttrail = prompt_selectlow;
 					text_length = strlen(text);
+					uix_undo_point(1);
 				) : char == 1919379572 ? ( // Right
 					(mouse_cap&8) ? ( // Shift
 						prompt_selectcursor = min(prompt_selectcursor + 1, text_length);
@@ -2752,6 +2800,7 @@ function control_hidden_textnumber(actualnumber, number, format) local(i) (
 			uix_control_hidden_text_active_x = uix_control_hidden_text_active_y = -1;
 			ui_key() != 27 ? (
 				actualnumber = ui_parsenumber(#uix_control_hidden_textnumber, actualnumber);
+				uix_undo_point();
 			);
 		);
 		uix_control_hidden_text_state = control_textinput(#uix_control_hidden_textnumber, uix_control_hidden_text_state);
@@ -2769,7 +2818,7 @@ function control_hidden_textnumber(actualnumber, number, format) local(i) (
 	actualnumber;
 );
 function control_hidden_textnumber(number, format) (
-	control_hidden_textnumber(number, number, format);
+	control_hidden_textnumber(number, number*1.00000006 /* sprintf() bug */, format);
 );
 function control_hidden_textnumber(number) (
 	control_hidden_textnumber(number, "%f");
