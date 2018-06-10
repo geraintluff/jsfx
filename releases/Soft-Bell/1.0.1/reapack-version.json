@@ -1,0 +1,30 @@
+{
+	"type": "effect",
+	"category": "Synth",
+	"files": {
+		"Soft-Bell/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Soft-Bell/synth-framework-obj.jsfx-inc": {
+			"main": false
+		},
+		"Soft-Bell/Soft-Bell.jsfx": {
+			"main": false
+		},
+		"Soft-Bell/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Soft-Bell/themes/bitmap-simple/theme-dark-orange.png": {
+			"main": false
+		},
+		"Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png": {
+			"main": false
+		},
+		"Soft-Bell/Soft-Bell.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.0.1",
+	"package": "Soft-Bell",
+	"time": "2018-06-10T21:23:10.537Z"
+}
