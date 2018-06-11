@@ -15,8 +15,8 @@ function filter_buffer_size() (
 	FILTER#;
 );
 
-function filter_init() (
-	this.x1 = this.x2 = this.y1 = this.y2 = 0;
+function filter_init(steady_value) (
+	this.x1 = this.x2 = this.y1 = this.y2 = steady_value;
 	this.b0 = 1;
 	this.b1 = this.b2 = this.a1 = this.a2 = 0;
 );

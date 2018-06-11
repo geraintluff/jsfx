@@ -221,6 +221,10 @@ function synth_freq(note*) (
 	note._synth.BASE_FREQ*synthx_pitchbend_ratio;
 );
 
+function synth_base_freq(note*) (
+	note._synth.BASE_FREQ;
+);
+
 function synth_velocity(note*) (
 	note._synth.VEL;
 );
