@@ -209,7 +209,7 @@ process_note(synth1)
 spl0 = output_wet*left + output_dry*spl0;
 spl1 = output_wet*right + output_dry*spl1;
 
-@gfx 405 456
+@gfx 500 550
 
 control_start("main", "bitmap-simple", 0);
 
