@@ -1140,6 +1140,15 @@
 				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
 				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/Soft-Bell.jsfx.rpl</source>
 			</version>
+			<version name="1.0.4" author="Geraint Luff" time="2018-06-11T22:24:46.500Z">
+				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/ui-lib.jsfx-inc</source>
+				<source file="Soft-Bell/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/synth-framework-obj.jsfx-inc</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/Soft-Bell.jsfx</source>
+				<source file="Soft-Bell/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/filter-utils.jsfx-inc</source>
+				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.4/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Pitch Correction">
