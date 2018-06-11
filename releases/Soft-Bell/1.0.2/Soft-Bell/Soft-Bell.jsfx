@@ -121,7 +121,7 @@ left = right = 0;
 function init_harmonic(harmonic*, freq, config*) local(slope_gain, resonance_wavelengths, resonance_samples, filter_freq) (
 	harmonic.phase = 0;
 
-	slope_gain = 0.25*sqrt(1000/freq/config.freq_multiplier);
+	slope_gain = 0.25*sqrt(1000/freq/freq_multiplier);
 
 	resonance_wavelengths = pow(2, config.resonance_wavelengths_log2);
 	resonance_samples = srate*resonance_wavelengths/freq/config.freq_multiplier;

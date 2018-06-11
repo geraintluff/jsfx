@@ -474,6 +474,8 @@
 		"Soft-Bell": {
 			"type": "effect",
 			"category": "Synth",
+			"summary": "a synth that produces gentle bells and chimes",
+			"sort": 8,
 			"files": {
 				"ui-lib.jsfx-inc": {
 					"main": false
@@ -497,7 +499,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.1"
+			"version": "1.0.3"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

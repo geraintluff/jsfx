@@ -184,8 +184,8 @@ h3 {
 [list][*][url=https://geraintluff.github.io/jsfx#PadSynth]PadSynth[/url] - a synth that produces thick sounds, including per-note effects and modulators
 [*][url=https://geraintluff.github.io/jsfx#Hammer%20And%20Chord]Hammer And Chord[/url] - a polyphonic string resonator/synth
 [*][url=https://geraintluff.github.io/jsfx#Humonica]Humonica[/url] - harmoniser
-[*][url=https://geraintluff.github.io/jsfx#Learning%20Sampler]Learning Sampler[/url] - a basic sampler that records incoming audio and plays it back
-[*][url=https://geraintluff.github.io/jsfx#Soft-Bell]Soft-Bell[/url] - Synth effect[/list]
+[*][url=https://geraintluff.github.io/jsfx#Soft-Bell]Soft-Bell[/url] - a synth that produces gentle bells and chimes
+[*][url=https://geraintluff.github.io/jsfx#Learning%20Sampler]Learning Sampler[/url] - a basic sampler that records incoming audio and plays it back[/list]
 
 [b]Delay[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#Echo-Cycles]Echo-Cycles[/url] - a delay effect where the feedback system moves echoes through the stereo field
@@ -216,9 +216,10 @@ h3 {
 </li>
 <li><a href="#Humonica">Humonica</a> - harmoniser
 </li>
-<li><a href="#Learning Sampler">Learning Sampler</a> - a basic sampler that records incoming audio and plays it back
+<li><a href="#Soft-Bell">Soft-Bell</a> - a synth that produces gentle bells and chimes
 </li>
-<li><a href="#Soft-Bell">Soft-Bell</a> - Synth effect</li></ul>
+<li><a href="#Learning Sampler">Learning Sampler</a> - a basic sampler that records incoming audio and plays it back
+</li></ul>
 <h3>Delay</h3><ul><li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
 </li>
 <li><a href="#Cross-Polyphonic-FM">Cross-Polyphonic-FM</a> - MIDI-controlled frequency-modulation effect
@@ -291,6 +292,10 @@ h3 {
 <p><img src="Spectrum Matcher 2.png" alt="screenshot"></p>
 <p>This effect is quite CPU-intensive, so if you&#39;re not using it it could be good to bypass it.</p>
 </div>
+<div class="reapack-package" id="Soft-Bell"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Soft-Bell-1.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-2.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-3.mp3"></audio><a href="Soft-Bell.jsfx.rpl" target="_blank">presets</a></div><h1 id="soft-bell">Soft Bell</h1>
+<p>Soft Bell is a synth that produces chime-like tones, with individually specified harmonics.</p>
+<p><img src="doc/images/Soft-Bell.png" alt="screenshot"></p>
+</div>
 <div class="reapack-package" id="Cross-Polyphonic-FM"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Cross-Polyphonic-FM.mp3"></audio></div><h1 id="cross-polyphonic-fm">Cross-Polyphonic FM</h1>
 <p>This effect is a MIDI-controlled frequency-modulator effect.  It can be used to add character to an existing sound (such as a different synth).</p>
 <p>Multiple MIDI notes produces multiple modulation frequencies.  The notes aren&#39;t processed separately - they are added together to form the modulation waveform.  This means that different notes interact (slightly similar to distortion).</p>
@@ -341,7 +346,6 @@ h3 {
 <p><img src="Smooth Limiter.png" alt="screenshot"></p>
 <p>The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.</p>
 </div>
-<div class="reapack-package" id="Soft-Bell"><div class="reapack-links"><a href="Soft-Bell.jsfx.rpl" target="_blank">presets</a></div><h1>Soft-Bell</h1></div>
 <div class="reapack-package" id="Spring-Box"><div class="reapack-links"><audio controls preload="none" src="audio-demos/spring-box.mp3"></audio><a href="Spring-Box.jsfx.rpl" target="_blank">presets</a><a href="https://www.youtube.com/watch?v=UqryhWXHbhA&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="spring-box">Spring-Box</h1>
 <p>Spring-Box is a chorus/echo effect based on a matrix of 4 delay lines feeding back into each other.  The delay lines vary in length according to the chorus parameters, so you can create a range of sounds from choruses and ambiences to space-like reverb effects.  (<a href="audio-demos/spring-box.mp3">audio demo</a>)</p>
 <p>Early echoes can be suppressed to get a smoother sound (the &quot;late bias&quot; control), by using two parallel delay structures with different feedback ratios, and subtracting the results.</p>

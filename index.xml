@@ -1098,6 +1098,11 @@
 		</reapack>
 		<reapack name="Soft-Bell" type="effect">
 			<metadata>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-1.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-2.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-3.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Soft-Bell.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Soft Bell\b}\line\line Soft Bell is a synth that produces chime-like tones, with individually specified harmonics.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Soft-Bell.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Soft-Bell.png</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-1.mp3</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-2.mp3</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Soft-Bell-3.mp3</link>
 				<link rel="presets">https://geraintluff.github.io/jsfx/Soft-Bell.jsfx.rpl</link>
 			</metadata>
 			<version name="1.0.0" author="Geraint Luff" time="2018-06-10T21:21:54.560Z">
@@ -1116,6 +1121,24 @@
 				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
 				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
 				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+			</version>
+			<version name="1.0.2" author="Geraint Luff" time="2018-06-11T22:03:57.650Z">
+				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/ui-lib.jsfx-inc</source>
+				<source file="Soft-Bell/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/synth-framework-obj.jsfx-inc</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/Soft-Bell.jsfx</source>
+				<source file="Soft-Bell/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/filter-utils.jsfx-inc</source>
+				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+			</version>
+			<version name="1.0.3" author="Geraint Luff" time="2018-06-11T22:22:11.652Z">
+				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/ui-lib.jsfx-inc</source>
+				<source file="Soft-Bell/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/synth-framework-obj.jsfx-inc</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/Soft-Bell.jsfx</source>
+				<source file="Soft-Bell/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/filter-utils.jsfx-inc</source>
+				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.3/Soft-Bell/Soft-Bell.jsfx.rpl</source>
 			</version>
 		</reapack>
 	</category>
