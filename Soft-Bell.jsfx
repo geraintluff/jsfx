@@ -80,6 +80,11 @@ function default_config(config*, harmonic_index) (
 
 @block
 
+/*
+synth_legato(2);
+synth_portamento(.1);
+*/
+
 synth_block();
 synth_block_each(synth1)
 && synth_block_each(synth2)
