@@ -16,9 +16,10 @@ slider8:sustain_level=0.1<0,1>-sustain level
 slider9:old_resonance_wavelengths_log2=8<0,10>-deprecated
 slider10:old_freq_multiplier=1<1,10,1>-deprecated
 
-import synth-framework-obj.jsfx-inc
-import filter-utils.jsfx-inc
 import ui-lib.jsfx-inc
+import filter-utils.jsfx-inc
+import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
 
 filename:0,themes/bitmap-simple/theme-dark-orange.png
 // Photo by Fancycrave on Unsplash: https://unsplash.com/photos/dLTpk6N31Fc
@@ -79,11 +80,6 @@ function default_config(config*, harmonic_index) (
 );
 
 @block
-
-/*
-synth_legato(2);
-synth_portamento(.1);
-*/
 
 synth_block();
 synth_block_each(synth1)
@@ -315,7 +311,7 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 
-	control_navbar("Harmonics");
+	control_navbar("Harmonics", "config", "synth.config");
 
 	ui_split_topratio(1/4);
 		harmonic_row(harmonic0);
@@ -326,7 +322,7 @@ ui_screen() == "main" ? (
 	ui_split_next();
 		harmonic_row(harmonic3);
 	ui_pop();
-) : control_system();
+) : synth_ui_system() || control_system();
 
 @serialize
 
@@ -340,7 +336,7 @@ function save_harmonic(harmonic*) (
 	file_var(0, harmonic.velocity_curve);
 );
 
-preset_version = 2;
+preset_version = 3;
 file_var(0, preset_version);
 
 preset_version < 1 ? (
@@ -363,4 +359,8 @@ preset_version < 1 ? (
 	save_harmonic(harmonic1);
 	save_harmonic(harmonic2);
 	save_harmonic(harmonic3);
+);
+
+preset_version >= 3 ? (
+	synth_serialize();
 );

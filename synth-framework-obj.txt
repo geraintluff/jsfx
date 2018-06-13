@@ -22,6 +22,28 @@ function synth_option_midi_sink(value) (
 	synthx_midi_sink = value;
 );
 
+function synth_serialize() local(version) (
+	version = 1;
+	debug.file_avail = file_avail(0);
+	!debug.file_avail ? debug.zero_file_avail += 1;
+	file_avail(0) !== 0 ? file_var(0, version) : version = 0;
+	version >= 1 ? (
+		file_var(0, synthx_midi_sink);
+		file_var(0, synthx_legato_mode);
+		file_var(0, synthx_legato_portamento_mode);
+		file_var(0, synthx_portamento_enabled);
+		file_var(0, synthx_portamento_seconds);
+		file_var(0, synthx_pitchbend_range);
+	) : (
+		synthx_midi_sink = 0;
+		synthx_legato_mode = 0;
+		synthx_legato_portamento_mode = 0;
+		synthx_portamento_enabled = 0;
+		synthx_portamento_seconds = 0.03;
+		synthx_pitchbend_range = 2;
+	);
+);
+
 function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	synthx_polyphony = 0;
 	synthx_custom_offset = NOTE##;
@@ -30,7 +52,8 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	synthx_maxduration = 60*60*24*365*srate; // one year
 	synthx_pitchbend = 0;
 	synthx_pitchbend_ratio = 1;
-	synthx_pitchbend_range = 2;
+	!synthx_pitchbend_range ? synthx_pitchbend_range = 2;
+	!synthx_portamento_seconds ? synthx_portamento_seconds = 0.03; // Not enabled, though :)
 
 	synthx_max_active_note = 0;
 	synthx_current_note = 0;
@@ -76,7 +99,8 @@ function synth_legato(enabled) (
 );
 
 function synth_portamento(seconds) (
-	seconds >= 0 ? (
+	seconds > 0 ? (
+		synthx_portamento_seconds = seconds;
 		synthx_portamento_enabled = 1;
 		synthx_portamento_samples = seconds*srate;
 	) : (
