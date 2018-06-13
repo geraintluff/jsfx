@@ -56,7 +56,7 @@
 			"links": {
 				"screenshot": "Sandwich Amp.png",
 				"audio": [
-					"audio-demos/Sandwich-Amp.mp3"
+					"audio-demos/sandwich-amp.mp3"
 				],
 				"presets": [
 					"Sandwich Amp.jsfx.rpl"

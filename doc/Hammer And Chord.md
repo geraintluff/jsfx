@@ -6,4 +6,4 @@ This effect is a polyphonic string resonator.  It can provide its own impulse (t
 
 It has two resonators for each note (left and right) and they can be detuned ([audio demo](audio-demos/Hammer And Chord detune demo.mp3)).
 
-If your input audio is tonal (e.g. speech) and those frequencies are coming through, the "de-tonal" setting puts a ring-modulator before each resonator to make it atonal. ([audio demo](Hammer And Chord ringmod demo.mp3))
+If your input audio is tonal (e.g. speech) and those frequencies are coming through, the "de-tonal" setting puts a ring-modulator before each resonator to make it atonal. ([audio demo](audio-demos/Hammer And Chord ringmod demo.mp3))
