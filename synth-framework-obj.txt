@@ -127,16 +127,16 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			base_freq = 440*pow(2, (midi_msg2 - 69)/12);
 			// Is this the first note of a phrase
 			first_note_of_phrase = 1;
-			synthx_legato_mode ? (
-				i = 0;
-				while (i < synthx_polyphony) (
-					note = synthx_notestack + synthx_step*i;
-					note[NOTE#ACTIVE] && note[NOTE#SAMPLES_FROM_RELEASE] < -midi_offset ? (
-						first_note_of_phrase = 0;
-					);
-					i += 1;
+			i = 0;
+			while (i < synthx_polyphony) (
+				note = synthx_notestack + synthx_step*i;
+				note[NOTE#ACTIVE] && note[NOTE#SAMPLES_FROM_RELEASE] < -midi_offset ? (
+					first_note_of_phrase = 0;
 				);
+				i += 1;
+			);
 
+			synthx_legato_mode ? (
 				// Move all unreleased notes to new frequency
 				i = 0;
 				while (i < synthx_polyphony) (
@@ -205,7 +205,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				);
 				// Set up the note parameters
 				selected_note[NOTE#ACTIVE] = 1;
-				synthx_portamento_mode && (synthx_legato_mode == 0 || !first_note_of_phrase || synthx_legato_portamento_mode > 0) ? (
+				synthx_portamento_mode && (!first_note_of_phrase || synthx_legato_portamento_mode > 0) ? (
 					// This calculation goes first, in case this is the same note we're sweeping from
 					portamento_samples = synthx_portamento_samples;
 					synthx_portamento_mode >= 2 ? portamento_samples *= synthx_controllers[5]/127;

@@ -1,7 +1,7 @@
 # Humonica
 
-This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes. ([audio demo](audio-demos/humonica.mp3))
+This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes.
 
 ![screenshot](Humonica.png)
 
-The resynthesised notes can sound very "bare", because they are made up of exact frequencies, however they can be softened with chorus. ([audio demo](audio-demos/humonica-spring-box.mp3) with Spring-Box chorus and reverb)
+You can control how much audio is used to calculate the timbre (window) and how often (overlap).  There is a zero-latency mode ("live": notes are played instantly, but the timbre will be slightly behind), and a latency-compensated one.
