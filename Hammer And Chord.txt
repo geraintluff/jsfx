@@ -29,6 +29,7 @@ slider21:timbre_wavelength_offset=0.5<0, 0.5>-Timbre tone
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
 import delay-utils.jsfx-inc
 import filter-utils.jsfx-inc
 
@@ -323,7 +324,7 @@ function labelled_switch(value, label, format_text) local(height) (
 control_start("main", "tron");
 
 ui_screen() == "main" ? (
-	control_navbar("Hammer And Chord (polyphonic resonator)", -1, -1);
+	control_navbar("Hammer And Chord (polyphonic resonator)", "config", "synth.config");
 
 	ui_split_topratio(0.5);
 		ui_split_leftratio(3/9);
@@ -394,13 +395,15 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 	ui_pop();
-) : ui_system();
+) : synth_ui_system() || ui_system();
 
 @serialize
 
-preset_version = 1;
+preset_version = 2;
 file_var(0, preset_version);
 
-preset_version > 1 ? (
+preset_version > 2 ? (
 	ui_error("Preset is from newer version - things might not sound right.\n\nUpdate Hammer and Chord to fix this.");
 );
+
+synth_serialize(preset_version < 2);
