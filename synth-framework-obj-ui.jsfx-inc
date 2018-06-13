@@ -39,15 +39,15 @@ function synth_ui_system() (
 			ui_split_leftratio(0.5);
 				synthx_ui_system_labels("Enabled", 0, "");
 				ui_pad(-1, 0);
-				synthx_portamento_enabled = control_switch(synthx_portamento_enabled);
+				synthx_portamento_mode = control_selector(synthx_portamento_mode, (synthx_portamento_mode == 0) ? "off" : (synthx_portamento_mode == 1) ? "on" : (synthx_portamento_mode == 2) ? "MIDI (CC 5)" : "MIDI (CC 5 + 65)", min(3, synthx_portamento_mode + 1), max(0, synthx_portamento_mode - 1));
 			ui_split_next();
-				synthx_portamento_enabled ? (
+				synthx_portamento_mode ? (
 					synthx_ui_system_labels("Time", floor(synthx_portamento_seconds*1000 + 0.5), "%i ms");
 					ui_pad(-1, 0);
 					synthx_portamento_seconds = max(0.001, control_dial(synthx_portamento_seconds, 0.001, 1, 5, 0.03));
 				);
 			ui_pop();
-			synthx_portamento_enabled ? synth_portamento(synthx_portamento_seconds) : synth_portamento(0);
+			synth_portamento(synthx_portamento_mode, synthx_portamento_seconds);
 		ui_split_next();
 			control_group("");
 			ui_split_leftratio(0.5);
@@ -66,7 +66,7 @@ function synth_ui_system() (
 		file_var(0, synthx_midi_sink);
 		file_var(0, synthx_legato_mode);
 		file_var(0, synthx_legato_portamento_mode);
-		file_var(0, synthx_portamento_enabled);
+		file_var(0, synthx_portamento_mode);
 		file_var(0, synthx_portamento_seconds);
 		file_var(0, synthx_pitchbend_range);
 		*/

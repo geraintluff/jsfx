@@ -30,14 +30,14 @@ function synth_serialize(reset) local(version) (
 		file_var(0, synthx_midi_sink);
 		file_var(0, synthx_legato_mode);
 		file_var(0, synthx_legato_portamento_mode);
-		file_var(0, synthx_portamento_enabled);
+		file_var(0, synthx_portamento_mode);
 		file_var(0, synthx_portamento_seconds);
 		file_var(0, synthx_pitchbend_range);
 	) : (
 		synthx_midi_sink = 0;
 		synthx_legato_mode = 0;
 		synthx_legato_portamento_mode = 0;
-		synthx_portamento_enabled = 0;
+		synthx_portamento_mode = 0;
 		synthx_portamento_seconds = 0.03;
 		synthx_pitchbend_range = 2;
 	);
@@ -97,14 +97,10 @@ function synth_legato(enabled) (
 	synth_legato(enabled, 0);
 );
 
-function synth_portamento(seconds) (
-	seconds > 0 ? (
-		synthx_portamento_seconds = seconds;
-		synthx_portamento_enabled = 1;
-		synthx_portamento_samples = seconds*srate;
-	) : (
-		synthx_portamento_enabled = 0;
-	);
+function synth_portamento(mode, seconds) (
+	synthx_portamento_mode = mode;
+	synthx_portamento_seconds = seconds;
+	synthx_portamento_samples = seconds*srate;
 );
 
 function synth_portamento_freq_buffer(note) (
@@ -152,11 +148,14 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 								// Any previous phrases are closed
 								note[6/*NOTE:PHRASE_STILL_ACTIVE*/] = 0;
 							) : (
-								synthx_portamento_enabled ? (
+								synthx_portamento_mode ? (
 									current_freq = synth_portamento_freq_buffer(note);
-									portamento_samples = synthx_portamento_samples + midi_offset;
+									portamento_samples = synthx_portamento_samples;
+									synthx_portamento_mode >= 2 ? portamento_samples *= synthx_controllers[5]/127;
+									synthx_portamento_mode == 3 && synthx_controllers[65] < 64 ? portamento_samples = 0;
+									portamento_samples += midi_offset;
 									note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = note[3/*NOTE:SAMPLES_FROM_ATTACK*/] + portamento_samples;
-									note[2/*NOTE:BASE_FREQ_SLOPE*/] = (base_freq - current_freq)/portamento_samples;
+									note[2/*NOTE:BASE_FREQ_SLOPE*/] = portamento_samples ? (base_freq - current_freq)/portamento_samples : 0;
 								) : (
 									note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
 									note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
@@ -207,10 +206,13 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				);
 				// Set up the note parameters
 				selected_note[4/*NOTE:ACTIVE*/] = 1;
-				synthx_portamento_enabled && (synthx_legato_mode == 0 || !first_note_of_phrase || synthx_legato_portamento_mode > 0) ? (
+				synthx_portamento_mode && (synthx_legato_mode == 0 || !first_note_of_phrase || synthx_legato_portamento_mode > 0) ? (
 					// This calculation goes first, in case this is the same note we're sweeping from
-					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = (base_freq - synth_portamento_freq_buffer(synthx_latest_note))/synthx_portamento_samples;
-					selected_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = synthx_portamento_samples;
+					portamento_samples = synthx_portamento_samples;
+					synthx_portamento_mode >= 2 ? portamento_samples *= synthx_controllers[5]/127;
+					synthx_portamento_mode == 3 && synthx_controllers[65] < 64 ? portamento_samples = 0;
+					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = portamento_samples ? (base_freq - synth_portamento_freq_buffer(synthx_latest_note))/portamento_samples : 0;
+					selected_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = portamento_samples;
 				) : (
 					selected_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
 					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
