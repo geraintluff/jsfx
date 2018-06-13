@@ -654,5 +654,7 @@ ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 2;
+preset_version = 3;
 file_var(0, preset_version);
+
+synth_serialize(preset_version < 3);
