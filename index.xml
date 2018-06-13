@@ -955,6 +955,14 @@
 				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.0/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
 				<changelog><![CDATA[add legato/portamento support]]></changelog>
 			</version>
+			<version name="1.5.1" author="Geraint Luff" time="2018-06-13T19:59:01.405Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/synth-framework-obj.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.1/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Humonica" type="effect">
 			<metadata>
@@ -1185,6 +1193,16 @@
 				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.7/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
 				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.7/Soft-Bell/Soft-Bell.jsfx.rpl</source>
 				<source file="Soft-Bell/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.7/Soft-Bell/synth-framework-obj-ui.jsfx-inc</source>
+			</version>
+			<version name="1.0.8" author="Geraint Luff" time="2018-06-13T19:59:06.390Z">
+				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/ui-lib.jsfx-inc</source>
+				<source file="Soft-Bell/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/synth-framework-obj.jsfx-inc</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/Soft-Bell.jsfx</source>
+				<source file="Soft-Bell/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/filter-utils.jsfx-inc</source>
+				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+				<source file="Soft-Bell/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.8/Soft-Bell/synth-framework-obj-ui.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
