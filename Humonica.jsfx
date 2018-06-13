@@ -26,6 +26,7 @@ slider17:stereo_width=0.5<0,1,0>-Stereo Width
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
 import filter-utils.jsfx-inc
 
 @init
@@ -565,7 +566,7 @@ function labelled_switch(value, label, text) (
 control_start("main", "default");
 
 ui_screen() == "main" ? (
-	control_navbar("Humonica", "help", "help");
+	control_navbar("Humonica", "config", "synth.config");
 
 	ui_split_bottomratio(0.15);
 		control_background_technical();
@@ -649,7 +650,7 @@ ui_screen() == "main" ? (
 
 	ui_align(0, 0);
 	ui_wraptext("Window: controls how much input audio is used to calculate the impulse for resynthesis.  Lower values give a faster-changing sound (better time-resolution), but reduced frequency resolution.\n\nOverlap: controls how often the impulse is recalculated, as a function of the window length.  Higher values mean recalculating more often, which gives a smoother result, at the expense of more calculation.\n\nLatency: the impulse is calculated using input audio. This switch chooses between zero-latency (\"live\") mode, where the analysis will always be slightly behind the input audio (depending on window length and overlap amount) or whether some extra latency is added to compensate.\n\nStereo: the left and right inputs can either be combined (their energy is added together) or calculated separately. 1-channel mode is slightly more efficient, so should be used unless you particularly need separate stereo channels.");
-) : ui_system();
+) : synth_ui_system() || ui_system();
 
 @serialize
 

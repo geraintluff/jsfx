@@ -314,6 +314,9 @@
 				},
 				"Humonica.jsfx.rpl": {
 					"main": false
+				},
+				"synth-framework-obj-ui.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "2.0.13",
