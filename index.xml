@@ -1112,6 +1112,15 @@
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.0.9/Humonica/filter-utils.jsfx-inc</source>
 				<changelog><![CDATA[Remove debugging display]]></changelog>
 			</version>
+			<version name="2.1.0" author="Geraint Luff" time="2018-06-13T20:17:15.978Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/synth-framework-obj.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/Humonica.jsfx.rpl</source>
+				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.0/Humonica/synth-framework-obj-ui.jsfx-inc</source>
+				<changelog><![CDATA[portamento/legato support (synth config)]]></changelog>
+			</version>
 		</reapack>
 		<reapack name="Soft-Bell" type="effect">
 			<metadata>
