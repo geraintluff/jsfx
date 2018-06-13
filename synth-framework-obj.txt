@@ -90,7 +90,7 @@ function synth_setup_each(note*) (
 
 function synth_legato(mode/*0: off, 1: legato but still trigger, 2: suppress new notes */, portamento_mode/*0: legato notes only, 1: legato and first notes, 2: releases as well*/) (
 	synthx_legato_mode = mode;
-	synthx_legato_portamento_mode = synthx_legato_mode ? portamento_mode : 1;
+	synthx_legato_portamento_mode = portamento_mode;
 );
 function synth_legato(enabled) (
 	synth_legato(enabled, 0);
@@ -206,7 +206,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				);
 				// Set up the note parameters
 				selected_note[NOTE#ACTIVE] = 1;
-				synthx_portamento_enabled && !(synthx_legato_portamento_mode == 0 && first_note_of_phrase) ? (
+				synthx_portamento_enabled && (synthx_legato_mode == 0 || !first_note_of_phrase || synthx_legato_portamento_mode > 0) ? (
 					// This calculation goes first, in case this is the same note we're sweeping from
 					selected_note[NOTE#BASE_FREQ_SLOPE] = (base_freq - synth_portamento_freq_buffer(synthx_latest_note))/synthx_portamento_samples;
 					selected_note[NOTE#PORTAMENTO_END_SAMPLE] = synthx_portamento_samples;
