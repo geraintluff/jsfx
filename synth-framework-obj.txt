@@ -22,12 +22,10 @@ function synth_option_midi_sink(value) (
 	synthx_midi_sink = value;
 );
 
-function synth_serialize() local(version) (
+function synth_serialize(reset) local(version) (
 	version = 1;
-	debug.file_avail = file_avail(0);
-	!debug.file_avail ? debug.zero_file_avail += 1;
-	file_avail(0) !== 0 ? file_var(0, version) : version = 0;
-	version >= 1 ? (
+	file_var(0, version);
+	!reset && version >= 1 ? (
 		file_var(0, synthx_midi_sink);
 		file_var(0, synthx_legato_mode);
 		file_var(0, synthx_legato_portamento_mode);

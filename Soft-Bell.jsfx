@@ -350,7 +350,6 @@ preset_version < 1 ? (
 	output_dry = 1;
 	output_wet = old_output_dry;
 
-	debug.update_preset += 1;
 	harmonic1.enabled = 0;
 	harmonic2.enabled = 0;
 	harmonic3.enabled = 0;
@@ -361,6 +360,5 @@ preset_version < 1 ? (
 	save_harmonic(harmonic3);
 );
 
-preset_version >= 3 ? (
-	synth_serialize();
-);
+// If it's an earlier version, reset instead of trying to load
+synth_serialize(preset_version < 3);

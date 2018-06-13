@@ -29,7 +29,7 @@ function synth_ui_system() (
 				synthx_legato_mode ? (
 					synthx_ui_system_labels("Portamento", 0, "");
 					ui_pad(-1, 0);
-					#synthx_legato_mode = (synthx_legato_portamento_mode == 0) ? "legato" : (synthx_legato_portamento_mode == 1) ? "all notes" : "+ release tails";
+					#synthx_legato_mode = (synthx_legato_portamento_mode == 0) ? "legato only" : (synthx_legato_portamento_mode == 1) ? "all notes" : "notes + release";
 					synthx_legato_portamento_mode = control_selector(synthx_legato_portamento_mode, #synthx_legato_mode, min(2, synthx_legato_portamento_mode + 1), max(0, synthx_legato_portamento_mode - 1));
 				);
 			ui_pop();
@@ -47,7 +47,6 @@ function synth_ui_system() (
 					synthx_portamento_seconds = max(0.001, control_dial(synthx_portamento_seconds, 0.001, 1, 5, 0.03));
 				);
 			ui_pop();
-			debug.synthx_portamento_seconds = max(debug.synthx_portamento_seconds, synthx_portamento_seconds);
 			synthx_portamento_enabled ? synth_portamento(synthx_portamento_seconds) : synth_portamento(0);
 		ui_split_next();
 			control_group("");
