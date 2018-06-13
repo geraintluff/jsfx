@@ -303,7 +303,7 @@
 				"Humonica.jsfx": {
 					"main": false
 				},
-				"synth-framework.jsfx-inc": {
+				"synth-framework-obj.jsfx-inc": {
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {

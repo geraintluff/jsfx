@@ -9,7 +9,7 @@ import synth-framework-obj.jsfx-inc
 @init
 
 freemem = 0;
-freemem = synth_setup(freemem); // Request one slot to keep the phase in
+freemem = synth_setup(freemem);
 synth_setup_each(synth1);
 synth_setup_each(synth2);
 synth_setup_each(synth3);
