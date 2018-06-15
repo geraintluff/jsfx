@@ -269,7 +269,7 @@
 					"main": false
 				}
 			},
-			"version": "1.5.2",
+			"version": "1.5.3",
 			"links": {
 				"youtube": [
 					"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
@@ -319,7 +319,7 @@
 					"main": false
 				}
 			},
-			"version": "2.1.2",
+			"version": "2.1.3",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -505,7 +505,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.9"
+			"version": "1.0.10"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

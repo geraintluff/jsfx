@@ -972,6 +972,14 @@
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.2/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.2/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
 			</version>
+			<version name="1.5.3" author="Geraint Luff" time="2018-06-15T23:03:47.849Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/synth-framework-obj.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.3/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Humonica" type="effect">
 			<metadata>
@@ -1147,6 +1155,14 @@
 				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.2/Humonica/Humonica.jsfx.rpl</source>
 				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.2/Humonica/synth-framework-obj-ui.jsfx-inc</source>
 			</version>
+			<version name="2.1.3" author="Geraint Luff" time="2018-06-15T23:03:51.382Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/synth-framework-obj.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/Humonica.jsfx.rpl</source>
+				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.3/Humonica/synth-framework-obj-ui.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Soft-Bell" type="effect">
 			<metadata>
@@ -1173,6 +1189,16 @@
 				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
 				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
 				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.1/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+			</version>
+			<version name="1.0.10" author="Geraint Luff" time="2018-06-15T23:03:54.790Z">
+				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/ui-lib.jsfx-inc</source>
+				<source file="Soft-Bell/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/synth-framework-obj.jsfx-inc</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/Soft-Bell.jsfx</source>
+				<source file="Soft-Bell/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/filter-utils.jsfx-inc</source>
+				<source file="Soft-Bell/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/themes/backgrounds/fancycrave-194878-unsplash.png</source>
+				<source file="Soft-Bell/Soft-Bell.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/Soft-Bell.jsfx.rpl</source>
+				<source file="Soft-Bell/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.10/Soft-Bell/synth-framework-obj-ui.jsfx-inc</source>
 			</version>
 			<version name="1.0.2" author="Geraint Luff" time="2018-06-11T22:03:57.650Z">
 				<source file="Soft-Bell/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Soft-Bell/1.0.2/Soft-Bell/ui-lib.jsfx-inc</source>
