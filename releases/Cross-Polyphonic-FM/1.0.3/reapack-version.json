@@ -1,0 +1,29 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"summary": "MIDI-controlled frequency-modulation effect",
+	"files": {
+		"Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx": {
+			"main": false
+		},
+		"Cross-Polyphonic-FM/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Cross-Polyphonic-FM/delay-utils.jsfx-inc": {
+			"main": false
+		},
+		"Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc": {
+			"main": false
+		},
+		"Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png": {
+			"main": false
+		},
+		"Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png": {
+			"main": false
+		}
+	},
+	"version": "1.0.3",
+	"package": "Cross-Polyphonic-FM",
+	"time": "2018-06-15T23:33:56.625Z",
+	"changeLog": "bugfix: discontinuity in delay length"
+}
