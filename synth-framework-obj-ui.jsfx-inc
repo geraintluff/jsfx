@@ -34,7 +34,7 @@ function synth_ui_system() (
 			synth_legato(synthx_legato_mode, synthx_legato_portamento_mode);
 		ui_split_next();
 			control_group("Portamento");
-			ui_split_leftratio(0.5);
+			ui_split_leftratio(1/3);
 				synthx_ui_system_labels("Enabled", 0, "");
 				ui_pad(-1, 0);
 				synthx_portamento_mode = control_selector(synthx_portamento_mode, (synthx_portamento_mode == 0) ? "off" : (synthx_portamento_mode == 1) ? "on" : (synthx_portamento_mode == 2) ? "MIDI (CC 5)" : "MIDI (CC 5 + 65)", min(3, synthx_portamento_mode + 1), max(0, synthx_portamento_mode - 1));
@@ -43,6 +43,12 @@ function synth_ui_system() (
 					synthx_ui_system_labels("Time", floor(synthx_portamento_seconds*1000 + 0.5), "%i ms");
 					ui_pad(-1, 0);
 					synthx_portamento_seconds = max(0.001, control_dial(synthx_portamento_seconds, 0.001, 1, 5, 0.03));
+				);
+			ui_split_next();
+				synthx_portamento_mode ? (
+					synthx_ui_system_labels("Source note", 0, synthx_portamento_from_nearest ? "nearest" : "latest");
+					ui_pad(-1, 0);
+					synthx_portamento_from_nearest = control_switch(synthx_portamento_from_nearest);
 				);
 			ui_pop();
 			synth_portamento(synthx_portamento_mode, synthx_portamento_seconds);
