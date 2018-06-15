@@ -140,7 +140,9 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
 				// TODO: this isn't quite right - if the sustain pedal is down then it still might not be released by this point
-				note[NOTE#ACTIVE] && note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] <= 0 ? (
+				note[NOTE#ACTIVE] && (note[NOTE#SAMPLES_FROM_RELEASE] <= -midi_offset
+					|| (note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] <= 0 && synthx_controllers[64] >= 64)
+				) ? (
 					first_note_of_phrase_sustained = 0;
 					note[NOTE#SAMPLES_FROM_RELEASE] <= -midi_offset ? (
 						first_note_of_phrase = 0;
