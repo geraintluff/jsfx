@@ -143,7 +143,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				// TODO: this isn't quite right - if the sustain pedal is down then it still might not be released by this point
 				note[4/*NOTE:ACTIVE*/] && note[5/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] <= 0 ? (
 					first_note_of_phrase_sustained = 0;
-					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] < -midi_offset ? (
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset ? (
 						first_note_of_phrase = 0;
 					);
 					synthx_portamento_from_nearest ? (
