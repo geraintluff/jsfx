@@ -470,6 +470,9 @@
 				},
 				"themes/backgrounds/sebastian-pociecha-451575-unsplash.png": {
 					"main": false
+				},
+				"synth-framework-obj-ui.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "1.0.4"

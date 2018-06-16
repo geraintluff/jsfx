@@ -17,6 +17,7 @@ slider8:velocity_curve=0.5<0,2>-Velocity curve
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
 import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
 
 filename:0,themes/bitmap-simple/theme-dark-orange.png
 // Photo by Sebastian Pociecha on Unsplash: https://unsplash.com/photos/LfDFvUlUIDo
@@ -208,7 +209,7 @@ gfx_blit(1, g_scale, 0);
 gfx_a = 1;
 
 ui_screen() == "main" ? (
-	control_navbar("Cross-Polyphonic FM");
+	control_navbar("Cross-Polyphonic FM", "config", "synth.config");
 
 	ui_split_topratio(1/2);
 		ui_split_leftratio(4/5);
@@ -261,7 +262,7 @@ ui_screen() == "main" ? (
 			fm_transpose_fine = control_dial(fm_transpose_fine, -12, 12, 0, 0);
 		ui_pop();
 	ui_pop();
-) : control_system();
+) : synth_ui_system() || control_system();
 
 @serialize
 
