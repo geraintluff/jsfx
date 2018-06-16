@@ -158,7 +158,7 @@ process_note(synth1)
 
 delay_samples = delay_factor*fm_depth;
 
-delay_samples ? (
+delay_samples !== 0 ? (
 	spl0 = delay0.delay_output_linear1(delay_samples);
 	spl1 = delay1.delay_output_linear1(delay_samples);
 );

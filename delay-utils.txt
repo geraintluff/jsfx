@@ -53,7 +53,6 @@ function delay_input(spl) (
 		this.index = 0;
 	);
 	this.buffer[this.index] = spl;
-	spl;
 );
 
 function delay_output_linear1(samples) local(index, index1, value, value2) (
