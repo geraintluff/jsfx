@@ -46,14 +46,20 @@ function tanh(x) (
 	) : (
 		(exp(2*x) - 1)/(exp(2*x) + 1);
 	);
+
 );
+
+freemem = 0;
+
+MAX_INPUT_DELAY_SAMPLES = srate;
+freemem = input0_delay.delay_setup(freemem, MAX_INPUT_DELAY_SAMPLES);
+freemem = input1_delay.delay_setup(freemem, MAX_INPUT_DELAY_SAMPLES);
 
 min_freq = 10;
 max_delay_samples = srate/min_freq;
 min_delay_samples = 4.1;
 delay_buffer_length = delay_size(max_delay_samples);
 
-freemem = 0;
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem, delay_buffer_length*2, 16);
 synth_setup_each(synth1);
@@ -87,10 +93,10 @@ midi_channel_filter ? (
 	midi_channel_filter_enabled = 0;
 );
 
-anticipation_samples = 0;//ceil(anticipation_ms*srate/1000);
+input_delay_samples = min(MAX_INPUT_DELAY_SAMPLES, synth_pdc_delay());
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
-pdc_delay = anticipation_samples;
+pdc_delay = input_delay_samples;
 
 synth_block();
 synth_block_each(synth1)
@@ -137,7 +143,7 @@ latest_note = -1;
 timbre_wavelength_offset_actual += timbre_wavelength_offset_step;
 
 function impulse(note*) local(attack, phase, amp) (
-	attack = synth_attack(note) - anticipation_samples;
+	attack = synth_attack(note);
 	attack >= 0 && attack < impulse_length_samples ? (
 		phase = attack/impulse_length_samples - 0.5;
 		phase2 = impulse_brightness*phase*synth_velocity(note)/127;
@@ -148,10 +154,14 @@ function impulse(note*) local(attack, phase, amp) (
 
 inv_stereo_factor = 0.5/stereo_width;
 
+
 inputM = (spl1 + spl0)*0.5;
 inputS = (spl1 - spl0)*inv_stereo_factor;
-input0 = inputM - inputS;
-input1 = inputM + inputS;
+input0_delay.delay_input(inputM - inputS);
+input1_delay.delay_input(inputM + inputS);
+input0 = input0_delay.delay_output_samples(inputM - inputS);
+input1 = input1_delay.delay_output_samples(inputM + inputS);
+
 output0 = output1 = 0;
 
 function process_note(note*) (
@@ -161,6 +171,17 @@ function process_note(note*) (
 		) : (
 			note_min_release = min(note_min_release, synth_release(note));
 			synth_needs_init(note) ? (
+				/*
+				note.input_delay_samples = floor(
+					synth_channel(note)*(
+						per_channel_delay_beats*srate*60/tempo
+						+ per_channel_delay_seconds*srate
+					)
+					+ input_delay_samples
+					+ 0.5
+				);
+				*/
+
 				mem = note;
 				note.delay_samples = max(min_delay_samples, min(max_delay_samples, srate/synth_freq(note)));
 				mem = note.buffer0.delay_init(mem, max_delay_samples);
@@ -225,8 +246,10 @@ function process_note(note*) (
 				delayed1 = note.filter1.filter_sample(delayed1);
 
 				input_envelope = note.input_decay_gain = note.input_decay_gain*note.input_decay_factor;
-				excitation0 = input0*input_envelope;
-				excitation1 = input1*input_envelope;
+				//excitation0 = input0_delay.delay_output_samples(note.input_delay_samples)*input_envelope;
+				//excitation1 = input1_delay.delay_output_samples(note.input_delay_samples)*input_envelope;
+				excitation0 = input0_delay.delay_output_samples(input_delay_samples)*input_envelope;
+				excitation1 = input1_delay.delay_output_samples(input_delay_samples)*input_envelope;
 				ring_mod ? (
 					noise = (rand()*2 - 1)*note.mod_gain;
 					excitation0 = note.mod_filter0.filter_sample(noise)*excitation0;

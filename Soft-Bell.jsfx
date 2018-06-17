@@ -83,7 +83,7 @@ function default_config(config*, harmonic_index) (
 
 @block
 
-delay_samples = pdc_delay = synth_pdc_delay();
+delay_samples = min(MAX_DELAY_SAMPLES, pdc_delay = synth_pdc_delay());
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
 
