@@ -19,7 +19,7 @@ slider11:tonality_limit=0<0,0.5,0.01>-Tonality limit
 slider12:lr_detune_cents=3<0,100,1>-L/R detune
 slider13:vib_mode=1<0,1,1{tracking,LFO}>-Vib mode
 slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
-slider15:vib_lfo_hz=4<0.5,10,.01>-Vib LFO Hz
+slider15:vib_lfo_hz=4.7<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
 
@@ -48,13 +48,9 @@ freemem = 0;
 freemem = (fft_block = freemem) + FFT_MAX_SIZE*2;
 kernel_length = MAX_WINDOW_SAMPLES;
 freemem = (kernelA0 = freemem) + kernel_length;
-freemem = (kernelA0_dc = freemem) + kernel_length;
 freemem = (kernelA1_read = kernelA1 = freemem) + kernel_length;
-freemem = (kernelA1_read_dc = kernelA1_dc = freemem) + kernel_length;
 freemem = (kernelB0 = freemem) + kernel_length;
-freemem = (kernelB0_dc = freemem) + kernel_length;
 freemem = (kernelB1_read = kernelB1 = freemem) + kernel_length;
-freemem = (kernelB1_read_dc = kernelB1_dc = freemem) + kernel_length;
 input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
@@ -121,7 +117,31 @@ attack_samples = srate*attack_ms*0.001;
 release_samples = srate*release_ms*0.001;
 window_samples = max(srate, 8000)*window_ms*0.001;
 interval_samples = window_samples*(1 - crossover_percent/100);
+old_fft_size = fft_size;
 fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
+old_fft_size !== fft_size ? (
+	i = 0;
+	while (i < fft_size*0.5) (
+		fft_block[i*2] = 0;
+		fft_block[i*2 + 1] = 0;
+		i += 1;
+	);
+	while (i < fft_size) (
+		fft_block[i*2] = 1;
+		fft_block[i*2 + 1] = 0;
+		i += 1;
+	);
+	fft_permute(fft_block, fft_size);
+	high_half_bitmask = $xffff;
+	i = 0;
+	while (i < fft_size) (
+		fft_block[i*2] ? (
+			high_half_bitmask &= i;
+		);
+		i += 1;
+	);
+	!high_half_bitmask ? ui_error("Something has changed with the FFT implementation\n\nThis is a BIG PROBLEM.\n\nPlease contact luffgd@gmail.com to get it fixed");
+);
 abs(timbre_shift_semitones) > 0.1 ? (
 	timbre_shift_factor = pow(2, timbre_shift_semitones/12);
 ) : (
@@ -211,7 +231,7 @@ input_index >= input_buffer_length ? (
 	input_index = 0;
 );
 
-function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
+function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
 	i = 0;
 	max_abs = 0;
 	// Fill with input
@@ -241,6 +261,7 @@ function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, no
 
 		// Zero-phase
 		fft(fft_block, fft_size);
+		fft_permute(fft_block, fft_size);
 		fft_block[0] = fft_block[1] = 0;
 		i = 1;
 
@@ -250,10 +271,13 @@ function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, no
 			mag2 = real*real + imag*imag;
 			mag = sqrt(mag2);
 
-			fft_block[i*2] = mag/fft_size;
-			fft_block[i*2 + 1] = 0;
+			fft_block[i*2] = 0;
+			fft_block[i*2 + 1] = mag/fft_size;
+			i < fft_size/2 ? fft_block[i*2 + 1] *= -1;
+
 			i += 1;
 		);
+		fft_ipermute(fft_block, fft_size);
 		ifft(fft_block, fft_size);
 
 		// Zero out kernel
@@ -263,27 +287,13 @@ function fill_kernel(kernel, kernel_dc, buffer, secondary_buffer) local(peak, no
 		i = 0;
 		window_value = (secondary_buffer >= 0) ? sqrt(0.5) : 1;
 		while (i < fft_size*0.5 && i < half_kernel_length) (
-			i2 = i ? (kernel_length - i) : 0;
-			kernel[i] = fft_block[i*2]*window_value;
-			kernel[i2] = kernel[i];
+			kernel[i] = fft_block[i*2];
 			i += 1;
 		);
-
-		// Sum
-		i = 0;
-		sum1 = 0;
-		while (i < half_kernel_length) (
-			sum1 += kernel[i];
-			kernel_dc[i] = sum1;
-			i += 1;
-		);
-
-		i = 0;
-		sum1 = 0;
-		while (i < half_kernel_length) (
-			sum1 += kernel_dc[i];
-			sum2 = (i + 1)*(i + 2)*0.5;
-			kernel_dc[i] = sum1/sum2;
+		i = 1;
+		while (i < fft_size*0.5 && i < half_kernel_length) (
+			i2 = kernel_length - i;
+			kernel[i2] = fft_block[(fft_size - i)*2]*window_value;
 			i += 1;
 		);
 	) : (
@@ -307,28 +317,14 @@ any_notes_active ? (
 		tmp = kernelA1_read;
 		kernelA1_read = kernelB1_read;
 		kernelB1_read = tmp;
-		tmp = kernelA0_dc;
-		kernelA0_dc = kernelB0_dc;
-		kernelB0_dc = tmp;
-		tmp = kernelA1_dc;
-		kernelA1_dc = kernelB1_dc;
-		kernelB1_dc = tmp;
-		tmp = kernelA1_read_dc;
-		kernelA1_read_dc = kernelB1_read_dc;
-		kernelB1_read_dc = tmp;
 
 		stereo_switch ? (
-			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, -1);
-			fill_kernel(kernelB1, kernelB1_dc, input_buffer1, -1);
+			fill_kernel(kernelB0, input_buffer0, -1);
+			fill_kernel(kernelB1, input_buffer1, -1);
 			kernelB1_read = kernelB1;
-			kernelB1_read_dc = kernelB1_dc;
 		) : (
-			fill_kernel(kernelB0, kernelB0_dc, input_buffer0, input_buffer1);
-			// TODO: have "true" slot, and instead of copying, point kernel?1 to kernel?0.
+			fill_kernel(kernelB0, input_buffer0, input_buffer1);
 			kernelB1_read = kernelB0;
-			kernelB1_read_dc = kernelB0_dc;
-			//memcpy(kernelB1, kernelB0, kernel_length);
-			//memcpy(kernelB1_dc, kernelB0_dc, half_kernel_length);
 		);
 
 		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
@@ -386,7 +382,7 @@ vibrato_tracking ? (
 
 spl0 = spl1 = 0;
 
-function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB) (
+function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase, indexA, indexB, floor_indexA, floor_indexB, floor_indexA2, floor_indexB2, ratioA, ratioB, valueA, valueB) (
 	phase = smooth_fade(index/wavelength);
 
 	indexA = min(index*timbre_factor, half_kernel_length_minus_one);
@@ -403,13 +399,13 @@ function interp_sample(index, wavelength, kernelA, kernelB, dcA, dcB) local(resu
 	valueA += (kernelA[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelA[floor_indexB];
 	valueB += (kernelA[floor_indexB2] - valueB)*ratioB;
-	result = valueA + (valueB - valueA)*phase - dcA;
+	result = valueA + (valueB - valueA)*phase;
 
 	valueA = kernelB[floor_indexA];
 	valueA += (kernelB[floor_indexA2] - valueA)*ratioA;
 	valueB = kernelB[floor_indexB];
 	valueB += (kernelB[floor_indexB2] - valueB)*ratioB;
-	value = valueA + (valueB - valueA)*phase - dcB;
+	value = valueA + (valueB - valueA)*phase;
 	result + (value - result)*kernel_crossfade;
 );
 
@@ -489,8 +485,8 @@ function process_note(note*) (
 
 			// Left
 			wavelength_floor = floor(note.WAVELENGTH_R*timbre_factor);
-			left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0, kernelA0_dc[wavelength_floor], kernelB0_dc[wavelength_floor]);
-			right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read, kernelA1_read_dc[wavelength_floor], kernelB1_read_dc[wavelength_floor]);
+			left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0);
+			right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read);
 
 			spl0 += left*amp;
 			spl1 += right*amp;
@@ -566,7 +562,7 @@ ui_screen() == "main" ? (
 
 	ui_split_bottomratio(0.15);
 		control_background_technical();
-		ui_graph_circular(kernelA0[0] ? kernelA0 : kernelA1, window_samples, 1, -window_samples/2, kernel_length, p0.00000001, 0.00000001);
+		ui_graph_circular(kernelA0[1] !== 0 ? kernelA0 : kernelA1, window_samples, 1, -window_samples*0.5, kernel_length, 0.00000001, 0.00000001);
 		control_finish_technical();
 	ui_pop();
 
@@ -619,7 +615,7 @@ ui_screen() == "main" ? (
 			);
 		ui_split_next();
 			vib_mode ? (
-				vib_lfo_hz = labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4);
+				vib_lfo_hz = labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4.7);
 			) : (
 				tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit", 0);
 			);

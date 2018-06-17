@@ -275,7 +275,7 @@ function synth_block() local(midi_offset, midi_offset_delayed, midi_msg1, midi_m
 			i = 0;
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
-				note[8/*NOTE:NOTE*/] == midi_msg2 ? (
+				note[8/*NOTE:NOTE*/] == midi_msg2 && note[5/*NOTE:CHANNEL*/] == midi_channel ? (
 					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset_delayed);
 					note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset_delayed);
 				);
