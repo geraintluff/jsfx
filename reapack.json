@@ -506,6 +506,9 @@
 				},
 				"synth-framework-obj-ui.jsfx-inc": {
 					"main": false
+				},
+				"delay-utils.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "1.0.10"
