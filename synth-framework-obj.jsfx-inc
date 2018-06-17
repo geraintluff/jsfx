@@ -48,9 +48,9 @@ function synth_serialize(reset) local(version) (
 	);
 );
 
-function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
+function synth_setup(freemem, custom_slots, max_polyphony) local(i, note) (
 	synthx_polyphony = 0;
-	synthx_custom_offset = 12/*NOTE: BASE_FREQ, PORTAMENTO_END_SAMPLE, BASE_FREQ_SLOPE, SAMPLES_FROM_ATTACK, ACTIVE, SAMPLES_FROM_RELEASE, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, PHRASE_STILL_ACTIVE, VEL, CHANNEL, CUSTOM_INIT*/;
+	synthx_custom_offset = 12/*NOTE: BASE_FREQ, PORTAMENTO_END_SAMPLE, BASE_FREQ_SLOPE, SAMPLES_FROM_ATTACK, ACTIVE, CHANNEL, SAMPLES_FROM_RELEASE, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, PHRASE_STILL_ACTIVE, VEL, CUSTOM_INIT*/;
 	synthx_timestep = 1/srate;
 	synthx_step = synthx_custom_offset + custom_slots;
 	synthx_maxduration = 60*60*24*365*srate; // one year
@@ -60,7 +60,6 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	!synthx_portamento_seconds ? synthx_portamento_seconds = 0.03; // Not enabled, though :)
 
 	synthx_max_active_note = 0;
-	synthx_current_note = 0;
 	freemem = (synthx_controllers = freemem) + 128;
 	freemem = (synthx_notestack = freemem) + max_polyphony*synthx_step;
 
@@ -71,10 +70,15 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 		i += 1;
 	);
 
-	synthx_latest_note = synthx_notestack;
-	synthx_latest_note[0/*NOTE:BASE_FREQ*/] = 440*pow(2, (63 - 69)/12);
-	synthx_latest_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
-	synthx_latest_note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
+	i = 0;
+	while (i < synthx_polyphony) (
+		note = synthx_notestack + synthx_step*i;
+
+		note[0/*NOTE:BASE_FREQ*/] = 440*pow(2, (63 - 69)/12);
+		note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
+		note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
+		i += 1;
+	);
 
 	freemem;
 );
@@ -134,27 +138,26 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			// Is this the first note of a phrase
 			first_note_of_phrase = 1;
 			first_note_of_phrase_sustained = 1;
-			previous_note = synthx_latest_note;
+			previous_note = synthx_notestack; // TODO: remove synthx_latest_note
 			nearest_distance = 128;
 			i = 0;
 			// TODO: use loop() instead, and increment by synth_step?
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
 				// TODO: this isn't quite right - if the sustain pedal is down then it still might not be released by this point
-				note[4/*NOTE:ACTIVE*/] && (note[5/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset
-					|| (note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] <= 0 && synthx_controllers[64] >= 64)
+				note[4/*NOTE:ACTIVE*/] && note[5/*NOTE:CHANNEL*/] == midi_channel && (note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset
+					|| (note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] <= 0 && synthx_controllers[64] >= 64)
 				) ? (
 					first_note_of_phrase_sustained = 0;
-					note[5/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset ? (
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset ? (
 						first_note_of_phrase = 0;
 					);
-					synthx_portamento_from_nearest ? (
-						distance = abs(note[7/*NOTE:NOTE*/] - midi_msg2);
-
-						distance < nearest_distance || (distance == nearest_distance && note[3/*NOTE:SAMPLES_FROM_ATTACK*/] < previous_note[3/*NOTE:SAMPLES_FROM_ATTACK*/]) ? (
-							previous_note = note;
-							nearest_distance = distance;
-						);
+					distance = synthx_portamento_from_nearest ? (
+						distance = abs(note[8/*NOTE:NOTE*/] - midi_msg2);
+					) : 0;
+					distance < nearest_distance || (distance == nearest_distance && note[3/*NOTE:SAMPLES_FROM_ATTACK*/] < previous_note[3/*NOTE:SAMPLES_FROM_ATTACK*/]) ? (
+						previous_note = note;
+						nearest_distance = distance;
 					);
 				);
 				i += 1;
@@ -165,11 +168,11 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				i = 0;
 				while (i < synthx_polyphony) (
 					note = synthx_notestack + synthx_step*i;
-					note[4/*NOTE:ACTIVE*/] ? (
-						note[8/*NOTE:PHRASE_STILL_ACTIVE*/] ? (
+					note[4/*NOTE:ACTIVE*/] && note[5/*NOTE:CHANNEL*/] == midi_channel ? (
+						note[9/*NOTE:PHRASE_STILL_ACTIVE*/] ? (
 							first_note_of_phrase && synthx_legato_portamento_mode < 2 ? (
 								// Any previous phrases are closed
-								note[8/*NOTE:PHRASE_STILL_ACTIVE*/] = 0;
+								note[9/*NOTE:PHRASE_STILL_ACTIVE*/] = 0;
 							) : (
 								synthx_portamento_mode ? (
 									current_freq = synth_portamento_freq_buffer(note);
@@ -184,10 +187,10 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 									note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
 								);
 								note[0/*NOTE:BASE_FREQ*/] = base_freq;
-								note[7/*NOTE:NOTE*/] = midi_msg2;
+								note[8/*NOTE:NOTE*/] = midi_msg2;
 								synthx_legato_mode < 2 ? ( // We're going to re-trigger a new note, so we close this one
-									note[5/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[5/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
-									note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
+									note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
+									note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
 								);
 							);
 						)
@@ -215,7 +218,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 					i = 0;
 					while (i < synthx_polyphony && selected_note < 0) (
 						note = synthx_notestack + synthx_step*i;
-						note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] > selected[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] ? (
+						note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] > selected[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] ? (
 							selected_note = note;
 						);
 						i += 1;
@@ -242,23 +245,22 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				);
 				selected_note[0/*NOTE:BASE_FREQ*/] = base_freq;
 				selected_note[3/*NOTE:SAMPLES_FROM_ATTACK*/] = -midi_offset;
-				selected_note[5/*NOTE:SAMPLES_FROM_RELEASE*/] = -synthx_maxduration;
-				selected_note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = -synthx_maxduration;
-				selected_note[7/*NOTE:NOTE*/] = midi_msg2;
-				selected_note[9/*NOTE:VEL*/] = midi_msg3;
-				selected_note[10/*NOTE:CHANNEL*/] = midi_channel;
+				selected_note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = -synthx_maxduration;
+				selected_note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = -synthx_maxduration;
+				selected_note[8/*NOTE:NOTE*/] = midi_msg2;
+				selected_note[10/*NOTE:VEL*/] = midi_msg3;
+				selected_note[5/*NOTE:CHANNEL*/] = midi_channel;
 				selected_note[11/*NOTE:CUSTOM_INIT*/] = 0;
-				selected_note[8/*NOTE:PHRASE_STILL_ACTIVE*/] = 1;
+				selected_note[9/*NOTE:PHRASE_STILL_ACTIVE*/] = 1;
 			);
-			synthx_latest_note = selected_note;
 		) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
 			// Close open note if there is one
 			i = 0;
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
-				note[7/*NOTE:NOTE*/] == midi_msg2 ? (
-					note[5/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[5/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
-					note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
+				note[8/*NOTE:NOTE*/] == midi_msg2 ? (
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
+					note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
 				);
 				i += 1;
 			);
@@ -271,8 +273,8 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				i = 0;
 				while (i < synthx_polyphony) (
 					note = synthx_notestack + synthx_step*i;
-					note[5/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[5/*NOTE:SAMPLES_FROM_RELEASE*/], 0);
-					note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], 0);
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], 0);
+					note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], 0);
 					i += 1;
 				);
 			) : midi_msg2 == 120 ? (
@@ -311,15 +313,15 @@ function synth_block_each(note*) local() (
 	);
 
 	note._synth.ACTIVE = note._synth.mem[4/*NOTE:ACTIVE*/];
-	note._synth.SAMPLES_FROM_RELEASE = note._synth.mem[5/*NOTE:SAMPLES_FROM_RELEASE*/];
+	note._synth.SAMPLES_FROM_RELEASE = note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/];
 	note._synth.SAMPLES_FROM_ATTACK = note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/];
-	note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = note._synth.mem[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/];
-	note._synth.NOTE = note._synth.mem[7/*NOTE:NOTE*/];
+	note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/];
+	note._synth.NOTE = note._synth.mem[8/*NOTE:NOTE*/];
 	note._synth.BASE_FREQ = note._synth.mem[0/*NOTE:BASE_FREQ*/];
 	note._synth.BASE_FREQ_SLOPE = note._synth.mem[2/*NOTE:BASE_FREQ_SLOPE*/];
 	note._synth.PORTAMENTO_END_SAMPLE = note._synth.mem[1/*NOTE:PORTAMENTO_END_SAMPLE*/];
-	note._synth.VEL = note._synth.mem[9/*NOTE:VEL*/];
-	note._synth.CHANNEL = note._synth.mem[10/*NOTE:CHANNEL*/];
+	note._synth.VEL = note._synth.mem[10/*NOTE:VEL*/];
+	note._synth.CHANNEL = note._synth.mem[5/*NOTE:CHANNEL*/];
 	note._synth.CUSTOM_INIT = note._synth.mem[11/*NOTE:CUSTOM_INIT*/];
 	1;
 );
@@ -327,9 +329,9 @@ function synth_block_each(note*) local() (
 function synth_sample_each(note*) (
 	note._synth.ACTIVE ? (
 		note._synth.SAMPLES_FROM_ATTACK = (note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/] += 1);
-		note._synth.SAMPLES_FROM_RELEASE = (note._synth.mem[5/*NOTE:SAMPLES_FROM_RELEASE*/] += 1);
+		note._synth.SAMPLES_FROM_RELEASE = (note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/] += 1);
 		note._synth.SAMPLES_FROM_RELEASE < 0 || synthx_controllers[64] < 64 ? (
-			note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = (note._synth.mem[6/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] += 1);
+			note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = (note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] += 1);
 		);
 		note._synth.SAMPLES_FROM_ATTACK >= 0
 	) : 0;

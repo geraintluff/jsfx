@@ -47,7 +47,7 @@ function synth_serialize(reset) local(version) (
 	);
 );
 
-function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
+function synth_setup(freemem, custom_slots, max_polyphony) local(i, note) (
 	synthx_polyphony = 0;
 	synthx_custom_offset = NOTE##;
 	synthx_timestep = 1/srate;
@@ -59,7 +59,6 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	!synthx_portamento_seconds ? synthx_portamento_seconds = 0.03; // Not enabled, though :)
 
 	synthx_max_active_note = 0;
-	synthx_current_note = 0;
 	freemem = (synthx_controllers = freemem) + 128;
 	freemem = (synthx_notestack = freemem) + max_polyphony*synthx_step;
 
@@ -70,10 +69,15 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 		i += 1;
 	);
 
-	synthx_latest_note = synthx_notestack;
-	synthx_latest_note[NOTE#BASE_FREQ] = 440*pow(2, (63 - 69)/12);
-	synthx_latest_note[NOTE#PORTAMENTO_END_SAMPLE] = 0;
-	synthx_latest_note[NOTE#BASE_FREQ_SLOPE] = 0;
+	i = 0;
+	while (i < synthx_polyphony) (
+		note = synthx_notestack + synthx_step*i;
+
+		note[NOTE#BASE_FREQ] = 440*pow(2, (63 - 69)/12);
+		note[NOTE#PORTAMENTO_END_SAMPLE] = 0;
+		note[NOTE#BASE_FREQ_SLOPE] = 0;
+		i += 1;
+	);
 
 	freemem;
 );
@@ -133,27 +137,26 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			// Is this the first note of a phrase
 			first_note_of_phrase = 1;
 			first_note_of_phrase_sustained = 1;
-			previous_note = synthx_latest_note;
+			previous_note = synthx_notestack; // TODO: remove synthx_latest_note
 			nearest_distance = 128;
 			i = 0;
 			// TODO: use loop() instead, and increment by synth_step?
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
 				// TODO: this isn't quite right - if the sustain pedal is down then it still might not be released by this point
-				note[NOTE#ACTIVE] && (note[NOTE#SAMPLES_FROM_RELEASE] <= -midi_offset
+				note[NOTE#ACTIVE] && note[NOTE#CHANNEL] == midi_channel && (note[NOTE#SAMPLES_FROM_RELEASE] <= -midi_offset
 					|| (note[NOTE#SAMPLES_FROM_SUSTAIN_RELEASE] <= 0 && synthx_controllers[64] >= 64)
 				) ? (
 					first_note_of_phrase_sustained = 0;
 					note[NOTE#SAMPLES_FROM_RELEASE] <= -midi_offset ? (
 						first_note_of_phrase = 0;
 					);
-					synthx_portamento_from_nearest ? (
+					distance = synthx_portamento_from_nearest ? (
 						distance = abs(note[NOTE#NOTE] - midi_msg2);
-
-						distance < nearest_distance || (distance == nearest_distance && note[NOTE#SAMPLES_FROM_ATTACK] < previous_note[NOTE#SAMPLES_FROM_ATTACK]) ? (
-							previous_note = note;
-							nearest_distance = distance;
-						);
+					) : 0;
+					distance < nearest_distance || (distance == nearest_distance && note[NOTE#SAMPLES_FROM_ATTACK] < previous_note[NOTE#SAMPLES_FROM_ATTACK]) ? (
+						previous_note = note;
+						nearest_distance = distance;
 					);
 				);
 				i += 1;
@@ -164,7 +167,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				i = 0;
 				while (i < synthx_polyphony) (
 					note = synthx_notestack + synthx_step*i;
-					note[NOTE#ACTIVE] ? (
+					note[NOTE#ACTIVE] && note[NOTE#CHANNEL] == midi_channel ? (
 						note[NOTE#PHRASE_STILL_ACTIVE] ? (
 							first_note_of_phrase && synthx_legato_portamento_mode < 2 ? (
 								// Any previous phrases are closed
@@ -249,7 +252,6 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				selected_note[NOTE#CUSTOM_INIT] = 0;
 				selected_note[NOTE#PHRASE_STILL_ACTIVE] = 1;
 			);
-			synthx_latest_note = selected_note;
 		) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
 			// Close open note if there is one
 			i = 0;
