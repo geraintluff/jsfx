@@ -18,6 +18,7 @@ slider10:old_freq_multiplier=1<1,10,1>-deprecated
 
 import ui-lib.jsfx-inc
 import filter-utils.jsfx-inc
+import delay-utils.jsfx-inc
 import synth-framework-obj.jsfx-inc
 import synth-framework-obj-ui.jsfx-inc
 
@@ -67,8 +68,9 @@ synth_setup_each(synth14);
 synth_setup_each(synth15);
 synth_setup_each(synth16);
 
-attack_samples = 0.01*srate;
-release_samples = 0.01*srate;
+MAX_DELAY_SAMPLES = srate;
+freemem = left_delay.delay_setup(freemem, MAX_DELAY_SAMPLES);
+freemem = right_delay.delay_setup(freemem, MAX_DELAY_SAMPLES);
 
 function default_config(config*, harmonic_index) (
 	config.pulse_amp = 1;
@@ -80,6 +82,10 @@ function default_config(config*, harmonic_index) (
 );
 
 @block
+
+delay_samples = pdc_delay = synth_pdc_delay();
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
 
 synth_block();
 synth_block_each(synth1)
@@ -106,6 +112,11 @@ decay_samples = srate*0.001*decay_ms;
 decay_factor = exp(-1/decay_samples);
 
 @sample
+
+left_delay.delay_input(spl0);
+right_delay.delay_input(spl1);
+spl0 = left_delay.delay_output_samples(delay_samples);
+spl1 = right_delay.delay_output_samples(delay_samples);
 
 function tapered_curve(r) (
 	r*r*(3 - 2*r);

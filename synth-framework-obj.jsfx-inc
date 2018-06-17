@@ -24,7 +24,7 @@ function synth_option_midi_sink(value) (
 );
 
 function synth_serialize(reset) local(version) (
-	version = 2;
+	version = 3;
 	file_var(0, version);
 	!reset && version >= 1 ? (
 		file_var(0, synthx_midi_sink);
@@ -46,9 +46,14 @@ function synth_serialize(reset) local(version) (
 	) : (
 		synthx_portamento_from_nearest = 0;
 	);
+	!reset && version >= 3 ? (
+		file_var(0, synthx_delay_ratio);
+	) : (
+		synthx_delay_ratio = 0;
+	);
 );
 
-function synth_setup(freemem, custom_slots, max_polyphony) local(i, note) (
+function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	synthx_polyphony = 0;
 	synthx_custom_offset = 12/*NOTE: BASE_FREQ, PORTAMENTO_END_SAMPLE, BASE_FREQ_SLOPE, SAMPLES_FROM_ATTACK, ACTIVE, CHANNEL, SAMPLES_FROM_RELEASE, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, PHRASE_STILL_ACTIVE, VEL, CUSTOM_INIT*/;
 	synthx_timestep = 1/srate;
@@ -70,17 +75,17 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i, note) (
 		i += 1;
 	);
 
-	i = 0;
-	while (i < synthx_polyphony) (
-		note = synthx_notestack + synthx_step*i;
-
-		note[0/*NOTE:BASE_FREQ*/] = 440*pow(2, (63 - 69)/12);
-		note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
-		note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
-		i += 1;
-	);
+	synthx_latest_note = synthx_notestack;
+	synthx_latest_note[0/*NOTE:BASE_FREQ*/] = 440*pow(2, (63 - 69)/12); // Start on note 63
+	synthx_latest_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
+	synthx_latest_note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
 
 	freemem;
+);
+
+function synth_pdc_delay() (
+	synthx_supports_latency = 1;
+	floor(synthx_delay_ratio*synthx_portamento_seconds*srate);
 );
 
 function synth_setup(freemem, custom_slots) (
@@ -109,13 +114,12 @@ function synth_legato(enabled) (
 function synth_portamento(mode, seconds) (
 	synthx_portamento_mode = mode;
 	synthx_portamento_seconds = seconds;
-	synthx_portamento_samples = seconds*srate;
 );
 
-function synth_portamento_freq_buffer(note) (
-	note[3/*NOTE:SAMPLES_FROM_ATTACK*/] < note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] ? (
+function synth_portamento_future_freq_buffer(note) (
+	note[3/*NOTE:SAMPLES_FROM_ATTACK*/] + synthx_delay_samples < note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] ? (
 		(note[0/*NOTE:BASE_FREQ*/]
-			+ min(0, note[3/*NOTE:SAMPLES_FROM_ATTACK*/] - note[1/*NOTE:PORTAMENTO_END_SAMPLE*/])*note[2/*NOTE:BASE_FREQ_SLOPE*/]
+			+ min(0, note[3/*NOTE:SAMPLES_FROM_ATTACK*/] + synthx_delay_samples - note[1/*NOTE:PORTAMENTO_END_SAMPLE*/])*note[2/*NOTE:BASE_FREQ_SLOPE*/]
 		);
 	) : (
 		note[0/*NOTE:BASE_FREQ*/];
@@ -123,11 +127,14 @@ function synth_portamento_freq_buffer(note) (
 );
 
 // Same logic as before - perhaps this should be a mod on top of synth-framework, that just caches things for the @sample block?
-function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi_msg3, midi_type, midi_channel, i, note, selected_note, base_freq, current_freq, portamento_samples, first_note_of_phrase, previous_note, distance, nearest_distance) (
+function synth_block() local(midi_offset, midi_offset_delayed, midi_msg1, midi_msg23, midi_msg2, midi_msg3, midi_type, midi_channel, i, note, selected_note, base_freq, current_freq, portamento_samples, first_note_of_phrase, previous_note, distance, nearest_distance) (
+	synthx_portamento_samples = synthx_portamento_seconds*srate;
+	synthx_delay_samples = floor(synthx_delay_ratio*synthx_portamento_samples);
 	while (midirecv(midi_offset, midi_msg1, midi_msg23)) (
 		!synthx_midi_sink ? (
 			midisend(midi_offset, midi_msg1, midi_msg23); // passthrough
 		);
+		midi_offset_delayed = midi_offset + synthx_delay_samples;
 		midi_type = midi_msg1>>4;
 		midi_channel = midi_msg1&0x0f;
 		midi_msg2 = midi_msg23&$xff; // note / controller
@@ -138,18 +145,18 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			// Is this the first note of a phrase
 			first_note_of_phrase = 1;
 			first_note_of_phrase_sustained = 1;
-			previous_note = synthx_notestack; // TODO: remove synthx_latest_note
+			previous_note = synthx_latest_note; // TODO: In case nothing is active, use previous note - ideally we'd have one of these per-channel, but we can't, because there's no guarantee some other channel wouldn't've used it in the meantime.  Perhaps we should cache the latest *frequency* per-channel, because that's what we actually need.
 			nearest_distance = 128;
 			i = 0;
 			// TODO: use loop() instead, and increment by synth_step?
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
-				// TODO: this isn't quite right - if the sustain pedal is down then it still might not be released by this point
-				note[4/*NOTE:ACTIVE*/] && note[5/*NOTE:CHANNEL*/] == midi_channel && (note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset
+				// This isn't quite accurate - if the sustain pedal is down then it might not register as released, even if the sustain is released later in this block and it would cross the line.  That's probably enough of an edge-case to fudge, though.
+				note[4/*NOTE:ACTIVE*/] && note[5/*NOTE:CHANNEL*/] == midi_channel && (note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset_delayed
 					|| (note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] <= 0 && synthx_controllers[64] >= 64)
 				) ? (
 					first_note_of_phrase_sustained = 0;
-					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset ? (
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] <= -midi_offset_delayed ? (
 						first_note_of_phrase = 0;
 					);
 					distance = synthx_portamento_from_nearest ? (
@@ -175,7 +182,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 								note[9/*NOTE:PHRASE_STILL_ACTIVE*/] = 0;
 							) : (
 								synthx_portamento_mode ? (
-									current_freq = synth_portamento_freq_buffer(note);
+									current_freq = synth_portamento_future_freq_buffer(note);
 									portamento_samples = synthx_portamento_samples;
 									synthx_portamento_mode >= 2 ? portamento_samples *= synthx_controllers[5]/127;
 									synthx_portamento_mode == 3 && synthx_controllers[65] < 64 ? portamento_samples = 0;
@@ -187,10 +194,19 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 									note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
 								);
 								note[0/*NOTE:BASE_FREQ*/] = base_freq;
+								debug.transition += 1;
+								debug.note_from = note[8/*NOTE:NOTE*/];
+								debug.note_to = midi_msg2;
 								note[8/*NOTE:NOTE*/] = midi_msg2;
 								synthx_legato_mode < 2 ? ( // We're going to re-trigger a new note, so we close this one
-									note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
-									note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
+									debug.retrigger += 1;
+									note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset_delayed);
+									note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset_delayed);
+								) : note[6/*NOTE:SAMPLES_FROM_RELEASE*/] == -midi_offset_delayed ? (
+									debug.force_continue += 1;
+									// This note was just released, but it should continue transition to the new pitch instead
+									selected_note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = -synthx_maxduration;
+									selected_note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = -synthx_maxduration;
 								);
 							);
 						)
@@ -237,14 +253,14 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 					portamento_samples = synthx_portamento_samples;
 					synthx_portamento_mode >= 2 ? portamento_samples *= synthx_controllers[5]/127;
 					synthx_portamento_mode == 3 && synthx_controllers[65] < 64 ? portamento_samples = 0;
-					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = portamento_samples ? (base_freq - synth_portamento_freq_buffer(previous_note))/portamento_samples : 0;
+					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = portamento_samples ? (base_freq - synth_portamento_future_freq_buffer(previous_note))/portamento_samples : 0;
 					selected_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = portamento_samples;
 				) : (
 					selected_note[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = 0;
 					selected_note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
 				);
 				selected_note[0/*NOTE:BASE_FREQ*/] = base_freq;
-				selected_note[3/*NOTE:SAMPLES_FROM_ATTACK*/] = -midi_offset;
+				selected_note[3/*NOTE:SAMPLES_FROM_ATTACK*/] = -midi_offset_delayed;
 				selected_note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = -synthx_maxduration;
 				selected_note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = -synthx_maxduration;
 				selected_note[8/*NOTE:NOTE*/] = midi_msg2;
@@ -252,6 +268,7 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 				selected_note[5/*NOTE:CHANNEL*/] = midi_channel;
 				selected_note[11/*NOTE:CUSTOM_INIT*/] = 0;
 				selected_note[9/*NOTE:PHRASE_STILL_ACTIVE*/] = 1;
+				synthx_latest_note = selected_note;
 			);
 		) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
 			// Close open note if there is one
@@ -259,8 +276,8 @@ function synth_block() local(midi_offset, midi_msg1, midi_msg23, midi_msg2, midi
 			while (i < synthx_polyphony) (
 				note = synthx_notestack + synthx_step*i;
 				note[8/*NOTE:NOTE*/] == midi_msg2 ? (
-					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset);
-					note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset);
+					note[6/*NOTE:SAMPLES_FROM_RELEASE*/] = max(note[6/*NOTE:SAMPLES_FROM_RELEASE*/], -midi_offset_delayed);
+					note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = max(note[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/], -midi_offset_delayed);
 				);
 				i += 1;
 			);

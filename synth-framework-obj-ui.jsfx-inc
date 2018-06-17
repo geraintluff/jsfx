@@ -14,8 +14,9 @@ function synthx_ui_system_labels(label, value, number_format) local(h) (
 	ui_pop();
 );
 
-function synth_ui_system() (
+function synth_ui_system() local(allow_latency) (
 	ui_screen() == "synth.config" ? (
+		allow_latency = synthx_supports_latency;
 		control_dialog("Synth config");
 
 		ui_split_topratio(1/3);
@@ -34,7 +35,7 @@ function synth_ui_system() (
 			synth_legato(synthx_legato_mode, synthx_legato_portamento_mode);
 		ui_split_next();
 			control_group("Portamento");
-			ui_split_leftratio(1/3);
+			ui_split_leftratio(allow_latency ? 1/4 : 1/3);
 				synthx_ui_system_labels("Enabled", 0, "");
 				ui_pad(-1, 0);
 				synthx_portamento_mode = control_selector(synthx_portamento_mode, (synthx_portamento_mode == 0) ? "off" : (synthx_portamento_mode == 1) ? "on" : (synthx_portamento_mode == 2) ? "MIDI (CC 5)" : "MIDI (CC 5 + 65)", min(3, synthx_portamento_mode + 1), max(0, synthx_portamento_mode - 1));
@@ -50,6 +51,12 @@ function synth_ui_system() (
 					ui_pad(-1, 0);
 					synthx_portamento_from_nearest = control_switch(synthx_portamento_from_nearest);
 				);
+			allow_latency && synthx_portamento_mode ? (
+				ui_split_next();
+				synthx_ui_system_labels("Latency", floor(synthx_delay_ratio*100 + 0.5), "%i%%");
+				ui_pad(-1, 0);
+				synthx_delay_ratio = control_dial(synthx_delay_ratio, 0, 1, 0, 0);
+			);
 			ui_pop();
 			synth_portamento(synthx_portamento_mode, synthx_portamento_seconds);
 		ui_split_next();
