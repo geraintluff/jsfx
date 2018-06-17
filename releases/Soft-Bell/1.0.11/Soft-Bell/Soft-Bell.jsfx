@@ -1,0 +1,375 @@
+desc:Soft Bell/Chime (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:output_dry=1<0,1>-dry (passthrough)
+slider2:output_wet=1<0,1>-wet (synth)
+slider3:old_input_amp=1<0,2>-deprecated
+slider4:old_output_dry=1<0,1>-deprecated
+slider5:attack_ms=5<1,1000>-attack (ms)
+slider6:release_ms=100<1,1000>-release (ms)
+slider7:decay_ms=300<1,1000>-decay (ms)
+slider8:sustain_level=0.1<0,1>-sustain level
+slider9:old_resonance_wavelengths_log2=8<0,10>-deprecated
+slider10:old_freq_multiplier=1<1,10,1>-deprecated
+
+import ui-lib.jsfx-inc
+import filter-utils.jsfx-inc
+import delay-utils.jsfx-inc
+import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-dark-orange.png
+// Photo by Fancycrave on Unsplash: https://unsplash.com/photos/dLTpk6N31Fc
+filename:1,themes/backgrounds/fancycrave-194878-unsplash.png
+
+@init
+
+!gfx_ext_retina ? gfx_ext_retina = 1;
+
+function default_setup(harmonic*, index) (
+	harmonic.enabled = (index == 0);
+	harmonic.resonance_wavelengths_log2 = 8;
+	harmonic.freq_multiplier = index + 1;
+	harmonic.pulse_amp = 1/(index + 1);
+	harmonic.noise_amp = 0.2/sqrt(index + 1);
+	harmonic.input_amp = 1/(index + 1);
+	harmonic.velocity_curve = 1;
+);
+
+!initial_setup ? (
+	initial_setup = 1;
+	default_setup(harmonic0, 0);
+	default_setup(harmonic1, 1);
+	default_setup(harmonic2, 2);
+	default_setup(harmonic3, 3);
+);
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem);
+synth_setup_each(synth1);
+synth_setup_each(synth2);
+synth_setup_each(synth3);
+synth_setup_each(synth4);
+synth_setup_each(synth5);
+synth_setup_each(synth6);
+synth_setup_each(synth7);
+synth_setup_each(synth8);
+synth_setup_each(synth9);
+synth_setup_each(synth10);
+synth_setup_each(synth11);
+synth_setup_each(synth12);
+synth_setup_each(synth13);
+synth_setup_each(synth14);
+synth_setup_each(synth15);
+synth_setup_each(synth16);
+
+MAX_DELAY_SAMPLES = srate;
+freemem = left_delay.delay_setup(freemem, MAX_DELAY_SAMPLES);
+freemem = right_delay.delay_setup(freemem, MAX_DELAY_SAMPLES);
+
+function default_config(config*, harmonic_index) (
+	config.pulse_amp = 1;
+	config.noise_amp = 0.1;
+	config.input_amp = 1;
+
+	config.resonance_wavelengths_log2 = 8;
+	config.freq_multiplier = harmonic_index;
+);
+
+@block
+
+delay_samples = min(MAX_DELAY_SAMPLES, pdc_delay = synth_pdc_delay());
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+
+synth_block();
+synth_block_each(synth1)
+&& synth_block_each(synth2)
+&& synth_block_each(synth3)
+&& synth_block_each(synth4)
+&& synth_block_each(synth5)
+&& synth_block_each(synth6)
+&& synth_block_each(synth7)
+&& synth_block_each(synth8)
+&& synth_block_each(synth9)
+&& synth_block_each(synth10)
+&& synth_block_each(synth11)
+&& synth_block_each(synth12)
+&& synth_block_each(synth13)
+&& synth_block_each(synth14)
+&& synth_block_each(synth15)
+&& synth_block_each(synth16);
+
+phase_step = 2*$pi/srate;
+attack_samples = srate*0.001*attack_ms;
+release_samples = srate*0.001*release_ms;
+decay_samples = srate*0.001*decay_ms;
+decay_factor = exp(-1/decay_samples);
+
+@sample
+
+left_delay.delay_input(spl0);
+right_delay.delay_input(spl1);
+spl0 = left_delay.delay_output_samples(delay_samples);
+spl1 = right_delay.delay_output_samples(delay_samples);
+
+function tapered_curve(r) (
+	r*r*(3 - 2*r);
+);
+
+function tapered_fade(r) (
+	r*r;
+);
+
+noise_left = (rand() - 0.5);
+noise_right = (rand() - 0.5);
+left = right = 0;
+
+function init_harmonic(harmonic*, freq, config*) local(slope_gain, resonance_wavelengths, resonance_samples, filter_freq) (
+	harmonic.phase = 0;
+
+	slope_gain = 0.25*sqrt(1000/freq/config.freq_multiplier);
+
+	resonance_wavelengths = pow(2, config.resonance_wavelengths_log2);
+	resonance_samples = srate*resonance_wavelengths/freq/config.freq_multiplier;
+
+	filter_freq = min(10000, freq/resonance_wavelengths);
+	harmonic.filter_sin0.filter_init(slope_gain*(config.pulse_amp + config.noise_amp*(rand() - 0.5)));
+	harmonic.filter_sin1.filter_init(slope_gain*(config.pulse_amp + config.noise_amp*(rand() - 0.5)));
+	harmonic.filter_sin0.filter_lowpass(filter_freq, 2);
+	harmonic.filter_sin1.filter_lowpass(filter_freq, 2);
+
+	harmonic.noise_amp = slope_gain*config.noise_amp*sqrt(resonance_samples)*sqrt(12);
+	harmonic.input_amp = config.input_amp*2*sqrt(min(12, resonance_wavelengths));
+
+	harmonic.freq_multiplier = config.freq_multiplier;
+	harmonic.velocity_curve = config.velocity_curve > 1 ? 1 + (config.velocity_curve - 1)*5 : config.velocity_curve;
+);
+
+function process_harmonic(harmonic*, amp, freq) local(left_in, right_in, sin_value) (
+	left_in = harmonic.input_amp*spl0 + harmonic.noise_amp*noise_left;
+	right_in = harmonic.input_amp*spl1 + harmonic.noise_amp*noise_right;
+
+	harmonic.phase += freq*phase_step*harmonic.freq_multiplier;
+	sin_value = sin(harmonic.phase);
+
+	harmonic.sin0 = harmonic.filter_sin0.filter_sample(sin_value*left_in);
+	harmonic.sin1 = harmonic.filter_sin1.filter_sample(sin_value*right_in);
+
+	amp = pow(amp, harmonic.velocity_curve);
+	left += amp*(harmonic.sin0*sin_value);
+	right += amp*(harmonic.sin1*sin_value);
+);
+
+function process_note(note*) (
+	synth_sample_each(note) ? (
+		synth_needs_init(note) ? (
+			freq = synth_base_freq(note);
+			(note.harmonic0.enabled = harmonic0.enabled) ? init_harmonic(note.harmonic0, freq, harmonic0);
+			(note.harmonic1.enabled = harmonic1.enabled) ? init_harmonic(note.harmonic1, freq, harmonic1);
+			(note.harmonic2.enabled = harmonic2.enabled) ? init_harmonic(note.harmonic2, freq, harmonic2);
+			(note.harmonic3.enabled = harmonic3.enabled) ? init_harmonic(note.harmonic3, freq, harmonic3);
+
+			note.decay_factor = 1;
+		);
+
+		amp = synth_velocity(note)*synth_controller(11)*0.000062000124000248;
+		attack_samples && synth_attack(note) < attack_samples ? (
+			amp *= tapered_curve(synth_attack(note)/attack_samples);
+		);
+		synth_release(note) > 0 ? (
+			amp *= tapered_fade(1 - synth_release(note)/release_samples);
+			synth_release(note) >= release_samples ? (
+				synth_stop(note);
+			);
+		);
+
+		note.decay_factor *= decay_factor;
+		amp *= sustain_level + (1 - sustain_level)*note.decay_factor;
+
+		freq = synth_freq(note);
+		note.harmonic0.enabled ? process_harmonic(note.harmonic0, amp, freq);
+		note.harmonic1.enabled ? process_harmonic(note.harmonic1, amp, freq);
+		note.harmonic2.enabled ? process_harmonic(note.harmonic2, amp, freq);
+		note.harmonic3.enabled ? process_harmonic(note.harmonic3, amp, freq);
+	);
+	synth_continue(note);
+);
+
+process_note(synth1)
+&& process_note(synth2)
+&& process_note(synth3)
+&& process_note(synth4)
+&& process_note(synth5)
+&& process_note(synth6)
+&& process_note(synth7)
+&& process_note(synth8)
+&& process_note(synth9)
+&& process_note(synth10)
+&& process_note(synth11)
+&& process_note(synth12)
+&& process_note(synth13)
+&& process_note(synth14)
+&& process_note(synth15)
+&& process_note(synth16);
+
+spl0 = output_wet*left + output_dry*spl0;
+spl1 = output_wet*right + output_dry*spl1;
+
+@gfx 500 550
+
+control_start("main", "bitmap-simple", 0);
+
+gfx_a = 0.2;
+g_scale = max(gfx_w/700, gfx_h/467);
+gfx_x = (gfx_w - 700*g_scale)*0.5;
+gfx_y = (gfx_h - 467*g_scale)*0.5;
+gfx_mode = 6;
+gfx_blit(1, g_scale, 0);
+gfx_mode = 0;
+
+ui_color(32, 48, 64, 0.1);
+ui_fill();
+ui_color(255, 255, 255);
+
+function labels(label, value, number_format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+);
+function labels(label) local(h) (
+	labels(label, 0, "");
+);
+
+function harmonic_row(config*) (
+	ui_push();
+		ui_color(255, 255, 255, 0.4);
+		gfx_line(ui_left_retina() + ui_width_retina()*0.1, ui_top_retina(), ui_left_retina() + ui_width_retina()*0.9, ui_top_retina());
+	ui_pop();
+
+	ui_pad();
+
+	ui_split_leftratio(1/7);
+		labels("enabled");
+		ui_pad();
+		config.enabled = control_switch(config.enabled);
+	ui_pop();
+	config.enabled ? (
+		ui_split_leftratio(1/6);
+			labels("harmonic");
+			ui_pad();
+			sprintf(#freq_multiplier, "%i", config.freq_multiplier);
+			config.freq_multiplier = control_selector(config.freq_multiplier, #freq_multiplier, min(10, config.freq_multiplier + 1), max(1, config.freq_multiplier - 1));
+		ui_split_next();
+			labels("tonality");
+			config.resonance_wavelengths_log2 = control_dial(config.resonance_wavelengths_log2, 0, 10, 0, 8);
+		ui_split_next();
+			labels("impulse", floor(config.pulse_amp*100 + 0.5), "%i%%");
+			config.pulse_amp = control_dial(config.pulse_amp, 0, 1, 2 + config.freq_multiplier, 1/config.freq_multiplier);
+		ui_split_next();
+			labels("noise", floor(config.noise_amp*100 + 0.5), "%i%%");
+			config.noise_amp = control_dial(config.noise_amp, 0, 1, 2 + config.freq_multiplier, 0.2/sqrt(config.freq_multiplier));
+		ui_split_next();
+			labels("audio", floor(config.input_amp*100 + 0.5), "%i%%");
+			config.input_amp = control_dial(config.input_amp, 0, 2, 2 + config.freq_multiplier, 1/config.freq_multiplier);
+		ui_split_next();
+			labels("damping");
+			config.velocity_curve = control_dial(config.velocity_curve, 0.1, 4, 2.4, 1);
+		ui_pop();
+	);
+);
+
+ui_screen() == "main" ? (
+	ui_split_topratio(1/4);
+		ui_split_rightratio(2/6);
+			control_group(-1);
+
+			ui_split_leftratio(0.5);
+				labels("wet", floor(output_wet*100 + 0.5), "%i%%");
+				output_wet = control_dial(output_wet, 0, 1, 0, 1);
+			ui_split_next();
+				labels("dry", floor(output_dry*100 + 0.5), "%i%%");
+				output_dry = control_dial(output_dry, 0, 1, 0, 1);
+			ui_pop();
+		ui_pop();
+
+		control_group("Envelope");
+		ui_split_leftratio(1/4);
+			labels("attack", floor(attack_ms + 0.5), "%ims");
+			attack_ms = control_dial(attack_ms, 1, 1000, 5, 5);
+		ui_split_next();
+			labels("decay", floor(decay_ms + 0.5), "%ims");
+			decay_ms = control_dial(decay_ms, 1, 1000, 5, 300);
+		ui_split_next();
+			labels("sustain", floor(sustain_level*100 + 0.5), "%i%%");
+			sustain_level = control_dial(sustain_level, 0, 1, 4, 0.1);
+		ui_split_next();
+			labels("release", floor(release_ms + 0.5), "%ims");
+			release_ms = control_dial(release_ms, 1, 1000, 5, 100);
+		ui_pop();
+	ui_pop();
+
+	control_navbar("Harmonics", "config", "synth.config");
+
+	ui_split_topratio(1/4);
+		harmonic_row(harmonic0);
+	ui_split_next();
+		harmonic_row(harmonic1);
+	ui_split_next();
+		harmonic_row(harmonic2);
+	ui_split_next();
+		harmonic_row(harmonic3);
+	ui_pop();
+) : synth_ui_system() || control_system();
+
+@serialize
+
+function save_harmonic(harmonic*) (
+	file_var(0, harmonic.enabled);
+	file_var(0, harmonic.resonance_wavelengths_log2);
+	file_var(0, harmonic.freq_multiplier);
+	file_var(0, harmonic.pulse_amp);
+	file_var(0, harmonic.noise_amp);
+	file_var(0, harmonic.input_amp);
+	file_var(0, harmonic.velocity_curve);
+);
+
+preset_version = 3;
+file_var(0, preset_version);
+
+preset_version < 1 ? (
+	harmonic0.enabled = 1;
+	harmonic0.resonance_wavelengths_log2 = old_resonance_wavelengths_log2;
+	harmonic0.freq_multiplier = old_freq_multiplier;
+	harmonic0.pulse_amp = output_dry;
+	harmonic0.noise_amp = output_wet;
+	harmonic0.input_amp = old_input_amp;
+	harmonic0.velocity_curve = 1;
+	output_dry = 1;
+	output_wet = old_output_dry;
+
+	harmonic1.enabled = 0;
+	harmonic2.enabled = 0;
+	harmonic3.enabled = 0;
+) : (
+	save_harmonic(harmonic0);
+	save_harmonic(harmonic1);
+	save_harmonic(harmonic2);
+	save_harmonic(harmonic3);
+);
+
+// If it's an earlier version, reset instead of trying to load
+synth_serialize(preset_version < 3);

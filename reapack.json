@@ -269,7 +269,7 @@
 					"main": false
 				}
 			},
-			"version": "1.5.3",
+			"version": "1.5.4",
 			"links": {
 				"youtube": [
 					"https://www.youtube.com/watch?v=0MmKuW2nEkk&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK",
@@ -511,7 +511,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.10"
+			"version": "1.0.11"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
