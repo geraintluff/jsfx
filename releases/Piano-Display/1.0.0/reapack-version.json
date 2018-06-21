@@ -1,0 +1,21 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Piano-Display/piano-display.jsfx": {
+			"main": false
+		},
+		"Piano-Display/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Piano-Display/piano-ui.jsfx-inc": {
+			"main": false
+		},
+		"Piano-Display/synth-framework-obj.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Piano Display",
+	"time": "2018-06-21T22:42:41.429Z"
+}

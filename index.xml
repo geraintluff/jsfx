@@ -1498,7 +1498,14 @@
 		</reapack>
 		<reapack name="Piano Display" type="effect">
 			<metadata>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Piano%20Display.png</link>
 			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2018-06-21T22:42:41.429Z">
+				<source file="Piano-Display/piano-display.jsfx">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-display.jsfx</source>
+				<source file="Piano-Display/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/ui-lib.jsfx-inc</source>
+				<source file="Piano-Display/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-ui.jsfx-inc</source>
+				<source file="Piano-Display/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/synth-framework-obj.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 </index>

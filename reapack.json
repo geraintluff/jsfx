@@ -529,7 +529,8 @@
 				"synth-framework-obj.jsfx-inc": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
