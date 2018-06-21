@@ -342,6 +342,10 @@ function synth_block_each(note*) local() (
 	1;
 );
 
+function synth_on(note*) (
+	note._synth.ACTIVE && note._synth.SAMPLES_FROM_ATTACK >= 0;
+);
+
 function synth_sample_each(note*) (
 	note._synth.ACTIVE ? (
 		note._synth.SAMPLES_FROM_ATTACK = (note._synth.mem[NOTE#SAMPLES_FROM_ATTACK] += 1);

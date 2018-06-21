@@ -512,6 +512,24 @@
 				}
 			},
 			"version": "1.0.11"
+		},
+		"Piano Display": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"piano-display.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"piano-ui.jsfx-inc": {
+					"main": false
+				},
+				"synth-framework-obj.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

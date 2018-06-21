@@ -207,6 +207,9 @@ h3 {
 [list][*][url=https://geraintluff.github.io/jsfx#MIDI%20Gate]MIDI Gate[/url] - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
 [*][url=https://geraintluff.github.io/jsfx#MIDI%20Harmony]MIDI Harmony[/url] - arpeggiator and auto-accompaniment plugin[/list]
 
+[b]Misc[/b]
+[list][*][url=https://geraintluff.github.io/jsfx#Piano%20Display]Piano Display[/url] - Misc effect[/list]
+
 [b]Pitch Correction[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#Warble]Warble[/url] - a basic pitch-editing effect[/list]
 
@@ -244,6 +247,7 @@ h3 {
 </li>
 <li><a href="#MIDI Harmony">MIDI Harmony</a> - arpeggiator and auto-accompaniment plugin
 </li></ul>
+<h3>Misc</h3><ul><li><a href="#Piano Display">Piano Display</a> - Misc effect</li></ul>
 <h3>Pitch Correction</h3><ul><li><a href="#Warble">Warble</a> - a basic pitch-editing effect
 </li></ul></div>
 <!--/reapack:nav-->
@@ -292,7 +296,7 @@ h3 {
 <p><img src="Spectrum Matcher 2.png" alt="screenshot"></p>
 <p>This effect is quite CPU-intensive, so if you&#39;re not using it it could be good to bypass it.</p>
 </div>
-<div class="reapack-package" id="Soft-Bell"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Soft-Bell-1.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-2.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-3.mp3"></audio><a href="Soft-Bell.jsfx.rpl" target="_blank">presets</a></div><h1 id="soft-bell">Soft Bell</h1>
+<div class="reapack-package" id="Soft-Bell"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Soft-Bell-1.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-2.mp3"></audio><audio controls preload="none" src="audio-demos/Soft-Bell-3.mp3"></audio><audio controls preload="none" src="audio-demos/Soft Bell music.mp3"></audio><a href="Soft-Bell.jsfx.rpl" target="_blank">presets</a></div><h1 id="soft-bell">Soft Bell</h1>
 <p>Soft Bell is a synth that produces chime-like tones, with individually specified harmonics.</p>
 <p>It can also be used with audio - it can produce interesting inharmonic sounds from musical input, particularly if you turn the &quot;tonality&quot; dial down.</p>
 <p><img src="doc/images/Soft-Bell.png" alt="screenshot"></p>
@@ -334,6 +338,7 @@ h3 {
 <p>It&#39;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:</p>
 <p><img src="Panalysis 2.png" alt="screenshot"></p>
 </div>
+<div class="reapack-package" id="Piano Display"><h1>Piano Display</h1></div>
 <div class="reapack-package" id="Sandwich Amp"><div class="reapack-links"><audio controls preload="none" src="audio-demos/sandwich-amp.mp3"></audio><a href="Sandwich Amp.jsfx.rpl" target="_blank">presets</a></div><h1 id="sandwich-amp">Sandwich Amp</h1>
 <p>Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</p>
 <p>The underlying distortion function is <code>tanh()</code> (which is a fairly &quot;soft&quot; distortion, as opposed to a hard clip), but it can be driven quite hard, and an offset can be added to get asymmetrical response.</p>
