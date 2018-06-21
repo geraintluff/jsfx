@@ -148,6 +148,7 @@
 			"type": "effect",
 			"category": "Utility",
 			"summary": "a limiter that aims to have the correction curve as smooth as possible",
+			"sort": 12,
 			"files": {
 				"ui-lib.jsfx-inc": {
 					"main": false
@@ -452,6 +453,7 @@
 			"type": "effect",
 			"category": "Delay",
 			"summary": "MIDI-controlled frequency-modulation effect",
+			"sort": 9,
 			"files": {
 				"Cross-Polyphonic-FM.jsfx": {
 					"main": false
@@ -515,7 +517,8 @@
 		},
 		"Piano Display": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Utility",
+			"summary": "Displays MIDI notes as a scrolling piano roll",
 			"files": {
 				"piano-display.jsfx": {
 					"main": false
@@ -530,7 +533,7 @@
 					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.1"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

@@ -344,6 +344,24 @@
 				<source file="Level-Meter/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Level-Meter/0.1.1/Level-Meter/ui-lib.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Piano Display" type="effect">
+			<metadata>
+				<description>{\rtf1\ansi\fs24{\fs48\b Piano Display\b}\line\line This displays MIDI notes as a scrolling piano roll.\line\line It was created as a nice way to display keyboard input when making demo videos.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Piano%20Display.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Piano%20Display.png</link>
+			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2018-06-21T22:42:41.429Z">
+				<source file="Piano-Display/piano-display.jsfx">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-display.jsfx</source>
+				<source file="Piano-Display/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/ui-lib.jsfx-inc</source>
+				<source file="Piano-Display/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-ui.jsfx-inc</source>
+				<source file="Piano-Display/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/synth-framework-obj.jsfx-inc</source>
+			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2018-06-21T22:45:21.556Z">
+				<source file="Piano-Display/piano-display.jsfx">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.1/Piano-Display/piano-display.jsfx</source>
+				<source file="Piano-Display/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.1/Piano-Display/ui-lib.jsfx-inc</source>
+				<source file="Piano-Display/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.1/Piano-Display/piano-ui.jsfx-inc</source>
+				<source file="Piano-Display/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.1/Piano-Display/synth-framework-obj.jsfx-inc</source>
+			</version>
+		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
@@ -1495,17 +1513,6 @@
 		<reapack name="MIDI Controller Control" type="effect">
 			<metadata>
 			</metadata>
-		</reapack>
-		<reapack name="Piano Display" type="effect">
-			<metadata>
-				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Piano%20Display.png</link>
-			</metadata>
-			<version name="1.0.0" author="Geraint Luff" time="2018-06-21T22:42:41.429Z">
-				<source file="Piano-Display/piano-display.jsfx">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-display.jsfx</source>
-				<source file="Piano-Display/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/ui-lib.jsfx-inc</source>
-				<source file="Piano-Display/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/piano-ui.jsfx-inc</source>
-				<source file="Piano-Display/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.0/Piano-Display/synth-framework-obj.jsfx-inc</source>
-			</version>
 		</reapack>
 	</category>
 </index>

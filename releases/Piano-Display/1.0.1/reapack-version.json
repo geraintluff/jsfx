@@ -1,0 +1,22 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "Displays MIDI notes as a scrolling piano roll",
+	"files": {
+		"Piano-Display/piano-display.jsfx": {
+			"main": false
+		},
+		"Piano-Display/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Piano-Display/piano-ui.jsfx-inc": {
+			"main": false
+		},
+		"Piano-Display/synth-framework-obj.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.1",
+	"package": "Piano Display",
+	"time": "2018-06-21T22:45:21.556Z"
+}

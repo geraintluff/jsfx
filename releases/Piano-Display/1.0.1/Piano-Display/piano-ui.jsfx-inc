@@ -1,0 +1,121 @@
+@init
+
+function pianox_key_to_layout(key) local(octaveKey) (
+	octaveKey = key%12;
+	octave = (key - octaveKey)/12;
+	octaveKey > 4 ? octaveKey += 1;
+	octave*14 + octaveKey;
+);
+
+function piano_push_key(key, lowKey, highKey) local(layoutLow, layoutHigh, layoutKey, left) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+
+	layoutKey = pianox_key_to_layout(key);
+	layoutKey%2 === 0 ? (
+		left = ui_left() + (layoutKey - layoutLow)*keyWidth;
+		ui_push_rect(left, ui_top() + ui_height()*0.6, keyWidth*2, ui_height()*0.4);
+		ui_color(0, 0, 0);
+	) : (
+		left = ui_left() + (layoutKey - layoutLow + 0.2)*keyWidth;
+		ui_push_rect(left, ui_top(), keyWidth*1.6, ui_height()*0.6);
+		ui_color(255, 255, 255);
+	);
+	ui_align(0.5, 0.9);
+);
+
+function piano_fill_key(key, lowKey, highKey) local(layoutLow, layoutHigh, layoutKey, octaveKey, left, top) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+	top = ui_top();
+	octaveKey = key%12;
+
+	layoutKey = pianox_key_to_layout(key);
+	layoutKey%2 === 0 ? (
+		left = floor(ui_left() + (layoutKey - layoutLow)*keyWidth);
+		// Narrow
+		octaveKey === 0 || octaveKey === 5 ? (
+			gfx_rect(left, top, ceil(keyWidth*1.2), ui_height()*0.6);
+		) : octaveKey === 4 || octaveKey === 11 ? (
+			gfx_rect(left + keyWidth*0.8, top, ceil(keyWidth*1.2), ui_height()*0.6);
+		) : (
+			gfx_rect(left + keyWidth*0.8, top, ceil(keyWidth*0.4), ui_height()*0.6);
+		);
+		gfx_rect(left, top + ui_height()*0.6, ceil(keyWidth*2), ui_height()*0.4);
+	) : (
+		left = ui_left() + (layoutKey - layoutLow + 0.2)*keyWidth;
+		gfx_rect(left, ui_top(), keyWidth*1.6, ui_height()*0.6);
+	);
+);
+
+function piano_key_name(string, key) local(octaveKey, octave, format) (
+	octaveKey = key%12;
+	octave = floor((key - octaveKey)/12 + 0.5) - 1;
+
+	format = (octaveKey === 0) ? "C%i"
+		: octaveKey === 1 ? "C#%i"
+		: octaveKey === 2 ? "D%i"
+		: octaveKey === 3 ? "D#%i"
+		: octaveKey === 4 ? "E%i"
+		: octaveKey === 5 ? "F%i"
+		: octaveKey === 6 ? "F#%i"
+		: octaveKey === 7 ? "G%i"
+		: octaveKey === 8 ? "G#%i"
+		: octaveKey === 9 ? "A%i"
+		: octaveKey === 10 ? "A#%i"
+		: "B%i";
+	sprintf(string, format, octave);
+);
+
+function piano_draw(lowKey, highKey) local(octave, octaveKey, keyCount, keyWidth, left, top, whiteHeight, blackHeight) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	ui_push();
+		ui_color(255, 255, 255);
+		ui_fill();
+		ui_color(0, 0, 0);
+		ui_border();
+
+		keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+
+		left = ui_left();
+		top = ui_top();
+		whiteHeight = ui_height();
+		blackHeight = whiteHeight*0.6;
+
+		i = lowKey;
+		while (i <= highKey) (
+			layoutKey = pianox_key_to_layout(i);
+
+			layoutKey%2 === 0 ? (
+				// Draw left edge
+				gfx_x = floor(left + (layoutKey - layoutLow)*keyWidth);
+				gfx_line(gfx_x, top, gfx_x, top + whiteHeight);
+			) : (
+				gfx_x = floor(left + (layoutKey - layoutLow + 0.2)*keyWidth);
+				gfx_rect(gfx_x, top, keyWidth*1.6, blackHeight);
+			);
+			i += 1;
+		);
+
+		i = 12*ceil(lowKey/12 - 0.001);
+		while (i < highKey) (
+			piano_push_key(i, lowKey, highKey);
+				piano_key_name(#key_name, i);
+				ui_text(#key_name);
+			ui_pop();
+			i += 12;
+		);
+	ui_pop();
+);
