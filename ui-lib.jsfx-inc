@@ -535,6 +535,12 @@ function ui_font_refresh() (
 	uix_setgfxfont();
 );
 
+function ui_font() (
+	uix_font_dirty = 1;
+	uix_setgfxcolor();
+	uix_setgfxfont();
+);
+
 function ui_fill() (
 	uix_setgfxcolor();
 	gfx_rect(ui_left_retina(), ui_top_retina(), ui_width_retina(), ui_height_retina());
@@ -1887,7 +1893,7 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 			uix_control_theme == 1/*uix_THEME:BLACK_AND_WHITE*/ ? (
 				ui_color(255, 255, 255);
 			) : uix_control_theme == 3/*uix_THEME:BITMAP_SIMPLE*/ ? (
-				uix_control_color_from_theme(151, 30, 0.25);
+				uix_control_color_from_theme(151, 30, 0.5);
 			) : (
 				ui_color(102, 102, 102, 0.5);
 			);
@@ -1913,6 +1919,11 @@ function control_group(text) local(texth, textw, textl, textr, textv) (
 				ui_pop();
 			ui_pop();
 			ui_padbottom();
+
+			// Border colour is lighter
+			uix_control_theme == 3/*uix_THEME:BITMAP_SIMPLE*/ ? (
+				uix_control_color_from_theme(151, 30, 0.25);
+			);
 
 			!textw ? textl = textr = ui_left_retina();
 			ui_push();
