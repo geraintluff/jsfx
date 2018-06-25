@@ -8,7 +8,7 @@ out_pin:Right
 slider1:delay_ms_l=0<-125,125,0.1>-Left delay (ms)
 slider2:delay_ms_r=0<-125,125,0.1>-Right delay (ms)
 slider3:delay_linked=0<0,1,1{no,yes}>-Linked
-slider4:display_units_in_samples=0<0,1,1{ms,samples}>-Units
+slider4:display_units_in_samples=0<0,2,1{ms,samples,beats}>-Units
 slider5:delay_fftsize_1024log2=3<0,4,1{1024,2048,4096,8192,16384}>-Analysis FFT Size
 slider6:phase_invert_l=0<0,1,1{normal,invert}>-Left phase
 slider7:phase_invert_r=0<0,1,1{normal,invert}>-Right phase
@@ -359,7 +359,14 @@ function delaydial(delayms, title) local(samples) (
 		delayms = doublebiasdial(delayms, -MAX_PREDELAY*1000, 0, MAX_DELAY*1000, 6);
 	ui_pop();
 
-	display_units_in_samples ? (
+	display_units_in_samples == 2 ? (
+		beatsPerMs = tempo/60*0.001;
+		beats = delayms*beatsPerMs;
+		newbeats = readout_entry_below(beats, beats*1.000001, "%.2f");
+		newbeats !== beats ? (
+			delayms = newbeats/beatsPerMs;
+		);
+	) : display_units_in_samples == 1 ? (
 		samples = floor(delayms*srate*0.001 + 0.5);
 		newsamples = readout_entry_below(samples, samples, "%i");
 		newsamples !== samples ? (
@@ -462,7 +469,11 @@ gmem[0] === send_routing_id ? (
 		ui_split_topratio(1/2);
 			delay_linked = labelledswitch(delay_linked, "L/R link", "on", "off");
 		ui_split_next();
-			display_units_in_samples = labelledswitch(display_units_in_samples, "Units", "samples", "ms");
+			#units = (display_units_in_samples == 0) ? "ms" : (display_units_in_samples == 1) ? "samples" : "beats";
+			titleabove("Units");
+			ui_push_height(DIAL_HEIGHT*0.7);
+				display_units_in_samples = control_selector(display_units_in_samples, #units, (display_units_in_samples + 1)%3, (display_units_in_samples + 2)%3);
+			ui_pop();
 		ui_pop();
 	ui_pop();
 
