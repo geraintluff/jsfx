@@ -1,0 +1,87 @@
+@init
+
+function synthx_ui_system_labels(label, value, number_format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+);
+
+function synth_ui_system() local(allow_latency) (
+	ui_screen() == "synth.config" ? (
+		allow_latency = synthx_supports_latency;
+		control_dialog("Synth config");
+
+		ui_split_topratio(1/3);
+			control_group("Legato");
+			ui_split_leftratio(0.5);
+				synthx_ui_system_labels("Monophonic", 0, "");
+				ui_pad(-1, 0);
+				#synthx_legato_mode = (synthx_legato_mode == 0) ? "off" : (synthx_legato_mode == 1) ? "retrigger (mono)" : "slide (mono)";
+				synthx_legato_mode = control_selector(synthx_legato_mode, #synthx_legato_mode, min(2, synthx_legato_mode + 1), max(0, synthx_legato_mode - 1));
+			ui_split_next();
+				synthx_ui_system_labels("Portamento", 0, "");
+				ui_pad(-1, 0);
+				#synthx_legato_mode = (synthx_legato_portamento_mode == 0) ? "legato only" : (synthx_legato_portamento_mode == 1) ? "all notes" : "notes + release";
+				synthx_legato_portamento_mode = control_selector(synthx_legato_portamento_mode, #synthx_legato_mode, min(2, synthx_legato_portamento_mode + 1), max(0, synthx_legato_portamento_mode - 1));
+			ui_pop();
+			synth_legato(synthx_legato_mode, synthx_legato_portamento_mode);
+		ui_split_next();
+			control_group("Portamento");
+			ui_split_leftratio(allow_latency ? 1/4 : 1/3);
+				synthx_ui_system_labels("Enabled", 0, "");
+				ui_pad(-1, 0);
+				synthx_portamento_mode = control_selector(synthx_portamento_mode, (synthx_portamento_mode == 0) ? "off" : (synthx_portamento_mode == 1) ? "on" : (synthx_portamento_mode == 2) ? "MIDI (CC 5)" : "MIDI (CC 5 + 65)", min(3, synthx_portamento_mode + 1), max(0, synthx_portamento_mode - 1));
+			ui_split_next();
+				synthx_portamento_mode ? (
+					synthx_ui_system_labels("Time", floor(synthx_portamento_seconds*1000 + 0.5), "%i ms");
+					ui_pad(-1, 0);
+					synthx_portamento_seconds = max(0.001, control_dial(synthx_portamento_seconds, 0.001, 1, 5, 0.03));
+				);
+			ui_split_next();
+				synthx_portamento_mode ? (
+					synthx_ui_system_labels("Source note", 0, synthx_portamento_from_nearest ? "nearest" : "latest");
+					ui_pad(-1, 0);
+					synthx_portamento_from_nearest = control_switch(synthx_portamento_from_nearest);
+				);
+			allow_latency && synthx_portamento_mode ? (
+				ui_split_next();
+				synthx_ui_system_labels("Latency", floor(synthx_delay_ratio*100 + 0.5), "%i%%");
+				ui_pad(-1, 0);
+				synthx_delay_ratio = control_dial(synthx_delay_ratio, 0, 1, 0, 0);
+			);
+			ui_pop();
+			synth_portamento(synthx_portamento_mode, synthx_portamento_seconds);
+		ui_split_next();
+			control_group("");
+			ui_split_leftratio(0.5);
+				synthx_ui_system_labels("MIDI passthrough", 0, "");
+				ui_pad(-1, 0);
+				synthx_midi_sink = !control_switch(!synthx_midi_sink);
+			ui_split_next();
+				synthx_ui_system_labels("Pitch-bend", 0, "");
+				ui_pad(-1, 0);
+				sprintf(#synthx_pitchbend_range, "%i semitones", synthx_pitchbend_range);
+				synthx_pitchbend_range = control_selector(synthx_pitchbend_range, #synthx_pitchbend_range, min(24, synthx_pitchbend_range + 1), max(1, synthx_pitchbend_range - 1));
+			ui_pop();
+		ui_pop();
+
+		/*
+		file_var(0, synthx_midi_sink);
+		file_var(0, synthx_legato_mode);
+		file_var(0, synthx_legato_portamento_mode);
+		file_var(0, synthx_portamento_mode);
+		file_var(0, synthx_portamento_seconds);
+		file_var(0, synthx_pitchbend_range);
+		*/
+
+		1;
+	) : 0;
+);

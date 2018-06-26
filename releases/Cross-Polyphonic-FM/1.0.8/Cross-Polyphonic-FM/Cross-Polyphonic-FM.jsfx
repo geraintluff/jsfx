@@ -1,0 +1,274 @@
+desc:Cross-Polyphonic FM (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:attack_ms=3<0,1000>-attack (ms)
+slider2:decay_ms=500<0, 1000>-decay (ms)
+slider3:sustain_level=0.5<0, 1>-sustain
+slider4:release_ms=10<3, 1000>-release (ms)
+slider5:fm_depth=4<0, 10>-FM depth
+slider6:fm_transpose_fine=0<-12, 12>-FM transpose (fine)
+slider7:fm_transpose_octaves=0<-1,5,1>-FM transpose (octaves)
+slider8:velocity_curve=0.5<0,2>-Velocity curve
+
+import ui-lib.jsfx-inc
+import delay-utils.jsfx-inc
+import synth-framework-obj.jsfx-inc
+import synth-framework-obj-ui.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-dark-orange.png
+// Photo by Sebastian Pociecha on Unsplash: https://unsplash.com/photos/LfDFvUlUIDo
+filename:1,themes/backgrounds/sebastian-pociecha-451575-unsplash.png
+
+@init
+
+MAX_DELAY = 0.1;
+MAX_DELAY_SAMPLES = ceil(MAX_DELAY*srate);
+
+gfx_ext_retina = 1;
+
+srate = max(1000, srate);
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = delay0.delay_setup(freemem, MAX_DELAY_SAMPLES);
+freemem = delay1.delay_setup(freemem, MAX_DELAY_SAMPLES);
+
+g_buffer_active = 0;
+g_buffer_index = 0;
+g_buffer_length = ceil(0.03*srate);
+g_buffer_scale = max(g_buffer_scale, 0.01);
+freemem = (g_buffer_dry = freemem) + g_buffer_length;
+freemem = (g_buffer_wet = freemem) + g_buffer_length;
+
+freemem = synth_setup(freemem);
+synth_setup_each(synth1);
+synth_setup_each(synth2);
+synth_setup_each(synth3);
+synth_setup_each(synth4);
+synth_setup_each(synth5);
+synth_setup_each(synth6);
+synth_setup_each(synth7);
+synth_setup_each(synth8);
+synth_setup_each(synth9);
+synth_setup_each(synth10);
+synth_setup_each(synth11);
+synth_setup_each(synth12);
+synth_setup_each(synth13);
+synth_setup_each(synth14);
+synth_setup_each(synth15);
+synth_setup_each(synth16);
+
+@block
+
+synth_block();
+synth_block_each(synth1)
+&& synth_block_each(synth2)
+&& synth_block_each(synth3)
+&& synth_block_each(synth4)
+&& synth_block_each(synth5)
+&& synth_block_each(synth6)
+&& synth_block_each(synth7)
+&& synth_block_each(synth8)
+&& synth_block_each(synth9)
+&& synth_block_each(synth10)
+&& synth_block_each(synth11)
+&& synth_block_each(synth12)
+&& synth_block_each(synth13)
+&& synth_block_each(synth14)
+&& synth_block_each(synth15)
+&& synth_block_each(synth16);
+
+attack_samples = attack_ms*0.001*srate;
+decay_samples = decay_ms*0.001*srate;
+release_samples = release_ms*0.001*srate;
+
+transpose_factor = pow(2, fm_transpose_fine/12 + floor(fm_transpose_octaves + 0.5));
+
+g_buffer_time < time() - 1 ? (
+	g_buffer_active = 0;
+) : (
+	g_buffer_scale = max(g_buffer_scale, 0.01);
+	g_scale_decay = 1 - 1/srate;
+);
+
+@sample
+
+g_buffer_active ? (
+	g_value = g_buffer_dry[g_buffer_index] = spl0 + spl1;
+	g_buffer_scale = max(g_buffer_scale*g_scale_decay, abs(g_value));
+);
+
+delay0.delay_input(spl0);
+delay1.delay_input(spl1);
+
+delay_factor = 0;
+
+function process_note(note*) (
+	synth_sample_each(note) ? (
+		synth_needs_init(note) ? (
+			note.phase = 0;
+			note.amp = velocity_curve ? pow(synth_velocity(note)/127, velocity_curve) : 1;
+		);
+
+		envelope = note.amp;
+		synth_attack(note) < attack_samples ? (
+			envelope *= synth_attack(note)/attack_samples;
+		) : synth_attack(note) - attack_samples < decay_samples ? (
+			envelope *= 1 - (synth_attack(note) - attack_samples)/decay_samples*(1 - sustain_level);
+		) : (
+			envelope *= sustain_level;
+		);
+		synth_release(note) > 0 ? (
+			synth_release(note) >= release_samples ? (
+				synth_stop(note);
+				envelope = 0;
+			) : (
+				envelope *= 1 - synth_release(note)/release_samples;
+			);
+		);
+
+		z = transpose_factor*synth_freq(note)/srate;
+		depth = envelope/(2*$pi*z);
+		delay_factor += depth*(0.5 - 0.5*cos(note.phase*2*$pi));
+		note.phase += z;
+		while (note.phase >= 1) (
+			note.phase -= 1;
+		);
+	);
+	synth_continue(note);
+);
+
+process_note(synth1)
+&& process_note(synth2)
+&& process_note(synth3)
+&& process_note(synth4)
+&& process_note(synth5)
+&& process_note(synth6)
+&& process_note(synth7)
+&& process_note(synth8)
+&& process_note(synth9)
+&& process_note(synth10)
+&& process_note(synth11)
+&& process_note(synth12)
+&& process_note(synth13)
+&& process_note(synth14)
+&& process_note(synth15)
+&& process_note(synth16);
+
+delay_samples = delay_factor*fm_depth;
+
+delay_samples !== 0 ? (
+	spl0 = delay0.delay_output_linear1(delay_samples);
+	spl1 = delay1.delay_output_linear1(delay_samples);
+);
+
+g_buffer_active ? (
+	g_buffer_wet[g_buffer_index] = spl0 + spl1;
+	g_buffer_index += 1;
+	g_buffer_index >= g_buffer_length ? (
+		g_buffer_index = 0;
+	);
+);
+
+@gfx 580 320
+
+g_buffer_active = 1;
+g_buffer_time = time();
+
+function labels(label, value, number_format, hidden_textnumber) local(h) (
+	h = (ui_height() - 60)/2;
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			hidden_textnumber ? (
+				value = control_hidden_textnumber(value, number_format);
+			) : (
+				ui_textnumber(value, number_format);
+			);
+		);
+	ui_pop();
+	value;
+);
+function labels(label, value, number_format) (
+	labels(label, value, number_format, 0);
+);
+
+control_start("main", "bitmap-simple", 0);
+
+gfx_a = 0.21;
+g_scale = max(gfx_w/800, gfx_h/343);
+gfx_x = (gfx_w - 800*g_scale)*0.8;
+gfx_y = (gfx_h - 343*g_scale)*0.5;
+gfx_blit(1, g_scale, 0);
+gfx_a = 1;
+
+ui_screen() == "main" ? (
+	control_navbar("Cross-Polyphonic FM", "config", "synth.config");
+
+	ui_split_topratio(1/2);
+		ui_split_leftratio(4/5);
+			control_group("Envelope");
+			ui_split_leftratio(1/4);
+				labels("Attack", attack_ms, "%i ms");
+				attack_ms = control_dial(attack_ms, 0, 1000, 5, 3);
+			ui_split_next();
+				labels("Decay", decay_ms, "%i ms");
+				decay_ms = control_dial(decay_ms, 0, 1000, 5, 500);
+			ui_split_next();
+				labels("Sustain", floor(sustain_level*100 + 0.5), "%i%%");
+				sustain_level = control_dial(sustain_level, 0, 1, 0, 0.5);
+			ui_split_next();
+				labels("Release", release_ms, "%i ms");
+				release_ms = control_dial(release_ms, 0, 1000, 5, 10);
+			ui_pop();
+		ui_pop();
+
+		control_group("Velocity");
+		labels("Velocity", 0, "curve");
+		velocity_curve = control_dial(velocity_curve, 0, 2, 2, 0.5);
+	ui_split_next();
+		ui_split_leftratio(1/4);
+			control_background_technical();
+			ui_push();
+				ui_split_topratio(0.5);
+					ui_color(160, 128, 128);
+					ui_graph(g_buffer_dry, g_buffer_length, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
+				ui_split_next();
+					ui_color(160, 64, 128);
+					ui_graph(g_buffer_wet, g_buffer_length, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
+				ui_pop();
+				control_finish_technical();
+			ui_pop();
+			ui_color(255, 255, 255, 0.1);
+			ui_border();
+		ui_pop();
+
+		control_group("FM oscillators");
+		ui_split_leftratio(1/3);
+			labels("Depth", fm_depth, "");
+			fm_depth = control_dial(fm_depth, 0, 10, 0.3, 4);
+		ui_split_next();
+			labels("Octave", 0, "");
+			sprintf(#fm_transpose_octaves, fm_transpose_octaves > 0 ? "+%i" : "%i", fm_transpose_octaves);
+			fm_transpose_octaves = control_selector(fm_transpose_octaves, #fm_transpose_octaves, min(fm_transpose_octaves + 1, 5), max(fm_transpose_octaves - 1, -1));
+		ui_split_next();
+			fm_transpose_fine = labels("Fine-tune", fm_transpose_fine, "%.2f st", 1);
+			fm_transpose_fine = control_dial(fm_transpose_fine, -12, 12, 0, 0);
+		ui_pop();
+	ui_pop();
+) : synth_ui_system() || control_system();
+
+@serialize
+
+preset_version = 2;
+file_var(0, preset_version);
+
+synth_serialize(preset_version < 2);
