@@ -30,6 +30,8 @@ MAX_DELAY_SAMPLES = ceil(MAX_DELAY*srate);
 
 gfx_ext_retina = 1;
 
+srate = max(1000, srate);
+
 freemem = 0;
 freemem = ui_setup(freemem);
 freemem = delay0.delay_setup(freemem, MAX_DELAY_SAMPLES);
@@ -238,10 +240,10 @@ ui_screen() == "main" ? (
 			ui_push();
 				ui_split_topratio(0.5);
 					ui_color(160, 128, 128);
-					ui_graph_circular(g_buffer_dry, g_buffer_length, 1, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
+					ui_graph(g_buffer_dry, g_buffer_length, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
 				ui_split_next();
 					ui_color(160, 64, 128);
-					ui_graph_circular(g_buffer_wet, g_buffer_length, 1, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
+					ui_graph(g_buffer_wet, g_buffer_length, g_buffer_index, -g_buffer_scale*1.5, g_buffer_scale*1.5);
 				ui_pop();
 				control_finish_technical();
 			ui_pop();

@@ -44,6 +44,17 @@ function ui_vpadding() (
 	ui_padding_y();
 );
 
+function ui_graph(buffer, length, low, high) (
+	// New implementation chooses default step so it draws at most 4 points per pixel
+	ui_graph_step(buffer, length, 1, low, high);
+);
+function ui_graph_circular(buffer, length, step, offset, low, high) (
+	ui_graph_step(buffer, length, step, offset, length, low, high);
+);
+function ui_graph_circular(buffer, length, step, offset, modulo_length, low, high);
+	ui_graph_step(buffer, length, step, offset, modulo_length, low, high);
+);
+
 function control_hslider(value, range_low, range_high, curve_bias) (
 	control_slider_left(value, range_low, range_high, curve_bias);
 );
