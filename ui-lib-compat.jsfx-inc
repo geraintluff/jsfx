@@ -51,7 +51,7 @@ function ui_graph(buffer, length, low, high) (
 function ui_graph_circular(buffer, length, step, offset, low, high) (
 	ui_graph_step(buffer, length, step, offset, length, low, high);
 );
-function ui_graph_circular(buffer, length, step, offset, modulo_length, low, high);
+function ui_graph_circular(buffer, length, step, offset, modulo_length, low, high) (
 	ui_graph_step(buffer, length, step, offset, modulo_length, low, high);
 );
 
