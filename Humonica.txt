@@ -562,7 +562,7 @@ ui_screen() == "main" ? (
 
 	ui_split_bottomratio(0.15);
 		control_background_technical();
-		ui_graph_circular(kernelA0[1] !== 0 ? kernelA0 : kernelA1, window_samples, 1, -window_samples*0.5, kernel_length, 0.00000001, 0.00000001);
+		ui_graph(kernelA0[1] !== 0 ? kernelA0 : kernelA1, window_samples, -window_samples*0.5, kernel_length, 0.00000001, 0.00000001);
 		control_finish_technical();
 	ui_pop();
 
