@@ -118,6 +118,7 @@ gmem[0] === send_routing_id ? (
 		);
 		delay_ms_l += adjust_ms;
 		delay_ms_r += adjust_ms;
+		sliderchange(-1);
 
 		// Stop sending
 		gmem[0] = 0;
@@ -492,6 +493,7 @@ gmem[0] === send_routing_id ? (
 					phase_invert_l = !phase_invert_l;
 					phase_invert_r = !phase_invert_r;
 				);
+				sliderchange(-1);
 			);
 		) : (
 			amplitude_mode == 1  || (amplitude_mode !== 2 && delay_samples >= 0) ? (
@@ -506,6 +508,7 @@ gmem[0] === send_routing_id ? (
 				phase_invert_r = 0;
 			);
 			delay_linked = 0;
+			sliderchange(-1);
 		);
 	);
 
