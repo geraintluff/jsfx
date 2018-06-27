@@ -443,6 +443,10 @@ function synth_pitchbend() (
 	synthx_pitchbend;
 );
 
+function synth_pitchbend_semitones() (
+	synthx_pitchbend/8192*synthx_pitchbend_range;
+);
+
 function synth_attack(note*) (
 	note._synth.SAMPLES_FROM_ATTACK;
 );

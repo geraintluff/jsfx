@@ -123,7 +123,7 @@ function draw_roll_note(note*, g_w, g_h, pixels) local(left) (
 	synth_on(note) ? (
 		set_colour(note);
 		gfx_a = 0.6 + 0.4*exp(-synth_attack_seconds(note));
-		left = g_w*synth_midinote(note)/128 + 0.5;
+		left = g_w*(synth_midinote(note) + synth_pitchbend_semitones())/128 + 0.5;
 		gfx_rect(left, g_h - pixels, g_w/128, pixels);
 	);
 	synth_continue(note);
