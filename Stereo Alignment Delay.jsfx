@@ -413,10 +413,10 @@ gmem[0] === send_routing_id ? (
 		control_background_technical();
 		ui_split_topratio(0.5);
 			gfx_a = 0.5;
-			ui_graph_step(buffer0, buffer_length>>4, 16, 1, -1);
+			ui_graph(buffer0, buffer_length, buffer_index>>4, 1, -1);
 		ui_split_next();
 			gfx_a = 0.5;
-			ui_graph_step(buffer1, buffer_length>>4, 16, 1, -1);
+			ui_graph(buffer1, buffer_length, buffer_index>>4, 1, -1);
 		ui_pop();
 		control_finish_technical();
 	ui_pop();
