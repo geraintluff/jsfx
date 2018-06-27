@@ -32,7 +32,27 @@ release_samples = 0.01*srate;
 
 @block
 
+// synth framework boilerplate
+// Copies from pseudo-objects back to memory buffer
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
+// Processes events
 synth_block();
+// Copies from memory buffer to pseudo-objects
 synth_block_each(synth1)
 && synth_block_each(synth2)
 && synth_block_each(synth3)
@@ -52,12 +72,16 @@ synth_block_each(synth1)
 
 @sample
 
+synth_sample();
+
 function process_note(note*) (
 	synth_sample_each(note) ? (
 		synth_needs_init(note) ? (
+			// Custom note initialisation
 			note.phase = 0;
 		);
 
+		// Custom note processing
 		note.phase += synth_freq(note)/srate;
 
 		amp = 0.25;
@@ -74,6 +98,7 @@ function process_note(note*) (
 		spl0 += value*amp;
 		spl1 += value*amp;
 
+		// Make sure to terminate the notes if needed
 		synth_release(note) >= release_samples ? (
 			synth_stop(note);
 		);

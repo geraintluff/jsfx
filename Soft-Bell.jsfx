@@ -87,6 +87,23 @@ delay_samples = min(MAX_DELAY_SAMPLES, pdc_delay = synth_pdc_delay());
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
 
+// synth framework boilerplate
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
 synth_block();
 synth_block_each(synth1)
 && synth_block_each(synth2)
@@ -113,10 +130,12 @@ decay_factor = exp(-1/decay_samples);
 
 @sample
 
-left_delay.delay_input(spl0);
-right_delay.delay_input(spl1);
-spl0 = left_delay.delay_output_samples(delay_samples);
-spl1 = right_delay.delay_output_samples(delay_samples);
+delay_samples ? (
+	left_delay.delay_input(spl0);
+	right_delay.delay_input(spl1);
+	spl0 = left_delay.delay_output_samples(delay_samples);
+	spl1 = right_delay.delay_output_samples(delay_samples);
+);
 
 function tapered_curve(r) (
 	r*r*(3 - 2*r);
@@ -125,10 +144,6 @@ function tapered_curve(r) (
 function tapered_fade(r) (
 	r*r;
 );
-
-noise_left = (rand() - 0.5);
-noise_right = (rand() - 0.5);
-left = right = 0;
 
 function init_harmonic(harmonic*, freq, config*) local(slope_gain, resonance_wavelengths, resonance_samples, filter_freq) (
 	harmonic.phase = 0;
@@ -201,25 +216,32 @@ function process_note(note*) (
 	synth_continue(note);
 );
 
-process_note(synth1)
-&& process_note(synth2)
-&& process_note(synth3)
-&& process_note(synth4)
-&& process_note(synth5)
-&& process_note(synth6)
-&& process_note(synth7)
-&& process_note(synth8)
-&& process_note(synth9)
-&& process_note(synth10)
-&& process_note(synth11)
-&& process_note(synth12)
-&& process_note(synth13)
-&& process_note(synth14)
-&& process_note(synth15)
-&& process_note(synth16);
+synth_sample() ? (
+	noise_left = (rand() - 0.5);
+	noise_right = (rand() - 0.5);
+	left = right = 0;
 
-spl0 = output_wet*left + output_dry*spl0;
-spl1 = output_wet*right + output_dry*spl1;
+	process_note(synth1)
+	&& process_note(synth2)
+	&& process_note(synth3)
+	&& process_note(synth4)
+	&& process_note(synth5)
+	&& process_note(synth6)
+	&& process_note(synth7)
+	&& process_note(synth8)
+	&& process_note(synth9)
+	&& process_note(synth10)
+	&& process_note(synth11)
+	&& process_note(synth12)
+	&& process_note(synth13)
+	&& process_note(synth14)
+	&& process_note(synth15)
+	&& process_note(synth16);
+
+	spl0 = output_wet*left + output_dry*spl0;
+	spl1 = output_wet*right + output_dry*spl1;
+);
+
 
 @gfx 500 550
 

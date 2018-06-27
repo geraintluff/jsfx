@@ -97,6 +97,23 @@ pdc_bot_ch = 0;
 pdc_top_ch = 2;
 pdc_delay = input_delay_samples;
 
+// synth framework boilerplate
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
 synth_block();
 synth_block_each(synth1)
 && synth_block_each(synth2)
@@ -279,6 +296,8 @@ function process_note(note*) (
 	);
 	synth_continue(note);
 );
+
+synth_sample();
 
 process_note(synth1)
 && process_note(synth2)

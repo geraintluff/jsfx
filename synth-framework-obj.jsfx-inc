@@ -81,6 +81,12 @@ function synth_setup(freemem, custom_slots, max_polyphony) local(i) (
 	synthx_latest_note[2/*NOTE:BASE_FREQ_SLOPE*/] = 0;
 
 	freemem;
+
+	/*NOTE: ACTIVE, SAMPLES_FROM_RELEASE, SAMPLES_FROM_ATTACK, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, BASE_FREQ, VEL, CHANNEL, CUSTOM_INIT*/
+	// synth_preblock_each() and synth_block_each() need to have considered all of these
+	synthx_custom_offset !== 9 ? (
+		synthx.ERROR = uix_error = "synth framework error";
+	);
 );
 
 function synth_pdc_delay() (
@@ -323,23 +329,42 @@ function synth_block() local(midi_offset, midi_offset_delayed, midi_msg1, midi_m
 	synthx_max_active_note + 1;
 );
 
-function synth_block_each(note*) local() (
-	/*NOTE: ACTIVE, SAMPLES_FROM_RELEASE, SAMPLES_FROM_ATTACK, SAMPLES_FROM_SUSTAIN_RELEASE, NOTE, BASE_FREQ, VEL, CHANNEL, CUSTOM_INIT*/
-	synthx_custom_offset !== 9 ? (
-		synthx.ERROR = 1;
+function synth_preblock_each(note*) local() (
+	// We don't need to set _mem[4/*NOTE:ACTIVE*/], because synth_stop() does that
+	note._synth.ACTIVE ? (
+		note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/] = note._synth.SAMPLES_FROM_RELEASE;
+		note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/] = note._synth.SAMPLES_FROM_ATTACK;
+		note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] = note._synth.SAMPLES_FROM_SUSTAIN_RELEASE;
+		note._synth.mem[11/*NOTE:CUSTOM_INIT*/] = note._synth.CUSTOM_INIT;
 	);
 
-	note._synth.ACTIVE = note._synth.mem[4/*NOTE:ACTIVE*/];
-	note._synth.SAMPLES_FROM_RELEASE = note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/];
-	note._synth.SAMPLES_FROM_ATTACK = note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/];
-	note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/];
-	note._synth.NOTE = note._synth.mem[8/*NOTE:NOTE*/];
-	note._synth.BASE_FREQ = note._synth.mem[0/*NOTE:BASE_FREQ*/];
-	note._synth.BASE_FREQ_SLOPE = note._synth.mem[2/*NOTE:BASE_FREQ_SLOPE*/];
-	note._synth.PORTAMENTO_END_SAMPLE = note._synth.mem[1/*NOTE:PORTAMENTO_END_SAMPLE*/];
-	note._synth.VEL = note._synth.mem[10/*NOTE:VEL*/];
-	note._synth.CHANNEL = note._synth.mem[5/*NOTE:CHANNEL*/];
-	note._synth.CUSTOM_INIT = note._synth.mem[11/*NOTE:CUSTOM_INIT*/];
+	/* Not ever changed in @sample */
+	//note._synth.mem[8/*NOTE:NOTE*/] = note._synth.NOTE;
+	//note._synth.mem[0/*NOTE:BASE_FREQ*/] = note._synth.BASE_FREQ;
+	//note._synth.mem[2/*NOTE:BASE_FREQ_SLOPE*/] = note._synth.BASE_FREQ_SLOPE;
+	//note._synth.mem[1/*NOTE:PORTAMENTO_END_SAMPLE*/] = note._synth.PORTAMENTO_END_SAMPLE;
+	//note._synth.mem[10/*NOTE:VEL*/] = note._synth.VEL;
+	//note._synth.mem[5/*NOTE:CHANNEL*/] = note._synth.CHANNEL;
+
+	// TODO: does synth_continue(note) make this faster or slower here?
+	//synth_continue(note);
+	1;
+);
+
+function synth_block_each(note*) local() (
+	(note._synth.ACTIVE = note._synth.mem[4/*NOTE:ACTIVE*/]) ? (
+		note._synth.SAMPLES_FROM_RELEASE = note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/];
+		note._synth.SAMPLES_FROM_ATTACK = note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/];
+		note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/];
+		note._synth.NOTE = note._synth.mem[8/*NOTE:NOTE*/];
+		note._synth.BASE_FREQ = note._synth.mem[0/*NOTE:BASE_FREQ*/];
+		note._synth.BASE_FREQ_SLOPE = note._synth.mem[2/*NOTE:BASE_FREQ_SLOPE*/];
+		note._synth.PORTAMENTO_END_SAMPLE = note._synth.mem[1/*NOTE:PORTAMENTO_END_SAMPLE*/];
+		note._synth.VEL = note._synth.mem[10/*NOTE:VEL*/];
+		note._synth.CHANNEL = note._synth.mem[5/*NOTE:CHANNEL*/];
+		note._synth.CUSTOM_INIT = note._synth.mem[11/*NOTE:CUSTOM_INIT*/];
+	);
+	//synth_continue(note);
 	1;
 );
 
@@ -347,12 +372,16 @@ function synth_on(note*) (
 	note._synth.ACTIVE && note._synth.SAMPLES_FROM_ATTACK >= 0;
 );
 
+function synth_sample() (
+	synthx_max_active_note >= 0;
+);
+
 function synth_sample_each(note*) (
 	note._synth.ACTIVE ? (
-		note._synth.SAMPLES_FROM_ATTACK = (note._synth.mem[3/*NOTE:SAMPLES_FROM_ATTACK*/] += 1);
-		note._synth.SAMPLES_FROM_RELEASE = (note._synth.mem[6/*NOTE:SAMPLES_FROM_RELEASE*/] += 1);
+		note._synth.SAMPLES_FROM_ATTACK += 1;
+		note._synth.SAMPLES_FROM_RELEASE += 1;
 		note._synth.SAMPLES_FROM_RELEASE < 0 || synthx_controllers[64] < 64 ? (
-			note._synth.SAMPLES_FROM_SUSTAIN_RELEASE = (note._synth.mem[7/*NOTE:SAMPLES_FROM_SUSTAIN_RELEASE*/] += 1);
+			note._synth.SAMPLES_FROM_SUSTAIN_RELEASE += 1;
 		);
 		note._synth.SAMPLES_FROM_ATTACK >= 0
 	) : 0;
@@ -366,11 +395,12 @@ function synth_needs_init(note*) (
 	note._synth.CUSTOM_INIT ? (
 		0;
 	) : (
-		note._synth.CUSTOM_INIT = note._synth.mem[11/*NOTE:CUSTOM_INIT*/] = 1;
+		note._synth.CUSTOM_INIT = 1;
 	);
 );
 
 function synth_stop(note*) (
+	// This is the only one where we update the memory at the time, because it's called so rarely
 	note._synth.ACTIVE = note._synth.mem[4/*NOTE:ACTIVE*/] = 0;
 );
 

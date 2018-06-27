@@ -34,6 +34,22 @@ release_samples = 0.01*srate;
 
 @block
 
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
 synth_block();
 synth_block_each(synth1)
 && synth_block_each(synth2)
@@ -106,6 +122,7 @@ function draw_note(note*) (
 function draw_roll_note(note*, g_w, g_h, pixels) local(left) (
 	synth_on(note) ? (
 		set_colour(note);
+		gfx_a = 0.6 + 0.4*exp(-synth_attack_seconds(note));
 		left = g_w*synth_midinote(note)/128 + 0.5;
 		gfx_rect(left, g_h - pixels, g_w/128, pixels);
 	);
@@ -168,6 +185,7 @@ ui_screen() === "main" ? (
 	&& draw_roll_note(synth14, g_w, g_h, pixels)
 	&& draw_roll_note(synth15, g_w, g_h, pixels)
 	&& draw_roll_note(synth16, g_w, g_h, pixels);
+	gfx_a = 1;
 
 	gfx_dest = -1;
 	gfx_blit(PIANO_ROLL_SCREEN, 1, 0, 0, 0, g_w, g_h, ui_left(), ui_top());
