@@ -118,6 +118,7 @@ gmem[0] === send_routing_id ? (
 		);
 		delay_ms_l += adjust_ms;
 		delay_ms_r += adjust_ms;
+		sliderchange(-1);
 
 		// Stop sending
 		gmem[0] = 0;
