@@ -16,6 +16,7 @@ slider10:midi_input_channel=16<1,16,1>-MIDI side-channel
 slider11:midi_input_transpose=0<-24,24,1>-MIDI transpose
 
 import ui-lib.jsfx-inc
+import piano-ui.jsfx-inc
 
 @init
 
@@ -210,13 +211,16 @@ function moveToOffset(next_offset) local(i, partial_beat) (
 		// TODO: have a controller for "silence ms", and only reset after that much gap
 		beats = 0;
 	);
-	samples_elapsed = next_offset - current_offset;
-	beats += beats_per_sample*samples_elapsed;
 	sequence_index = floor(beats*sequence_interval)%sequence_length;
 	sequence_index != prev_sequence_index && fixed_sequence_enabled && !input_source ? (
 		partial_beat = beats*sequence_interval;
 		partial_beat = (partial_beat - floor(partial_beat))/sequence_interval;
-		current_offset = max(current_offset, floor(next_offset - partial_beat/beats_per_sample + 0.5));
+		next_offset = max(current_offset, floor(next_offset - partial_beat/beats_per_sample + 0.5));
+
+		samples_elapsed = next_offset - current_offset;
+		beats += beats_per_sample*samples_elapsed;
+		current_offset = next_offset;
+
 		i = 0;
 		while (i < 128) (
 			output_notes[i] ? (
@@ -227,6 +231,8 @@ function moveToOffset(next_offset) local(i, partial_beat) (
 		);
 		needs_recalculate = 1;
 	) : (
+		samples_elapsed = next_offset - current_offset;
+		beats += beats_per_sample*samples_elapsed;
 		current_offset = next_offset;
 	);
 	prev_sequence_index = sequence_index;
@@ -413,7 +419,12 @@ ui_screen() == "main" ? (
 			ui_split_leftratio(4/4);
 				control_group("Range");
 				ui_split_leftratio(1/4);
-					fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", "");
+					fixed_centre = labelled_dial(fixed_centre, 0, 127, 0, "Centre", piano_key_name(fixed_centre));
+					ui_click() && ui_clickcount() == 2 ? (
+						ui_screen_open("piano.select-key");
+						ui_screen_arg(0, "slider");
+						ui_screen_arg(1, 4); // 4th slider
+					);
 				ui_split_next();
 					fixed_range = labelled_dial(fixed_range, 1, 36, 1.4, "Range", "%i st");
 				ui_split_next();
@@ -469,7 +480,7 @@ ui_screen() == "main" ? (
 			ui_text("vel");
 		ui_pop();
 	);
-) : control_system();
+) : piano_screen() || control_system();
 
 @serialize
 

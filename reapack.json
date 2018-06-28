@@ -341,6 +341,9 @@
 				},
 				"MIDI Harmony.jsfx.rpl": {
 					"main": false
+				},
+				"piano-ui.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "1.0.3"
