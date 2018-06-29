@@ -18,7 +18,6 @@ slider10:chorus_alignment=0<0,1,1{independent,linked}>-chorus phase
 
 import ui-lib.jsfx-inc
 import delay-utils.jsfx-inc
-import smoother.jsfx-inc
 
 filename:0,themes/bitmap-simple/theme-cyan.png
 
@@ -99,10 +98,6 @@ function update() local(delay, chorus, chorusfactor) (
 	ampB = amp*min(1, feedbackRatio*1.1);
 );
 
-update();
-smoother_init(wet);
-smoother_init(dry);
-
 /*
 // Create an orthogonal matrix for the mixing
 coeff_a = 1;
@@ -168,21 +163,7 @@ filter_b1 = (1 - filter_cosW0)/filter_a0;
 filter_b0 = filter_b1/2;
 filter_b2 = filter_b0;
 
-smoothing = smoother_block(wet) + smoother_block(dry)
-	+ smoother_block(filter_a1) + smoother_block(filter_a2)
-	+ smoother_block(filter_b0) + smoother_block(filter_b1) + smoother_block(filter_b2);
-
 @sample
-
-smoothing ? (
-	smoother_sample(wet);
-	smoother_sample(dry);
-	smoother_sample(filter_a1);
-	smoother_sample(filter_a2);
-	smoother_sample(filter_b0);
-	smoother_sample(filter_b1);
-	smoother_sample(filter_b2);
-);
 
 chorus_alignment ? (
 	chorusphase1 += chorusphasespeed1;
@@ -255,21 +236,21 @@ right = (y2a - y2b + y4a - y4b)*0.71;
 // Filter
 
 x = left;
-left = smoother_value(filter_b0)*x + smoother_value(filter_b1)*filterLx1 + smoother_value(filter_b2)*filterLx2 - smoother_value(filter_a1)*filterLy1 - smoother_value(filter_a2)*filterLy2;
+left = filter_b0*x + filter_b1*filterLx1 + filter_b2*filterLx2 - filter_a1*filterLy1 - filter_a2*filterLy2;
 filterLx2 = filterLx1;
 filterLx1 = x;
 filterLy2 = filterLy1;
 filterLy1 = left;
 
 x = right;
-right = smoother_value(filter_b0)*x + smoother_value(filter_b1)*filterRx1 + smoother_value(filter_b2)*filterRx2 - smoother_value(filter_a1)*filterRy1 - smoother_value(filter_a2)*filterRy2;
+right = filter_b0*x + filter_b1*filterRx1 + filter_b2*filterRx2 - filter_a1*filterRy1 - filter_a2*filterRy2;
 filterRx2 = filterRx1;
 filterRx1 = x;
 filterRy2 = filterRy1;
 filterRy1 = right;
 
-spl0 = spl0*smoother_value(dry) + left*smoother_value(wet);
-spl1 = spl1*smoother_value(dry) + right*smoother_value(wet);
+spl0 = spl0*dry + left*wet;
+spl1 = spl1*dry + right*wet;
 
 writepos += 1;
 writepos >= buffersize ? writepos = 0;

@@ -81,6 +81,12 @@
 				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/delay-utils.jsfx-inc</source>
 				<source file="Bad-Connection/Bad Connection.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.2/Bad-Connection/Bad%20Connection.jsfx.rpl</source>
 			</version>
+			<version name="2.1.3" author="Geraint Luff" time="2018-06-29T20:51:56.413Z">
+				<source file="Bad-Connection/Bad Connection.jsfx">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.3/Bad-Connection/Bad%20Connection.jsfx</source>
+				<source file="Bad-Connection/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.3/Bad-Connection/ui-lib.jsfx-inc</source>
+				<source file="Bad-Connection/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.3/Bad-Connection/delay-utils.jsfx-inc</source>
+				<source file="Bad-Connection/Bad Connection.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Bad-Connection/2.1.3/Bad-Connection/Bad%20Connection.jsfx.rpl</source>
+			</version>
 		</reapack>
 		<reapack name="Sandwich Amp" type="effect">
 			<metadata>
@@ -435,6 +441,21 @@
 				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
 				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.4/Spring-Box/Spring-Box.jsfx.rpl</source>
 			</version>
+			<version name="1.1.5" author="Geraint Luff" time="2018-06-29T20:46:26.799Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.5/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.5/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.5/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.5/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.5/Spring-Box/Spring-Box.jsfx.rpl</source>
+			</version>
+			<version name="1.1.6" author="Geraint Luff" time="2018-06-29T21:35:42.447Z">
+				<source file="Spring-Box/Spring-Box.jsfx">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/Spring-Box.jsfx</source>
+				<source file="Spring-Box/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/ui-lib.jsfx-inc</source>
+				<source file="Spring-Box/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/delay-utils.jsfx-inc</source>
+				<source file="Spring-Box/themes/bitmap-simple/theme-cyan.png">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/themes/bitmap-simple/theme-cyan.png</source>
+				<source file="Spring-Box/Spring-Box.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/Spring-Box.jsfx.rpl</source>
+				<source file="Spring-Box/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Spring-Box/1.1.6/Spring-Box/smoother.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Stereo Alignment Delay" type="effect">
 			<metadata>
@@ -547,6 +568,15 @@
 				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/delay-utils.jsfx-inc</source>
 				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/filter-utils.jsfx-inc</source>
 				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.2/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
+			</version>
+			<version name="1.2.3" author="Geraint Luff" time="2018-06-29T22:18:09.540Z">
+				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/Echo-Cycles.jsfx</source>
+				<source file="Echo-Cycles/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/ui-lib.jsfx-inc</source>
+				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/delay-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/filter-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
+				<source file="Echo-Cycles/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/smoother.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Vibrato" type="effect">
@@ -688,6 +718,16 @@
 				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.8/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
 				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.8/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
 				<source file="Cross-Polyphonic-FM/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.8/Cross-Polyphonic-FM/synth-framework-obj-ui.jsfx-inc</source>
+			</version>
+			<version name="1.0.9" author="Geraint Luff" time="2018-06-29T21:35:50.763Z">
+				<source file="Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/Cross-Polyphonic-FM.jsfx</source>
+				<source file="Cross-Polyphonic-FM/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/ui-lib.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/delay-utils.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/synth-framework-obj.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/themes/bitmap-simple/theme-dark-orange.png</source>
+				<source file="Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/themes/backgrounds/sebastian-pociecha-451575-unsplash.png</source>
+				<source file="Cross-Polyphonic-FM/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/synth-framework-obj-ui.jsfx-inc</source>
+				<source file="Cross-Polyphonic-FM/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/smoother.jsfx-inc</source>
 			</version>
 		</reapack>
 	</category>
@@ -1261,6 +1301,15 @@
 				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.4/Humonica/filter-utils.jsfx-inc</source>
 				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.4/Humonica/Humonica.jsfx.rpl</source>
 				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.4/Humonica/synth-framework-obj-ui.jsfx-inc</source>
+			</version>
+			<version name="2.1.5" author="Geraint Luff" time="2018-06-29T22:37:32.269Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/synth-framework-obj.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/Humonica.jsfx.rpl</source>
+				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/synth-framework-obj-ui.jsfx-inc</source>
+				<source file="Humonica/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/2.1.5/Humonica/smoother.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Soft-Bell" type="effect">

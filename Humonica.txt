@@ -27,6 +27,7 @@ import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
 import synth-framework-obj-ui.jsfx-inc
 import filter-utils.jsfx-inc
+import smoother.jsfx-inc
 
 @init
 gfx_ext_retina = 1;
@@ -87,10 +88,13 @@ freemem = filter_buffer_init(filter_right = freemem);
 freemem = filter_buffer_init(freq_factor_filter = freemem);
 filter_buffer_highpass(freq_factor_filter, 3, 1.5);
 
+smoother_init(timbre_shift_semitones);
+smoother_init(stereo_width);
+
 @slider
 
 function check_for_old_presets() (
-	// Catch presets from before v2
+	// Catch presets from before v2 (we didn't have preset_version before this)
 	// We deliberately changed how the crossover slider is stored so that we could do this
 	crossover_ratio >= 40 ? (
 		// Older versions stored a "crossover_percent" value, so we convert
@@ -110,6 +114,9 @@ function check_for_old_presets() (
 check_for_old_presets();
 
 @block
+
+smoothing = smoother_block(timbre_shift_semitones)
+	+ smoother_block(stereo_width);
 
 crossover_percent = 100 - 50/crossover_ratio;
 
@@ -142,8 +149,9 @@ old_fft_size !== fft_size ? (
 	);
 	!high_half_bitmask ? ui_error("Something has changed with the FFT implementation\n\nThis is a BIG PROBLEM.\n\nPlease contact luffgd@gmail.com to get it fixed");
 );
+
 abs(timbre_shift_semitones) > 0.1 ? (
-	timbre_shift_factor = pow(2, timbre_shift_semitones/12);
+	timbre_shift_factor = pow(2, smoother_value(timbre_shift_semitones)/12);
 ) : (
 	timbre_shift_factor = 1;
 );
@@ -151,6 +159,23 @@ abs(timbre_shift_semitones) > 0.1 ? (
 input_buffer0[input_index] = 0;
 input_buffer1[input_index] = 0;
 
+// synth framework boilerplate
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
 any_notes_active = synth_block();
 synth_block_each(synth1)
 && synth_block_each(synth2)
@@ -219,6 +244,17 @@ half_kernel_length = kernel_length >> 1;
 half_kernel_length_minus_one = half_kernel_length - 1;
 
 @sample
+
+smoothing ? (
+	smoother_sample(timbre_shift_semitones);
+	smoother_sample(stereo_width);
+
+	abs(timbre_shift_semitones) > 0.1 ? (
+		timbre_shift_factor = pow(2, smoother_value(timbre_shift_semitones)/12);
+	) : (
+		timbre_shift_factor = 1;
+	);
+);
 
 function smooth_fade(phase) (
 	phase*phase*(3 - 2*phase);
@@ -515,7 +551,7 @@ spl0 = filter_buffer_sample(filter_left, spl0);
 spl1 = filter_buffer_sample(filter_right, spl1);
 
 splm = (spl0 + spl1)*0.5;
-spls = (spl0 - spl1)*0.5*stereo_width;
+spls = (spl0 - spl1)*0.5*smoother_value(stereo_width);
 
 spl0 = splm + spls;
 spl1 = splm - spls;
@@ -585,11 +621,11 @@ ui_screen() == "main" ? (
 			control_group("Timbre");
 			ui_pad(-1, 0);
 			ui_split_leftratio(1/3);
-				timbre_shift_semitones = labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0);
+				ui_automate(timbre_shift_semitones, labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0));
 			ui_split_next();
-				timbre_shift_tracking = labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "(relative to\nmiddle C)", 0);
+				ui_automate(timbre_shift_tracking, labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "(relative to\nmiddle C)", 0));
 			ui_split_next();
-				lowpass_freq_khz = labelled_dial(lowpass_freq_khz, 1, 20, 2, "Filter", "%.f kHz", 8);
+				ui_automate(lowpass_freq_khz, labelled_dial(lowpass_freq_khz, 1, 20, 2, "Filter", "%.f kHz", 8));
 			ui_pop();
 		ui_pop();
 	ui_pop();
@@ -597,9 +633,9 @@ ui_screen() == "main" ? (
 	ui_split_leftratio(2/8);
 		control_group("Stereo");
 		ui_split_leftratio(1/2);
-			lr_detune_cents = labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3);
+			ui_automate(lr_detune_cents, labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3));
 		ui_split_next();
-			stereo_width = labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5);
+			ui_automate(stereo_width, labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5));
 		ui_pop();
 	ui_pop();
 
@@ -609,13 +645,13 @@ ui_screen() == "main" ? (
 			vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
 		ui_split_next();
 			vib_mode ? (
-				vib_lfo_scale_cents = labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 5);
+				ui_automate(vib_lfo_scale_cents, labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 5));
 			) : (
 				vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Tracking", "strength", 0));
 			);
 		ui_split_next();
 			vib_mode ? (
-				vib_lfo_hz = labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4.7);
+				ui_automate(vib_lfo_hz, labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4.7));
 			) : (
 				tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit", 0);
 			);
