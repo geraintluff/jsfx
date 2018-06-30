@@ -1,0 +1,104 @@
+desc:Ripple Phaser (by Geraint Luff)
+
+in_pin:Left
+in_pin:Right
+out_pin:Left
+out_pin:Right
+
+slider1:bands_N=1<1,20,1>Number of bands
+slider2:low_freq=0<100,2000>Low freq
+slider3:high_freq=0<1000,18000>High freq
+slider4:cycle_phase_offset=0.5<0,1>Phase Offset
+slider5:cycle_phase_lfo_hz=1<-10,10>Phase LFO (hz)
+slider6:cycle_phase_invbeat=0<-4,4,0.5>Phase LFO (/beat)
+
+import ui-lib.jsfx-inc
+import filter-utils.jsfx-inc
+
+@init
+
+MAX_BANDS_N = 20;
+
+freemem = ui_setup(0);
+freemem = (filter_mem = freemem) + filter_buffer_size()*MAX_BANDS_N;
+
+cycle_phase_beat = beat_position*cycle_phase_invbeat;
+cycle_phase_beat -= floor(cycle_phase_beat);
+cycle_phase_lfo = play_position*cycle_phase_lfo_hz;
+cycle_phase_lfo -= floor(cycle_phase_lfo);
+
+function calculate_filters() (
+);
+
+@block
+
+secondsblock = samplesblock/srate;
+
+cycle_phase_beat_blockdelta = cycle_phase_invbeat*secondsblock*tempo/60;
+cycle_phase_lfo_blockdelta = secondsblock*cycle_phase_lfo_hz;
+
+// If we're playing
+play_state > 0 && play_state != 6 ? (
+	// Difference between expectation and actual beat position, modulo 1 (within 0.5 beats)
+	cycle_phase_beat_correction = beat_position*cycle_phase_invbeat - cycle_phase_beat;
+	cycle_phase_beat_correction -= floor(cycle_phase_beat_correction + 0.5) - 0.5;
+	// Make up for the difference during this block
+	cycle_phase_beat_blockdelta += cycle_phase_beat_correction;
+);
+
+// Current phase (modulo 1) and per-sample step
+cycle_phase = cycle_phase_lfo + cycle_phase_beat + cycle_phase_offset;
+cycle_phase -= floor(cycle_phase);
+cycle_phase_next_block = cycle_phase + cycle_phase_lfo_blockdelta + cycle_phase_beat_blockdelta;
+
+cycle_phase_step = (cycle_phase_lfo_blockdelta + cycle_phase_beat_blockdelta)/samplesblock;
+
+// How far in the future these values are now
+samples_to_next_block = samplesblock
+
+cycle_phase_beat += cycle_phase_beat_blockdelta;
+cycle_phase_beat -= floor(cycle_phase_beat);
+cycle_phase_lfo += cycle_phase_lfo_blockdelta;
+cycle_phase_lfo -= floor(cycle_phase_lfo);
+
+calculate_filters();
+
+cycle_phase_lfo
+
+	cycle_phase_beat = beat_position;
+);
+
+
+@sample
+
+cycle_phase_lfo += cycle_phase_lfo_increment;
+cycle_phase_lfo -= floor(cycle_phase_lfo);
+
+@gfx 510 660
+
+control_start("main", "tron");
+
+ui_screen() == "main" ? (
+	ui_split_bottom(150);
+		ui_split_rightratio(3/6);
+			control_group("bands");
+			ui_split_leftratio(1/3);
+				sprintf(#bands_N, "%i", bands_N);
+				bands_N = control_selector(bands_N, #bands_N, min(MAX_BANDS_N, bands_N + 1), max(1, bands_N - 1));
+			ui_split_next();
+			ui_split_next();
+			ui_pop();
+		ui_pop();
+
+		control_group("LFO");
+		ui_split_leftratio(1/3);
+		ui_split_next();
+		ui_split_next();
+		ui_pop();
+	ui_pop();
+) : control_system();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);

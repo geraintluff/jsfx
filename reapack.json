@@ -555,6 +555,21 @@
 				}
 			},
 			"version": "1.0.1"
+		},
+		"Ripple": {
+			"type": "effect",
+			"category": "Delay",
+			"files": {
+				"Ripple.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"filter-utils.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

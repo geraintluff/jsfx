@@ -306,6 +306,7 @@
 			<metadata>
 				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Panalysis.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Panalysis\b}\line\line This effect draws the incoming audio on a 2D plot, so you can visualise the stereo field.  You can also alter the width/pan using the controls.\line\line {\par \bullet\tab Centre-panned (mono) sounds will draw vertically\line \bullet\tab Left-panned sounds will draw angled to the left, right-panned will draw to the right\line \bullet\tab If the L+R channels are independent, the graph will have no defined clear direction (may appear round)\line }\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Panalysis.png&quot;}}{\fldrslt screenshot}}\line\line It&apos;s possible to rotate the field such that hard-left or hard-right inputs will output &quot;inside out&quot; (opposite phase in both output channels).  In this case, the Width dial will turn red - double-click the dial to reset it to the maximum &quot;safe&quot; width:\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Panalysis-too-wide.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Panalysis%20polar.png</link>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Panalysis-polar.png</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Panalysis-too-wide.png</link>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Panalysis.png</link>
 				<link rel="presets">https://geraintluff.github.io/jsfx/Panalysis.jsfx.rpl</link>
@@ -1616,6 +1617,10 @@
 	</category>
 	<category name="Misc">
 		<reapack name="MIDI Controller Control" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
+		<reapack name="Ripple" type="effect">
 			<metadata>
 			</metadata>
 		</reapack>
