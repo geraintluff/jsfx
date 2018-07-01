@@ -2400,22 +2400,23 @@ function control_dial(value, range_low, range_high) (
 	control_dial(value, range_low, range_high, 0);
 );
 
-function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius, x1, x2, y1, y2) (
+function uix_control_dial_angle(angle, isUnit) local(display_angle, radius, centrex, centrey, inner_radius, x1, x2, y1, y2) (
 	radius = min(min(ui_width_retina(), ui_height_retina())/2 - 1, 30*uix_drawconfig_current[9/*uix_DRAWCONFIG:RETINA_SCALING*/]);
 	centrex = (ui_left_retina() + radius) + (ui_width_retina() - radius*2 - 1)*ui_halign();
 	centrey = (ui_top_retina() + radius) + (ui_height_retina() - radius*2 - 1)*ui_valign();
 
+	display_angle = isUnit ? 2*$pi*angle : angle;
 	uix_control_theme == 3/*uix_THEME:BITMAP_SIMPLE*/ ? (
 		gfx_blit(uix_control_theme_buffer, 1, 0, 980, 20, 120, 120, centrex - radius + 0.5, centrey - radius + 0.5, radius*2, radius*2);
-		gfx_blit(uix_control_theme_buffer, 1, angle, 980, 200, 120, 120, centrex - radius + 0.5, centrey - radius + 0.5, radius*2, radius*2);
+		gfx_blit(uix_control_theme_buffer, 1, display_angle, 980, 200, 120, 120, centrex - radius + 0.5, centrey - radius + 0.5, radius*2, radius*2);
 	) : (
 		inner_radius = radius - 4;
 		uix_control_background_enabled_circle(centrex, centrey, radius, "none");
 
-		x1 = centrex + sin(angle)*inner_radius*0.5;
-		y1 = centrey - cos(angle)*inner_radius*0.5;
-		x2 = centrex + sin(angle)*inner_radius;
-		y2 = centrey - cos(angle)*inner_radius;
+		x1 = centrex + sin(display_angle)*inner_radius*0.5;
+		y1 = centrey - cos(display_angle)*inner_radius*0.5;
+		x2 = centrex + sin(display_angle)*inner_radius;
+		y2 = centrey - cos(display_angle)*inner_radius;
 		uix_thick_line(x1, y1, x2, y2);
 
 		ui_pad(5, 5);
@@ -2423,13 +2424,31 @@ function control_dial_angle(angle) local(radius, centrex, centrey, inner_radius,
 		uix_control_finish_enabled_circle(centrex, centrey, radius, 0);
 	);
 
-	angle = uix_control_dragvalue(angle, -0.1, 2*$pi + 0.1, 0);
-	angle < 0 ? angle += 2*$pi;
-	angle >= 2*$pi ? angle -= 2*$pi;
+	isUnit ? (
+		angle = uix_control_dragvalue(angle, -0.03, 1.03, 0);
+		angle -= floor(angle);
+	) : (
+		angle = uix_control_dragvalue(angle, -0.1, 2*$pi + 0.1, 0);
+		angle < 0 ? angle += 2*$pi;
+		angle >= 2*$pi ? angle -= 2*$pi;
+	);
 	angle;
+);
+function control_dial_angle(angle) (
+	uix_control_dial_angle(angle, 0);
 );
 function control_dial_angle(angle, default) (
 	angle = control_dial_angle(angle);
+	ui_click() && ui_clickcount() == 2 ? (
+		angle = default;
+	);
+	angle;
+);
+function control_dial_angle_unit(angle) (
+	angle = uix_control_dial_angle(angle, 1);
+);
+function control_dial_angle_unit(angle, default) (
+	angle = uix_control_dial_angle(angle, 1);
 	ui_click() && ui_clickcount() == 2 ? (
 		angle = default;
 	);

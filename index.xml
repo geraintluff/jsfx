@@ -759,6 +759,10 @@
 				<source file="Cross-Polyphonic-FM/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Cross-Polyphonic-FM/1.0.9/Cross-Polyphonic-FM/smoother.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Ripple" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 	<category name="Synth">
 		<reapack name="PadSynth" type="effect">
@@ -1617,10 +1621,6 @@
 	</category>
 	<category name="Misc">
 		<reapack name="MIDI Controller Control" type="effect">
-			<metadata>
-			</metadata>
-		</reapack>
-		<reapack name="Ripple" type="effect">
 			<metadata>
 			</metadata>
 		</reapack>

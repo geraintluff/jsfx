@@ -6,19 +6,21 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:band_count=6<2,20,1>Number of bands
-slider2:low_freq=200<30,2000>Low freq
-slider3:high_freq=6000<1000,18000>High freq
-slider4:cycle_phase_offset=0.5<0,1>Phase Offset
-slider5:cycle_phase_stereo_offset=0.15<-0.5,0.5>Stereo Offset
-slider6:cycle_phase_lfo_hz=0<-10,10>Phase LFO (hz)
-slider7:cycle_phase_invbeat=0.5<-4,4,0.5>Phase LFO (/beat)
-slider8:filter_mode=0<0,1,1{cut,boost}>Filter type
-slider9:filter_db=60<0,60,0.1>Filter strength (dB)
-slider10:filter_width_factor=0.3<0.01,0.7>Filter width
+slider1:control_band_count=4<2,20,1>-Number of bands
+slider2:low_freq=100<30,2000>-Low freq
+slider3:high_freq=12000<1000,20000>-High freq
+slider4:cycle_phase_offset=0<0,1>-Phase Offset
+slider5:cycle_phase_stereo_offset=0<-0.5,0.5>-Stereo Offset
+slider6:cycle_phase_lfo_hz=0<-10,10>-Phase LFO (hz)
+slider7:cycle_phase_invbeat=0.5<-4,4,0.5>-Phase LFO (/beat)
+slider8:control_filter_mode=0<0,1,1{notch,peak}>-Filter type
+slider9:filter_db=60<0,60,0.1>-Filter strength (dB)
+slider10:filter_width_factor=0.7<0.01,0.7>-Filter width
+slider11:output_gain_db=0<-12,6>-Output (db)
 
 import ui-lib.jsfx-inc
 import filter-utils.jsfx-inc
+import frequency-graph.jsfx-inc
 
 @init
 
@@ -43,7 +45,7 @@ function filters_from_mem(bands) (
 	actual_band_count = bands;
 );
 
-function gain_window(x) (
+function gain_window_tapered(x) (
 	0.5 - 0.5*cos(x*2*$pi);
 );
 
@@ -95,10 +97,11 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 		) : (
 			freq = low_freq*exp(log(high_freq/low_freq)*(i + future_phase)/band_count);
 			filter_mode == 1 ? (
-				gain = pow(10, 0.5*filter_db*gain_window((i + future_phase)/band_count)/20);
+				gain = pow(10, 0.5*filter_db/20);
+				gain = 1 + (gain - 1)*gain_window_tapered((i + future_phase)/band_count);
 				target_filter.filter_band(freq, gain, bw);
 			) : (
-				gain = pow(10, -filter_db*gain_window((i + future_phase)/band_count)/20);
+				gain = pow(10, -filter_db*gain_window_tapered((i + future_phase)/band_count)/20);
 				target_filter.filter_notch(freq, bw, gain);
 			);
 		);
@@ -120,6 +123,20 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 	);
 
 	filters_from_mem(actual_band_count);
+);
+
+function clear_filters(filter_mem) local(i, filter_mem_i) (
+	memset(filter_mem_l, 0, MAX_BAND_COUNT*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/);
+	memset(filter_mem_r, 0, MAX_BAND_COUNT*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/);
+
+	i = 0;
+	loop(MAX_BAND_COUNT,
+		filter_mem_i = filter_mem_l + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
+		filter_mem_i[2/*FILTER:B0*/] = 1;
+		filter_mem_i = filter_mem_r + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
+		filter_mem_i[2/*FILTER:B0*/] = 1;
+		i += 1;
+	);
 );
 
 function step_filters(filter_mem) local(i, filter_mem_i) (
@@ -229,17 +246,43 @@ cycle_phase_offset_prev = cycle_phase_offset;
 samples_to_next_block = 0;
 cycle_phase_step = 0;
 
-function calculate_filters_stereo() (
-	cycle_phase_left = cycle_phase - cycle_phase_stereo_offset*0.5;
-	cycle_phase_left -= floor(cycle_phase_left);
+function calculate_filters_stereo() local(new_phase) (
+	new_phase = cycle_phase - cycle_phase_stereo_offset*0.5;
+	cycle_phase_left = new_phase + floor(cycle_phase_left - new_phase + 0.5);
 	calculate_filters(filter_mem_l, cycle_phase_left);
-	cycle_phase_right = cycle_phase + cycle_phase_stereo_offset*0.5;
-	cycle_phase_right -= floor(cycle_phase_right);
+	new_phase = cycle_phase + cycle_phase_stereo_offset*0.5;
+	cycle_phase_right = new_phase + floor(cycle_phase_right - new_phase + 0.5);
 	calculate_filters(filter_mem_r, cycle_phase_right);
 );
 calculate_filters_stereo();
 
+output_gain = pow(10, output_gain_db/20);
+output_gain_step = 0;
+
+gain = (control_band_count == band_count && control_filter_mode == filter_mode) ? 1 : 0;
+gain_step = 0;
+gain_step_max = 1/(0.05*srate);
+
 @block
+
+output_gain_step = (pow(10, output_gain_db/20) - output_gain)/samplesblock;
+
+control_band_count == band_count && control_filter_mode == filter_mode ? (
+	gain_step = max(-gain_step_max, min(gain_step_max, (1 - gain)/samplesblock));
+) : (
+	gain < 0.01 ? (
+		band_count = control_band_count;
+		filter_mode = control_filter_mode;
+		gain_step = max(-gain_step_max, min(gain_step_max, (1 - gain)/samplesblock));
+
+		clear_filters();
+		samples_to_next_block = 0;
+		cycle_phase_step = 0;
+		calculate_filters_stereo();
+	) : (
+		gain_step = max(-gain_step_max, min(gain_step_max, -gain/samplesblock));
+	);
+);
 
 secondsblock = samplesblock/srate;
 
@@ -286,6 +329,7 @@ phase_logger_index >= phase_logger_length ? (
 beat_position_next_block = beat_position + beat_blockdelta;
 cycle_phase_offset_prev = cycle_phase_offset;
 cycle_phase += cycle_phase_blockdelta;
+cycle_phase -= floor(cycle_phase);
 
 @sample
 
@@ -309,14 +353,14 @@ function filter(x0, filter_mem) local(i, y0, filter_mem_i) (
 	x0;
 );
 
-spl0 = filter(spl0, filter_mem_l);
-spl1 = filter(spl1, filter_mem_r);
+spl0 = filter(spl0*gain, filter_mem_l);
+spl1 = filter(spl1*gain, filter_mem_r);
 
 step_filters(filter_mem_l);
 step_filters(filter_mem_r);
 
 cycle_phase_left += cycle_phase_step;
-while (cycle_phase_left >= 1) (
+while (cycle_phase_left > 1) (
 	cycle_phase_left -= 1;
 	shift_filters_down(filter_mem_l);
 	calculate_filters(filter_mem_l, cycle_phase_left);
@@ -327,7 +371,7 @@ while (cycle_phase_left < 0) (
 	calculate_filters(filter_mem_l, cycle_phase_left);
 );
 cycle_phase_right += cycle_phase_step;
-while (cycle_phase_right >= 1) (
+while (cycle_phase_right > 1) (
 	cycle_phase_right -= 1;
 	shift_filters_down(filter_mem_r);
 	calculate_filters(filter_mem_r, cycle_phase_right);
@@ -338,55 +382,124 @@ while (cycle_phase_right < 0) (
 	calculate_filters(filter_mem_r, cycle_phase_right);
 );
 
+spl0 *= gain*output_gain;
+spl1 *= gain*output_gain;
+gain += gain_step;
+output_gain += output_gain_step;
+
 samples_to_next_block -= 1;
 
-@gfx 510 660
+@gfx 600 440
+
+function labels(label, value, number_format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value, number_format);
+		);
+	ui_pop();
+);
+function labels(label) local(h) (
+	labels(label, 0, "");
+);
 
 control_start("main", "tron");
 
 ui_screen() == "main" ? (
-	ui_split_bottom(200);
+	ui_split_bottom(250);
 		ui_split_topratio(0.5);
-			ui_split_rightratio(3/6);
-				control_group("filters");
-			ui_pop();
-		ui_split_next();
-			ui_split_rightratio(3/6);
-				control_group("bands");
+			ui_split_leftratio(3/6);
+				control_group("Filters");
 				ui_split_leftratio(1/3);
-					sprintf(#band_count, "%i", band_count);
-					band_count = control_selector(band_count, #band_count, min(MAX_BAND_COUNT, band_count + 1), max(1, band_count - 1));
+					labels("Type", 0, filter_mode == 1 ? "peak" : "notch");
+					control_filter_mode = control_switch(control_filter_mode);
 				ui_split_next();
+					labels("Strength");
+					ui_automate(filter_db, control_dial(filter_db, 0, 60, 1, 40));
 				ui_split_next();
+					labels("Focus");
+					ui_automate(filter_width_factor, control_dial(filter_width_factor, 0.7, 0.01, -2, 0.5));
 				ui_pop();
 			ui_pop();
 
 			control_group("LFO");
 			ui_split_leftratio(1/3);
+				labels("Freq", cycle_phase_lfo_hz, cycle_phase_lfo_hz >= 1 ? "%.1f Hz" : "%.2f Hz");
+				ui_automate(cycle_phase_lfo_hz, control_dial(cycle_phase_lfo_hz, -10, 10, 0, 0));
 			ui_split_next();
+				labels("Tempo", cycle_phase_invbeat, "%.1f / beat");
+				cycle_phase_invbeat != floor(cycle_phase_invbeat_float*2 + 0.5)*0.5 ? (
+					cycle_phase_invbeat_float = cycle_phase_invbeat;
+				);
+				cycle_phase_invbeat_float = control_dial(cycle_phase_invbeat_float, -4, 4, 0, 0);
+				ui_automate(cycle_phase_invbeat, floor(cycle_phase_invbeat_float*2 + 0.5)*0.5);
 			ui_split_next();
 				control_background_technical();
 				ui_graph(phase_logger_buffer, phase_logger_length, phase_logger_index, 0, 1);
 				control_finish_technical();
+			ui_pop();
+		ui_split_next();
+			ui_split_leftratio(3/6);
+				control_group("Bands");
+				ui_split_leftratio(1/3);
+					labels("Count", control_band_count, "%i filters");
+					control_band_count != floor(control_band_count_float + 0.5) ? (
+						control_band_count_float = control_band_count;
+					);
+					control_band_count_float = control_dial(control_band_count_float, 1.6, 20.4, 2, 6);
+					ui_automate(control_band_count, floor(control_band_count_float + 0.5));
+				ui_split_next();
+					labels("Low", low_freq, "%i Hz");
+					ui_automate(low_freq, min(high_freq*0.5, control_dial(low_freq, 20, 2000, 5, 100)));
+				ui_split_next();
+					labels("High", high_freq, "%i Hz");
+					ui_automate(high_freq, max(low_freq*2, control_dial(high_freq, 1000, 20000, 5, 12000)));
+				ui_pop();
+			ui_pop();
+
+			ui_split_leftratio(2/3);
+				control_group("Phase");
+				ui_split_leftratio(1/2);
+					labels("Offset");
+					ui_automate(cycle_phase_offset, control_dial_angle_unit(cycle_phase_offset, 0));
+				ui_split_next();
+					labels("Stereo");
+					ui_automate(cycle_phase_stereo_offset, control_dial(cycle_phase_stereo_offset, -0.5, 0.5, 0, 0));
+				ui_pop();
+			ui_pop();
+
+			ui_split_leftratio(1/1);
+				control_group("Output");
+				labels("Gain", output_gain_db, "%1.fdB");
+				ui_automate(output_gain_db, control_dial(output_gain_db, -12, 6, -1.4, 0));
 			ui_pop();
 		ui_pop();
 	ui_pop();
 
 	control_background_technical();
 
+	plot.frequency_graph_init(20, 18000, -20, 20);
+	plot.frequency_graph_grid();
+
+	ui_color(256, 192, 64, 0.8);
 	g_i = 0;
 	loop(g_buffer_length,
 		g_freq = 20*exp(log(18000/20)*g_i/g_buffer_length);
-		g_buffer[g_i] = log(correction_amp(filter_mem_l, g_freq))*20/log(10);
+		g_buffer[g_i] = log(correction_amp(filter_mem_l, g_freq))*20/log(10) + output_gain_db;
 		g_i += 1;
 	);
 	ui_graph(g_buffer, g_buffer_length, -20, 20);
 
-	ui_color(96, 192, 256, 0.6);
+	ui_color(96, 192, 256, 1);
 	g_i = 0;
 	loop(g_buffer_length,
 		g_freq = 20*exp(log(18000/20)*g_i/g_buffer_length);
-		g_buffer[g_i] = log(correction_amp(filter_mem_r, g_freq))*20/log(10);
+		g_buffer[g_i] = log(correction_amp(filter_mem_r, g_freq))*20/log(10) + output_gain_db;
 		g_i += 1;
 	);
 	ui_graph(g_buffer, g_buffer_length, -20, 20);

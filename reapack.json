@@ -568,6 +568,9 @@
 				},
 				"filter-utils.jsfx-inc": {
 					"main": false
+				},
+				"frequency-graph.jsfx-inc": {
+					"main": false
 				}
 			}
 		}
