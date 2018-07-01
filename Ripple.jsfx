@@ -12,7 +12,7 @@ slider3:high_freq=6000<1000,18000>High freq
 slider4:cycle_phase_offset=0.5<0,1>Phase Offset
 slider5:cycle_phase_lfo_hz=0<-10,10>Phase LFO (hz)
 slider6:cycle_phase_invbeat=0.5<-4,4,0.5>Phase LFO (/beat)
-slider7:filter_mode=0<0,1,1{cut, boost}>Filter type
+slider7:filter_mode=0<0,1,1{cut, boost}>-Filter type
 slider8:filter_db=12<0,60,0.1>Filter strength (dB)
 slider9:filter_width_factor=0.3<0.01,0.7>Filter width
 slider10:filter_restoration=1<0,2>Filter compensation
@@ -25,7 +25,7 @@ import filter-utils.jsfx-inc
 MAX_BAND_COUNT = 20 + 5;
 
 freemem = ui_setup(0);
-freemem = (filter_mem = freemem) + 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/*MAX_BAND_COUNT;
+freemem = (filter_mem = freemem) + 18*MAX_BAND_COUNT;
 
 phase_logger_length = ceil(srate*1/(samplesblock ? samplesblock : 256));
 freemem = (phase_logger_buffer = freemem) + phase_logger_length;
