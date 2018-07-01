@@ -27,8 +27,8 @@ import frequency-graph.jsfx-inc
 MAX_BAND_COUNT = 20 + 5;
 
 freemem = ui_setup(0);
-freemem = (filter_mem_l = freemem) + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*MAX_BAND_COUNT;
-freemem = (filter_mem_r = freemem) + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*MAX_BAND_COUNT;
+freemem = (filter_mem_l = freemem) + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/*MAX_BAND_COUNT;
+freemem = (filter_mem_r = freemem) + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/*MAX_BAND_COUNT;
 
 phase_logger_length = ceil(srate*1/(samplesblock ? samplesblock : 256));
 freemem = (phase_logger_buffer = freemem) + phase_logger_length;
@@ -36,22 +36,199 @@ freemem = (phase_logger_buffer = freemem) + phase_logger_length;
 g_buffer_length = 1024;
 freemem = (g_buffer = freemem) + g_buffer_length;
 
-function filters_to_mem() (
-	0;
+function single_filter_to_mem(mem_i, filter*) (
+	mem_i[0/*FILTER:A1*/] = filter.a1;
+	mem_i[1/*FILTER:A1_STEP*/] = filter.a1_step;
+	mem_i[2/*FILTER:A2*/] = filter.a2;
+	mem_i[3/*FILTER:A2_STEP*/] = filter.a2_step;
+	mem_i[4/*FILTER:B0*/] = filter.b0;
+	mem_i[5/*FILTER:B0_STEP*/] = filter.b0_step;
+	mem_i[6/*FILTER:B1*/] = filter.b1;
+	mem_i[7/*FILTER:B1_STEP*/] = filter.b1_step;
+	mem_i[8/*FILTER:B2*/] = filter.b2;
+	mem_i[9/*FILTER:B2_STEP*/] = filter.b2_step;
+	mem_i[10/*FILTER:X1*/] = filter.x1;
+	mem_i[11/*FILTER:X2*/] = filter.x2;
+	mem_i[12/*FILTER:Y1*/] = filter.y1;
+	mem_i[13/*FILTER:Y2*/] = filter.y2;
 );
 
-function filters_from_mem(bands) (
-	// Eventually, this will unpack into fixed filters
-	actual_band_count = bands;
+function filters_to_mem(mem, bank*) local(mem_i) (
+	mem_i = mem;
+	bank.bank16_enabled ? (
+		single_filter_to_mem(mem_i, bank.bank16_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_3);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_4);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_5);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_6);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_7);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_8);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_9);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_10);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_11);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_12);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_13);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank16_14);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	bank.bank8_enabled ? (
+		single_filter_to_mem(mem_i, bank.bank8_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_3);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_4);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_5);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank8_6);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	mem_i = mem;
+	bank.bank4_enabled ? (
+		single_filter_to_mem(mem_i, bank.bank4_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank4_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_mem(mem_i, bank.bank4_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	mem_i = mem;
+	bank.bank2_enabled ? (
+		single_filter_to_mem(mem_i, bank.bank2_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	bank.bank1_enabled ? (
+		single_filter_to_mem(mem_i, bank.bank1_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+	);
+);
+
+function single_filter_to_bank(mem_i, filter*) (
+	filter.a1 = mem_i[0/*FILTER:A1*/];
+	filter.a1_step = mem_i[1/*FILTER:A1_STEP*/];
+	filter.a2 = mem_i[2/*FILTER:A2*/];
+	filter.a2_step = mem_i[3/*FILTER:A2_STEP*/];
+	filter.b0 = mem_i[4/*FILTER:B0*/];
+	filter.b0_step = mem_i[5/*FILTER:B0_STEP*/];
+	filter.b1 = mem_i[6/*FILTER:B1*/];
+	filter.b1_step = mem_i[7/*FILTER:B1_STEP*/];
+	filter.b2 = mem_i[8/*FILTER:B2*/];
+	filter.b2_step = mem_i[9/*FILTER:B2_STEP*/];
+	filter.x1 = mem_i[10/*FILTER:X1*/];
+	filter.x2 = mem_i[11/*FILTER:X2*/];
+	filter.y1 = mem_i[12/*FILTER:Y1*/];
+	filter.y2 = mem_i[13/*FILTER:Y2*/];
+);
+
+function filters_to_bank(mem, bank*) local(i, mem_i) (
+	bank.bank16_enabled = actual_band_count&16;
+	bank.bank8_enabled = actual_band_count&16;
+	bank.bank4_enabled = actual_band_count&16;
+	bank.bank2_enabled = actual_band_count&16;
+	bank.bank1_enabled = actual_band_count&16;
+
+	mem_i = mem;
+	bank.bank16_enabled ? (
+		single_filter_to_bank(mem_i, bank.bank16_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_3);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_4);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_5);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_6);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_7);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_8);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_9);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_10);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_11);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_12);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_13);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank16_14);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	bank.bank8_enabled ? (
+		single_filter_to_bank(mem_i, bank.bank8_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_3);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_4);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_5);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank8_6);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	mem_i = mem;
+	bank.bank4_enabled ? (
+		single_filter_to_bank(mem_i, bank.bank4_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank4_1);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		single_filter_to_bank(mem_i, bank.bank4_2);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	mem_i = mem;
+	bank.bank2_enabled ? (
+		single_filter_to_bank(mem_i, bank.bank2_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+		
+	);
+	bank.bank1_enabled ? (
+		single_filter_to_bank(mem_i, bank.bank1_0);
+		mem_i += 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
+	);
 );
 
 function gain_window_tapered(x) (
 	0.5 - 0.5*cos(x*2*$pi);
 );
 
-function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i, actual_band_count) (
-	filters_to_mem();
-
+function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i) (
 	// Calculate filter targets
 	// Future time is min(samples_to_next_block, [when the next filter will pop off an edge])
 	// Predict that far in future, divide by distance
@@ -108,55 +285,119 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 
 		!future_samples ? (
 			filter_mem_i[0/*FILTER:A1*/] = target_filter.a1;
-			filter_mem_i[1/*FILTER:A2*/] = target_filter.a2;
-			filter_mem_i[2/*FILTER:B0*/] = target_filter.b0;
-			filter_mem_i[3/*FILTER:B1*/] = target_filter.b1;
-			filter_mem_i[4/*FILTER:B2*/] = target_filter.b2;
+			filter_mem_i[2/*FILTER:A2*/] = target_filter.a2;
+			filter_mem_i[4/*FILTER:B0*/] = target_filter.b0;
+			filter_mem_i[6/*FILTER:B1*/] = target_filter.b1;
+			filter_mem_i[8/*FILTER:B2*/] = target_filter.b2;
 		);
-		filter_mem_i[5/*FILTER:A1_STEP*/] = (target_filter.a1 - filter_mem_i[0/*FILTER:A1*/])*future_factor;
-		filter_mem_i[6/*FILTER:A2_STEP*/] = (target_filter.a2 - filter_mem_i[1/*FILTER:A2*/])*future_factor;
-		filter_mem_i[7/*FILTER:B0_STEP*/] = (target_filter.b0 - filter_mem_i[2/*FILTER:B0*/])*future_factor;
-		filter_mem_i[8/*FILTER:B1_STEP*/] = (target_filter.b1 - filter_mem_i[3/*FILTER:B1*/])*future_factor;
-		filter_mem_i[9/*FILTER:B2_STEP*/] = (target_filter.b2 - filter_mem_i[4/*FILTER:B2*/])*future_factor;
+		filter_mem_i[1/*FILTER:A1_STEP*/] = (target_filter.a1 - filter_mem_i[0/*FILTER:A1*/])*future_factor;
+		filter_mem_i[3/*FILTER:A2_STEP*/] = (target_filter.a2 - filter_mem_i[2/*FILTER:A2*/])*future_factor;
+		filter_mem_i[5/*FILTER:B0_STEP*/] = (target_filter.b0 - filter_mem_i[4/*FILTER:B0*/])*future_factor;
+		filter_mem_i[7/*FILTER:B1_STEP*/] = (target_filter.b1 - filter_mem_i[6/*FILTER:B1*/])*future_factor;
+		filter_mem_i[9/*FILTER:B2_STEP*/] = (target_filter.b2 - filter_mem_i[8/*FILTER:B2*/])*future_factor;
 
 		i += 1;
 	);
 
-	filters_from_mem(actual_band_count);
+	actual_band_count;
 );
 
 function clear_filters(filter_mem) local(i, filter_mem_i) (
-	memset(filter_mem_l, 0, MAX_BAND_COUNT*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/);
-	memset(filter_mem_r, 0, MAX_BAND_COUNT*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/);
+	memset(filter_mem, 0, MAX_BAND_COUNT*14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/);
 
 	i = 0;
 	loop(MAX_BAND_COUNT,
-		filter_mem_i = filter_mem_l + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
-		filter_mem_i[2/*FILTER:B0*/] = 1;
-		filter_mem_i = filter_mem_r + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
-		filter_mem_i[2/*FILTER:B0*/] = 1;
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/*i;
+		filter_mem_i[4/*FILTER:B0*/] = 1;
 		i += 1;
 	);
+);
+
+function filter_step() (
+	this.a1 += this.a1_step;
+	this.a2 += this.a2_step;
+	this.b0 += this.b0_step;
+	this.b1 += this.b1_step;
+	this.b2 += this.b2_step;
 );
 
 function step_filters(filter_mem) local(i, filter_mem_i) (
 	i = 0;
 	loop(actual_band_count,
-		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
-		filter_mem_i[0/*FILTER:A1*/] += filter_mem_i[5/*FILTER:A1_STEP*/];
-		filter_mem_i[1/*FILTER:A2*/] += filter_mem_i[6/*FILTER:A2_STEP*/];
-		filter_mem_i[2/*FILTER:B0*/] += filter_mem_i[7/*FILTER:B0_STEP*/];
-		filter_mem_i[3/*FILTER:B1*/] += filter_mem_i[8/*FILTER:B1_STEP*/];
-		filter_mem_i[4/*FILTER:B2*/] += filter_mem_i[9/*FILTER:B2_STEP*/];
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/*i;
+		filter_mem_i[0/*FILTER:A1*/] += filter_mem_i[1/*FILTER:A1_STEP*/];
+		filter_mem_i[2/*FILTER:A2*/] += filter_mem_i[3/*FILTER:A2_STEP*/];
+		filter_mem_i[4/*FILTER:B0*/] += filter_mem_i[5/*FILTER:B0_STEP*/];
+		filter_mem_i[6/*FILTER:B1*/] += filter_mem_i[7/*FILTER:B1_STEP*/];
+		filter_mem_i[8/*FILTER:B2*/] += filter_mem_i[9/*FILTER:B2_STEP*/];
 		i += 1;
 	);
+
+	filter_left.bank16_0.filter_step();
+	filter_right.bank16_0.filter_step();
+	filter_left.bank16_1.filter_step();
+	filter_right.bank16_1.filter_step();
+	filter_left.bank16_2.filter_step();
+	filter_right.bank16_2.filter_step();
+	filter_left.bank16_3.filter_step();
+	filter_right.bank16_3.filter_step();
+	filter_left.bank16_4.filter_step();
+	filter_right.bank16_4.filter_step();
+	filter_left.bank16_5.filter_step();
+	filter_right.bank16_5.filter_step();
+	filter_left.bank16_6.filter_step();
+	filter_right.bank16_6.filter_step();
+	filter_left.bank16_7.filter_step();
+	filter_right.bank16_7.filter_step();
+	filter_left.bank16_8.filter_step();
+	filter_right.bank16_8.filter_step();
+	filter_left.bank16_9.filter_step();
+	filter_right.bank16_9.filter_step();
+	filter_left.bank16_10.filter_step();
+	filter_right.bank16_10.filter_step();
+	filter_left.bank16_11.filter_step();
+	filter_right.bank16_11.filter_step();
+	filter_left.bank16_12.filter_step();
+	filter_right.bank16_12.filter_step();
+	filter_left.bank16_13.filter_step();
+	filter_right.bank16_13.filter_step();
+	filter_left.bank16_14.filter_step();
+	filter_right.bank16_14.filter_step();
+	
+	filter_left.bank8_0.filter_step();
+	filter_right.bank8_0.filter_step();
+	filter_left.bank8_1.filter_step();
+	filter_right.bank8_1.filter_step();
+	filter_left.bank8_2.filter_step();
+	filter_right.bank8_2.filter_step();
+	filter_left.bank8_3.filter_step();
+	filter_right.bank8_3.filter_step();
+	filter_left.bank8_4.filter_step();
+	filter_right.bank8_4.filter_step();
+	filter_left.bank8_5.filter_step();
+	filter_right.bank8_5.filter_step();
+	filter_left.bank8_6.filter_step();
+	filter_right.bank8_6.filter_step();
+	
+	filter_left.bank4_0.filter_step();
+	filter_right.bank4_0.filter_step();
+	filter_left.bank4_1.filter_step();
+	filter_right.bank4_1.filter_step();
+	filter_left.bank4_2.filter_step();
+	filter_right.bank4_2.filter_step();
+	
+	filter_left.bank2_0.filter_step();
+	filter_right.bank2_0.filter_step();
+	
+	filter_left.bank1_0.filter_step();
+	filter_right.bank1_0.filter_step();
 );
 
 function shift_filters_down(filter_mem) local(i, filter_mem_i) (
 	// Shunt all filters down
-	i = band_count*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/ - 1;
-	while (i >= 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/) (
-		filter_mem[i] = filter_mem[i - 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/];
+	i = band_count*14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/ - 1;
+	while (i >= 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/) (
+		filter_mem[i] = filter_mem[i - 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/];
 		i -= 1;
 	);
 
@@ -167,39 +408,38 @@ function shift_filters_down(filter_mem) local(i, filter_mem_i) (
 	// Copy coefficients
 	filter_mem_i = filter_mem;
 	filter_mem_i[0/*FILTER:A1*/] = target_filter.a1;
-	filter_mem_i[1/*FILTER:A2*/] = target_filter.a2;
-	filter_mem_i[2/*FILTER:B0*/] = target_filter.b0;
-	filter_mem_i[3/*FILTER:B1*/] = target_filter.b1;
-	filter_mem_i[4/*FILTER:B2*/] = target_filter.b2;
+	filter_mem_i[2/*FILTER:A2*/] = target_filter.a2;
+	filter_mem_i[4/*FILTER:B0*/] = target_filter.b0;
+	filter_mem_i[6/*FILTER:B1*/] = target_filter.b1;
+	filter_mem_i[8/*FILTER:B2*/] = target_filter.b2;
 
 	// Rewrite output - zero gain, so should be same as input
-	filter_mem_i[10/*FILTER:Y1*/] = filter_mem_i[11/*FILTER:X1*/];
-	filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[13/*FILTER:X2*/];
+	filter_mem_i[12/*FILTER:Y1*/] = filter_mem_i[10/*FILTER:X1*/];
+	filter_mem_i[13/*FILTER:Y2*/] = filter_mem_i[11/*FILTER:X2*/];
 );
 
 function shift_filters_up(filter_mem) local(i, bw, filter_mem_i) (
 	// Shunt all filters up
 	i = 0;
-	while (i < (band_count - 1)*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/) (
-		filter_mem[i] = filter_mem[i + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/];
+	while (i < (band_count - 1)*14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/) (
+		filter_mem[i] = filter_mem[i + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/];
 		i += 1;
 	);
 
 	// New filter coeffs: 0-gain at high_freq
 	bw = filter_width_factor*(log(high_freq/low_freq)/log(2)/band_count);
 	target_filter.filter_band(high_freq, 1, bw);
-	shift_up_new_filter.filter_band(high_freq, 1, bw);
 	// Copy coefficients
-	filter_mem_i = filter_mem + (band_count - 1)*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/;
+	filter_mem_i = filter_mem + (band_count - 1)*14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
 	filter_mem_i[0/*FILTER:A1*/] = target_filter.a1;
-	filter_mem_i[1/*FILTER:A2*/] = target_filter.a2;
-	filter_mem_i[2/*FILTER:B0*/] = target_filter.b0;
-	filter_mem_i[3/*FILTER:B1*/] = target_filter.b1;
-	filter_mem_i[4/*FILTER:B2*/] = target_filter.b2;
+	filter_mem_i[2/*FILTER:A2*/] = target_filter.a2;
+	filter_mem_i[4/*FILTER:B0*/] = target_filter.b0;
+	filter_mem_i[6/*FILTER:B1*/] = target_filter.b1;
+	filter_mem_i[8/*FILTER:B2*/] = target_filter.b2;
 
 	// Rewrite output - zero gain, so should be same as input
-	filter_mem_i[10/*FILTER:Y1*/] = filter_mem_i[11/*FILTER:X1*/];
-	filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[13/*FILTER:X2*/];
+	filter_mem_i[12/*FILTER:Y1*/] = filter_mem_i[10/*FILTER:X1*/];
+	filter_mem_i[13/*FILTER:Y2*/] = filter_mem_i[11/*FILTER:X2*/];
 );
 
 function correction_amp(filter_mem, freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i, filter_mem_i) (
@@ -212,13 +452,13 @@ function correction_amp(filter_mem, freq) local(wi, wr, hi, hr, pr, pi, pm2, zr,
 
 	i = 0;
 	while (i < actual_band_count) (
-		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/*i;
 		// Numerator (B)
-		zr = filter_mem_i[2/*FILTER:B0*/] + filter_mem_i[3/*FILTER:B1*/]*wr + filter_mem_i[4/*FILTER:B2*/]*w2r;
-		zi = filter_mem_i[3/*FILTER:B1*/]*wi + filter_mem_i[4/*FILTER:B2*/]*w2i;
+		zr = filter_mem_i[4/*FILTER:B0*/] + filter_mem_i[6/*FILTER:B1*/]*wr + filter_mem_i[8/*FILTER:B2*/]*w2r;
+		zi = filter_mem_i[6/*FILTER:B1*/]*wi + filter_mem_i[8/*FILTER:B2*/]*w2i;
 		// Denominator (B)
-		pr = 1 + filter_mem_i[0/*FILTER:A1*/]*wr + filter_mem_i[1/*FILTER:A2*/]*w2r;
-		pi = filter_mem_i[0/*FILTER:A1*/]*wi + filter_mem_i[1/*FILTER:A2*/]*w2i;
+		pr = 1 + filter_mem_i[0/*FILTER:A1*/]*wr + filter_mem_i[2/*FILTER:A2*/]*w2r;
+		pi = filter_mem_i[0/*FILTER:A1*/]*wi + filter_mem_i[2/*FILTER:A2*/]*w2i;
 		pm2 = pr*pr + pi*pi;
 
 		// Multiply by numerator
@@ -250,11 +490,16 @@ function calculate_filters_stereo() local(new_phase) (
 	new_phase = cycle_phase - cycle_phase_stereo_offset*0.5;
 	cycle_phase_left = new_phase + floor(cycle_phase_left - new_phase + 0.5);
 	calculate_filters(filter_mem_l, cycle_phase_left);
+
 	new_phase = cycle_phase + cycle_phase_stereo_offset*0.5;
 	cycle_phase_right = new_phase + floor(cycle_phase_right - new_phase + 0.5);
 	calculate_filters(filter_mem_r, cycle_phase_right);
 );
+filters_to_mem(filter_mem_l, filter_left);
+filters_to_mem(filter_mem_r, filter_right);
 calculate_filters_stereo();
+filters_to_bank(filter_mem_l, filter_left);
+filters_to_bank(filter_mem_r, filter_right);
 
 output_gain = pow(10, output_gain_db/20);
 output_gain_step = 0;
@@ -275,10 +520,14 @@ control_band_count == band_count && control_filter_mode == filter_mode ? (
 		filter_mode = control_filter_mode;
 		gain_step = max(-gain_step_max, min(gain_step_max, (1 - gain)/samplesblock));
 
-		clear_filters();
 		samples_to_next_block = 0;
 		cycle_phase_step = 0;
+
+		clear_filters(filter_mem_l);
+		clear_filters(filter_mem_r);
 		calculate_filters_stereo();
+		filters_to_bank(filter_mem_l, filter_left);
+		filters_to_bank(filter_mem_r, filter_right);
 	) : (
 		gain_step = max(-gain_step_max, min(gain_step_max, -gain/samplesblock));
 	);
@@ -316,7 +565,12 @@ cycle_phase_blockdelta += cycle_phase_adjustment;
 
 samples_to_next_block = samplesblock;
 cycle_phase_step = cycle_phase_blockdelta/samplesblock;
-calculate_filters_stereo(samplesblock);
+
+filters_to_mem(filter_mem_l, filter_left);
+filters_to_mem(filter_mem_r, filter_right);
+calculate_filters_stereo();
+filters_to_bank(filter_mem_l, filter_left);
+filters_to_bank(filter_mem_r, filter_right);
 
 // Phase logging
 phase_logger_buffer[phase_logger_index] = cycle_phase;
@@ -336,17 +590,17 @@ cycle_phase -= floor(cycle_phase);
 function filter(x0, filter_mem) local(i, y0, filter_mem_i) (
 	i = 0;
 	loop(actual_band_count,
-		filter_mem_i = filter_mem + i*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/;
+		filter_mem_i = filter_mem + i*14/*FILTER: A1, A1_STEP, A2, A2_STEP, B0, B0_STEP, B1, B1_STEP, B2, B2_STEP, X1, X2, Y1, Y2*/;
 
-		y0 = x0*filter_mem_i[2/*FILTER:B0*/]
-			+ filter_mem_i[11/*FILTER:X1*/]*filter_mem_i[3/*FILTER:B1*/]
-			+ filter_mem_i[13/*FILTER:X2*/]*filter_mem_i[4/*FILTER:B2*/]
-			- filter_mem_i[10/*FILTER:Y1*/]*filter_mem_i[0/*FILTER:A1*/]
-			- filter_mem_i[12/*FILTER:Y2*/]*filter_mem_i[1/*FILTER:A2*/];
-		filter_mem_i[13/*FILTER:X2*/] = filter_mem_i[11/*FILTER:X1*/];
-		filter_mem_i[11/*FILTER:X1*/] = x0;
-		filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[10/*FILTER:Y1*/];
-		filter_mem_i[10/*FILTER:Y1*/] = y0;
+		y0 = x0*filter_mem_i[4/*FILTER:B0*/]
+			+ filter_mem_i[10/*FILTER:X1*/]*filter_mem_i[6/*FILTER:B1*/]
+			+ filter_mem_i[11/*FILTER:X2*/]*filter_mem_i[8/*FILTER:B2*/]
+			- filter_mem_i[12/*FILTER:Y1*/]*filter_mem_i[0/*FILTER:A1*/]
+			- filter_mem_i[13/*FILTER:Y2*/]*filter_mem_i[2/*FILTER:A2*/];
+		filter_mem_i[11/*FILTER:X2*/] = filter_mem_i[10/*FILTER:X1*/];
+		filter_mem_i[10/*FILTER:X1*/] = x0;
+		filter_mem_i[13/*FILTER:Y2*/] = filter_mem_i[12/*FILTER:Y1*/];
+		filter_mem_i[12/*FILTER:Y1*/] = y0;
 		x0 = y0;
 		i += 1;
 	);
@@ -362,24 +616,32 @@ step_filters(filter_mem_r);
 cycle_phase_left += cycle_phase_step;
 while (cycle_phase_left > 1) (
 	cycle_phase_left -= 1;
+	filters_to_mem(filter_mem_l, filter_left);
 	shift_filters_down(filter_mem_l);
 	calculate_filters(filter_mem_l, cycle_phase_left);
+	filters_to_bank(filter_mem_l, filter_left);
 );
 while (cycle_phase_left < 0) (
 	cycle_phase_left += 1;
+	filters_to_mem(filter_mem_l, filter_left);
 	shift_filters_up(filter_mem_l);
 	calculate_filters(filter_mem_l, cycle_phase_left);
+	filters_to_bank(filter_mem_l, filter_left);
 );
 cycle_phase_right += cycle_phase_step;
 while (cycle_phase_right > 1) (
 	cycle_phase_right -= 1;
+	filters_to_mem(filter_mem_r, filter_right);
 	shift_filters_down(filter_mem_r);
 	calculate_filters(filter_mem_r, cycle_phase_right);
+	filters_to_bank(filter_mem_r, filter_right);
 );
 while (cycle_phase_right < 0) (
 	cycle_phase_right += 1;
+	filters_to_mem(filter_mem_r, filter_right);
 	shift_filters_up(filter_mem_r);
 	calculate_filters(filter_mem_r, cycle_phase_right);
+	filters_to_bank(filter_mem_r, filter_right);
 );
 
 spl0 *= gain*output_gain;
