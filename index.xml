@@ -761,7 +761,16 @@
 		</reapack>
 		<reapack name="Ripple" type="effect">
 			<metadata>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/ripple.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Ripple\b}\line\line Ripple is a phaser-like effect which continually rises or falls.\line\line The filters fade out (go to 0dB) at some definable limit, so you can modulate some areas of the spectrum while leaving others in tact.\line\line It has a variable number of filters (up to 20), stereo phase-offset and a tempo-synced LFO.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Ripple.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Ripple.png</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/ripple.mp3</link>
 			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2018-07-01T16:56:37.255Z">
+				<source file="Ripple/Ripple.jsfx">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.0/Ripple/Ripple.jsfx</source>
+				<source file="Ripple/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.0/Ripple/ui-lib.jsfx-inc</source>
+				<source file="Ripple/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.0/Ripple/filter-utils.jsfx-inc</source>
+				<source file="Ripple/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.0/Ripple/frequency-graph.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
