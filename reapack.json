@@ -571,9 +571,12 @@
 				},
 				"frequency-graph.jsfx-inc": {
 					"main": false
+				},
+				"Ripple.jsfx.rpl": {
+					"main": false
 				}
 			},
-			"version": "1.0.0"
+			"version": "1.0.2"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

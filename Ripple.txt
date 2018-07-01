@@ -402,6 +402,8 @@ gain = (control_band_count == band_count && control_filter_mode == filter_mode) 
 gain_step = 0;
 gain_step_max = 1/(0.05*srate);
 
+no_lfo_since_init = 1;
+
 @block
 
 output_gain_step = (pow(10, output_gain_db/20) - output_gain)/samplesblock;
@@ -432,9 +434,10 @@ secondsblock = samplesblock/srate;
 beat_blockdelta = secondsblock*tempo/60;
 cycle_phase_blockdelta = beat_blockdelta*cycle_phase_invbeat + secondsblock*cycle_phase_lfo_hz;
 
+cycle_phase_lfo_hz ? no_lfo_since_init = 0;
 // Figure out what phase *should* be, and slew over next block
 play_state > 0 && play_state != 6 ? (
-	cycle_phase_lfo_hz ? (
+	!no_lfo_since_init ? (
 		// Difference between expectation and actual beat-based phase + offset
 		cycle_phase_adjustment = (beat_position - beat_position_next_block)*cycle_phase_invbeat
 			+ cycle_phase_offset - cycle_phase_offset_prev;
@@ -443,7 +446,7 @@ play_state > 0 && play_state != 6 ? (
 		cycle_phase_adjustment = beat_position*cycle_phase_invbeat + cycle_phase_offset - cycle_phase;
 	);
 ) : (
-	cycle_phase_invbeat || cycle_phase_lfo_hz ? (
+	cycle_phase_invbeat || !no_lfo_since_init ? (
 		// We're freewheeling anyway, just track offset changes
 		cycle_phase_adjustment = cycle_phase_offset - cycle_phase_offset_prev;
 	) : (
@@ -610,7 +613,7 @@ ui_screen() == "main" ? (
 
 			ui_split_leftratio(1/1);
 				control_group("Output");
-				labels("Gain", output_gain_db, "%1.fdB");
+				labels("Gain", output_gain_db, "%.1fdB");
 				ui_automate(output_gain_db, control_dial(output_gain_db, -12, 6, -1.4, 0));
 			ui_pop();
 		ui_pop();

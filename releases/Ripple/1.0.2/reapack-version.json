@@ -1,0 +1,24 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"files": {
+		"Ripple/Ripple.jsfx": {
+			"main": false
+		},
+		"Ripple/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/frequency-graph.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/Ripple.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.0.2",
+	"package": "Ripple",
+	"time": "2018-07-01T20:10:31.226Z"
+}
