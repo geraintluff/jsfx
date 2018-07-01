@@ -14,7 +14,7 @@
     "jsfx-preprocessor": "^1.0.2"
   },
   "scripts": {
-    "build": "node node_modules/jsfx-preprocessor \"Humonica.txt\" \"Humonica.jsfx\" && node node_modules/jsfx-preprocessor \"Pulsar.txt\" \"Pulsar.jsfx\" && node node_modules/jsfx-preprocessor \"Warble.txt\" \"Warble.jsfx\" && node node_modules/jsfx-preprocessor \"filter-utils.txt\" \"filter-utils.jsfx-inc\" && node node_modules/jsfx-preprocessor \"synth-framework.txt\" \"synth-framework.jsfx-inc\" && node node_modules/jsfx-preprocessor \"synth-framework-obj.txt\" \"synth-framework-obj.jsfx-inc\" && node node_modules/jsfx-preprocessor \"delay-utils.txt\" \"delay-utils.jsfx-inc\" && node node_modules/jsfx-preprocessor \"Hammer And Chord.txt\" \"Hammer And Chord.jsfx\"",
+    "build": "node node_modules/jsfx-preprocessor \"Ripple.txt\" \"Ripple.jsfx\" && node node_modules/jsfx-preprocessor \"Humonica.txt\" \"Humonica.jsfx\" && node node_modules/jsfx-preprocessor \"Pulsar.txt\" \"Pulsar.jsfx\" && node node_modules/jsfx-preprocessor \"Warble.txt\" \"Warble.jsfx\" && node node_modules/jsfx-preprocessor \"filter-utils.txt\" \"filter-utils.jsfx-inc\" && node node_modules/jsfx-preprocessor \"synth-framework.txt\" \"synth-framework.jsfx-inc\" && node node_modules/jsfx-preprocessor \"synth-framework-obj.txt\" \"synth-framework-obj.jsfx-inc\" && node node_modules/jsfx-preprocessor \"delay-utils.txt\" \"delay-utils.jsfx-inc\" && node node_modules/jsfx-preprocessor \"Hammer And Chord.txt\" \"Hammer And Chord.jsfx\"",
     "install": "node node_modules/reapack install",
     "nodemon-build": "nodemon -e txt --exec npm run build",
     "nodemon-install": "nodemon -e jsfx,jsfx-inc --exec npm run install"
