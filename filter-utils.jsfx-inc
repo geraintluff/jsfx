@@ -200,7 +200,7 @@ function filter_buffer_init(freemem) local(obj) (
 	obj[6/*FILTER:X2*/] = 0;
 	obj[7/*FILTER:Y1*/] = 0;
 	obj[8/*FILTER:Y2*/] = 0;
-	freemem + 9/*FILTER: A1, A2, B0, B1, B2, X1, X2, Y1, Y2*/;
+	freemem + 9/*FILTER*/;
 );
 
 function filter_buffer_lowpass(obj, freq, BW) local(inv_a0, b0, w0, sin_w0, Q, alpha) (

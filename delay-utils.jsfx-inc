@@ -154,7 +154,7 @@ function delay_buffer_size(max_delay_samples) local(length, interp_samples, inte
 
 function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buffer, interp_buffer, freemem) (
 	i = 0;
-	while (i < 12/*DELAY: interp_samples, length, index, allpass_prev_delay, buffer, interp_scale, interp_offset, interp_buffer, allpass_x1, allpass_y1, allpass_x2, allpass_y2*/) (
+	while (i < 12/*DELAY*/) (
 		obj[i] = 0;
 		i += 1;
 	);
@@ -165,7 +165,7 @@ function delay_buffer_setup(obj, max_delay_samples) local(i, t, wr, w, obj, buff
 
 	obj[3/*DELAY:allpass_prev_delay*/] = 1;
 
-	freemem = obj + 12/*DELAY: interp_samples, length, index, allpass_prev_delay, buffer, interp_scale, interp_offset, interp_buffer, allpass_x1, allpass_y1, allpass_x2, allpass_y2*/;
+	freemem = obj + 12/*DELAY*/;
 	buffer = obj[4/*DELAY:buffer*/] = freemem;
 	freemem = obj[4/*DELAY:buffer*/] + obj[1/*DELAY:length*/];
 	i = 0;
