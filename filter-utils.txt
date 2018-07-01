@@ -40,11 +40,6 @@ function filter_bandpass(normfreq, BW) local(inv_a0, b1, w0, sin_w0, Q, alpha) (
 		Q = -BW;
 	);
 	alpha = sin_w0*0.5/Q;
-	debug.w0 = w0;
-	debug.sin_w0 = sin_w0;
-	debug.alpha = alpha;
-	debug.Q = Q;
-	debug.BW = BW;
 
 	// TODO: this is actually a lowpass!  Do the right thing.
 	inv_a0 = 1/(1 + alpha);
@@ -90,7 +85,6 @@ function filter_highshelf_gainband(freq, gainFactor, BW) local(A, inv_a0, b0, w0
 	Q = 0.5/sinh(log(2)*0.5*BW*w0/sin_w0);
 	alpha = sin(w0)/(2*Q);
 	sqrtA2alpha = 2*sqrt(A)*alpha;
-	debug.Q = Q;
 
 	a0 = (A + 1) - (A - 1)*cos(w0) + sqrtA2alpha;
 	this.a1 = 2*((A - 1) - (A + 1)*cos(w0))/a0;

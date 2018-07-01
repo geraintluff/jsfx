@@ -6,16 +6,16 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:band_count=6<1,20,1>Number of bands
+slider1:band_count=6<2,20,1>Number of bands
 slider2:low_freq=200<30,2000>Low freq
 slider3:high_freq=6000<1000,18000>High freq
 slider4:cycle_phase_offset=0.5<0,1>Phase Offset
-slider5:cycle_phase_lfo_hz=0<-10,10>Phase LFO (hz)
-slider6:cycle_phase_invbeat=0.5<-4,4,0.5>Phase LFO (/beat)
-slider7:filter_mode=0<0,1,1{cut, boost}>-Filter type
-slider8:filter_db=12<0,60,0.1>Filter strength (dB)
-slider9:filter_width_factor=0.3<0.01,0.7>Filter width
-slider10:filter_restoration=1<0,2>Filter compensation
+slider5:cycle_phase_stereo_offset=0.15<-0.5,0.5>Stereo Offset
+slider6:cycle_phase_lfo_hz=0<-10,10>Phase LFO (hz)
+slider7:cycle_phase_invbeat=0.5<-4,4,0.5>Phase LFO (/beat)
+slider8:filter_mode=0<0,1,1{cut, boost}>Filter type
+slider9:filter_db=60<0,60,0.1>Filter strength (dB)
+slider10:filter_width_factor=0.3<0.01,0.7>Filter width
 
 import ui-lib.jsfx-inc
 import filter-utils.jsfx-inc
@@ -25,7 +25,8 @@ import filter-utils.jsfx-inc
 MAX_BAND_COUNT = 20 + 5;
 
 freemem = ui_setup(0);
-freemem = (filter_mem = freemem) + 18*MAX_BAND_COUNT;
+freemem = (filter_mem_l = freemem) + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*MAX_BAND_COUNT;
+freemem = (filter_mem_r = freemem) + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*MAX_BAND_COUNT;
 
 phase_logger_length = ceil(srate*1/(samplesblock ? samplesblock : 256));
 freemem = (phase_logger_buffer = freemem) + phase_logger_length;
@@ -45,7 +46,7 @@ function gain_window(x) (
 	0.5 - 0.5*cos(x*2*$pi);
 );
 
-function calculate_filters() local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i) (
+function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i) (
 	filters_to_mem();
 
 	// Calculate filter targets
@@ -53,23 +54,23 @@ function calculate_filters() local(i, freq, gain, band_gain, bw, future_samples,
 	// Predict that far in future, divide by distance
 	future_samples = samples_to_next_block;
 	cycle_phase_step > 0 ? (
-		future_samples = min(future_samples, ceil((1 - cycle_phase)/cycle_phase_step));
+		future_samples = min(future_samples, ceil((1 - current_phase)/cycle_phase_step));
 	) : cycle_phase_step < 0 ? (
-		future_samples = min(future_samples, ceil(cycle_phase/-cycle_phase_step));
+		future_samples = min(future_samples, ceil(current_phase/-cycle_phase_step));
 	);
 	future_factor = future_samples ? 1/future_samples : 0;
 
-	future_phase = cycle_phase + cycle_phase_step*future_samples;
+	future_phase = current_phase + cycle_phase_step*future_samples;
 
 	bw = filter_width_factor*(log(high_freq/low_freq)/log(2)/band_count);
 
 	i = 0;
 	loop(band_count + 2,
-		filter_mem_i = filter_mem + 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/*i;
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
 		i >= band_count ? (
-			// Magic equations found through trial and error!
 			band_width = filter_width_factor*log(high_freq/low_freq)/log(2)/band_count;
 			filter_mode == 0 ? (
+				// Magic equations found through trial and error!
 				band_gain = pow(10, -filter_db/20);
 				gain = 1 + (1 - band_gain)*1.2*filter_width_factor*filter_width_factor;
 				i == band_count ? (
@@ -77,18 +78,16 @@ function calculate_filters() local(i, freq, gain, band_gain, bw, future_samples,
 					target_filter.filter_highshelf_gainslope(freq/srate, 1/gain, 1.8 - band_gain);
 				) : (
 					freq = (1.18 + band_gain)*low_freq*exp(log(high_freq/low_freq)*(0.4)/band_count);
-					debug.freq = freq/296.0647;
 					target_filter.filter_highshelf_gainslope(freq/srate, gain, 1.8 - band_gain);
 				);
 			) : (
 				band_gain = pow(10, -filter_db/20);
-				gain = pow(10, -filter_db*filter_width_factor*1.5/20);
+				gain = pow(10, -filter_db*(0.5 + filter_width_factor)*1.5/20);
 				i == band_count ? (
-					freq = 1/(1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(band_count - 1)*1/band_count);
+					freq = 1/(1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(band_count - 1 - min(0.4, filter_width_factor))*1/band_count);
 					target_filter.filter_highshelf_gainslope(freq/srate, 1/gain, 1);
 				) : (
-					freq = (1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(1)/band_count);
-					debug.freq = freq/296.0647;
+					freq = (1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(1 +  min(0.4, filter_width_factor))/band_count);
 					target_filter.filter_highshelf_gainslope(freq/srate, gain, 1);
 				);
 			);
@@ -122,10 +121,10 @@ function calculate_filters() local(i, freq, gain, band_gain, bw, future_samples,
 	filters_from_mem();
 );
 
-function step_filters() local(i, filter_mem_i) (
+function step_filters(filter_mem) local(i, filter_mem_i) (
 	i = 0;
 	loop(actual_band_count,
-		filter_mem_i = filter_mem + 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/*i;
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
 		filter_mem_i[0/*FILTER:A1*/] += filter_mem_i[5/*FILTER:A1_STEP*/];
 		filter_mem_i[1/*FILTER:A2*/] += filter_mem_i[6/*FILTER:A2_STEP*/];
 		filter_mem_i[2/*FILTER:B0*/] += filter_mem_i[7/*FILTER:B0_STEP*/];
@@ -135,13 +134,11 @@ function step_filters() local(i, filter_mem_i) (
 	);
 );
 
-function shift_filters_down() local(i, filter_mem_i) (
-	cycle_phase -= 1;
-
+function shift_filters_down(filter_mem) local(i, filter_mem_i) (
 	// Shunt all filters down
-	i = band_count*18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/ - 1;
-	while (i >= 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/) (
-		filter_mem[i] = filter_mem[i - 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/];
+	i = band_count*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/ - 1;
+	while (i >= 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/) (
+		filter_mem[i] = filter_mem[i - 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/];
 		i -= 1;
 	);
 
@@ -158,22 +155,15 @@ function shift_filters_down() local(i, filter_mem_i) (
 	filter_mem_i[4/*FILTER:B2*/] = target_filter.b2;
 
 	// Rewrite output - zero gain, so should be same as input
-	filter_mem_i[10/*FILTER:Y1_L*/] = filter_mem_i[11/*FILTER:X1_L*/];
-	filter_mem_i[12/*FILTER:Y2_L*/] = filter_mem_i[13/*FILTER:X2_L*/];
-	filter_mem_i[14/*FILTER:Y1_R*/] = filter_mem_i[15/*FILTER:X1_R*/];
-	filter_mem_i[16/*FILTER:Y2_R*/] = filter_mem_i[17/*FILTER:X2_R*/];
-
-	// Now calculate_filters will do the correct thing
-	calculate_filters();
+	filter_mem_i[10/*FILTER:Y1*/] = filter_mem_i[11/*FILTER:X1*/];
+	filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[13/*FILTER:X2*/];
 );
 
-function shift_filters_up() local(i, bw, filter_mem_i) (
-	cycle_phase += 1;
-
+function shift_filters_up(filter_mem) local(i, bw, filter_mem_i) (
 	// Shunt all filters up
 	i = 0;
-	while (i < (band_count - 1)*18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/) (
-		filter_mem[i] = filter_mem[i + 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/];
+	while (i < (band_count - 1)*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/) (
+		filter_mem[i] = filter_mem[i + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/];
 		i += 1;
 	);
 
@@ -182,7 +172,7 @@ function shift_filters_up() local(i, bw, filter_mem_i) (
 	target_filter.filter_band(high_freq, 1, bw);
 	shift_up_new_filter.filter_band(high_freq, 1, bw);
 	// Copy coefficients
-	filter_mem_i = filter_mem + (band_count - 1)*18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/;
+	filter_mem_i = filter_mem + (band_count - 1)*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/;
 	filter_mem_i[0/*FILTER:A1*/] = target_filter.a1;
 	filter_mem_i[1/*FILTER:A2*/] = target_filter.a2;
 	filter_mem_i[2/*FILTER:B0*/] = target_filter.b0;
@@ -190,16 +180,11 @@ function shift_filters_up() local(i, bw, filter_mem_i) (
 	filter_mem_i[4/*FILTER:B2*/] = target_filter.b2;
 
 	// Rewrite output - zero gain, so should be same as input
-	filter_mem_i[10/*FILTER:Y1_L*/] = filter_mem_i[11/*FILTER:X1_L*/];
-	filter_mem_i[12/*FILTER:Y2_L*/] = filter_mem_i[13/*FILTER:X2_L*/];
-	filter_mem_i[14/*FILTER:Y1_R*/] = filter_mem_i[15/*FILTER:X1_R*/];
-	filter_mem_i[16/*FILTER:Y2_R*/] = filter_mem_i[17/*FILTER:X2_R*/];
-
-	// Now calculate_filters will do the correct thing
-	calculate_filters();
+	filter_mem_i[10/*FILTER:Y1*/] = filter_mem_i[11/*FILTER:X1*/];
+	filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[13/*FILTER:X2*/];
 );
 
-function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i, filter_mem_i) (
+function correction_amp(filter_mem, freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i, filter_mem_i) (
 	hr = 1;
 	hi = 0;
 	wr = cos(2*$pi*freq/srate);
@@ -209,7 +194,7 @@ function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti,
 
 	i = 0;
 	while (i < actual_band_count) (
-		filter_mem_i = filter_mem + 18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/*i;
+		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
 		// Numerator (B)
 		zr = filter_mem_i[2/*FILTER:B0*/] + filter_mem_i[3/*FILTER:B1*/]*wr + filter_mem_i[4/*FILTER:B2*/]*w2r;
 		zi = filter_mem_i[3/*FILTER:B1*/]*wi + filter_mem_i[4/*FILTER:B2*/]*w2i;
@@ -236,46 +221,22 @@ function correction_amp(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti,
 	sqrt(hr*hr + hi*hi);
 );
 
-/*
-function correction_phase(freq) local(wi, wr, hi, hr, pr, pi, pm2, zr, zi, tr, ti, i) (
-	hr = 1;
-	hi = 0;
-	wr = cos(2*$pi*freq/srate);
-	wi = sin(2*$pi*freq/srate);
-	w2r = cos(4*$pi*freq/srate);
-	w2i = sin(4*$pi*freq/srate);
-
-	i = 0;
-	while (i < correction_N) (
-		zr = correction_b0[i] + correction_b1[i]*wr + correction_b2[i]*w2r;
-		zi = correction_b1[i]*wi + correction_b2[i]*w2i;
-		pr = 1 + correction_a1[i]*wr + correction_a2[i]*w2r;
-		pi = correction_a1[i]*wi + correction_a2[i]*w2i;
-		pm2 = pr*pr + pi*pi;
-
-		tr = hr;
-		ti = hi;
-		hr = tr*zr - ti*zi;
-		hi = tr*zi + ti*zr;
-
-		tr = hr;
-		ti = hi;
-		hr = tr*pr + ti*pi;
-		hi = ti*pr - tr*pi;
-		hr /= pm2;
-		hi /= pm2;
-		i += 1;
-	);
-	atan2(hi, hr);
-);
-*/
-
 cycle_phase = play_position*cycle_phase_lfo_hz + beat_position*cycle_phase_invbeat + cycle_phase_offset;
 cycle_phase -= floor(cycle_phase);
 cycle_phase_offset_prev = cycle_phase_offset;
 
-samples_to_next_block = 1000;
-calculate_filters();
+samples_to_next_block = 0;
+cycle_phase_step = 0;
+
+function calculate_filters_stereo() (
+	cycle_phase_left = cycle_phase - cycle_phase_stereo_offset*0.5;
+	cycle_phase_left -= floor(cycle_phase_left);
+	calculate_filters(filter_mem_l, cycle_phase_left);
+	cycle_phase_right = cycle_phase + cycle_phase_stereo_offset*0.5;
+	cycle_phase_right -= floor(cycle_phase_right);
+	calculate_filters(filter_mem_r, cycle_phase_right);
+);
+calculate_filters_stereo();
 
 @block
 
@@ -311,64 +272,69 @@ cycle_phase_blockdelta += cycle_phase_adjustment;
 
 samples_to_next_block = samplesblock;
 cycle_phase_step = cycle_phase_blockdelta/samplesblock;
+calculate_filters_stereo(samplesblock);
 
-// Get ready for the next block
-beat_position_next_block = beat_position + beat_blockdelta;
-cycle_phase_offset_prev = cycle_phase_offset;
-
-calculate_filters();
-
+// Phase logging
 phase_logger_buffer[phase_logger_index] = cycle_phase;
 phase_logger_index += 1;
 phase_logger_index >= phase_logger_length ? (
 	phase_logger_index = 0;
 );
 
+// Get ready for the next block
+beat_position_next_block = beat_position + beat_blockdelta;
+cycle_phase_offset_prev = cycle_phase_offset;
+cycle_phase += cycle_phase_blockdelta;
+
 @sample
 
-x0_l = spl0;
-x0_r = spl1;
+function filter(x0, filter_mem) local(i, y0, filter_mem_i) (
+	i = 0;
+	loop(actual_band_count,
+		filter_mem_i = filter_mem + i*14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/;
 
-i = 0;
-loop(actual_band_count,
-	filter_mem_i = filter_mem + i*18/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1_L, X1_L, Y2_L, X2_L, Y1_R, X1_R, Y2_R, X2_R*/;
-
-	y0_l = x0_l*filter_mem_i[2/*FILTER:B0*/]
-		+ filter_mem_i[11/*FILTER:X1_L*/]*filter_mem_i[3/*FILTER:B1*/]
-		+ filter_mem_i[13/*FILTER:X2_L*/]*filter_mem_i[4/*FILTER:B2*/]
-		- filter_mem_i[10/*FILTER:Y1_L*/]*filter_mem_i[0/*FILTER:A1*/]
-		- filter_mem_i[12/*FILTER:Y2_L*/]*filter_mem_i[1/*FILTER:A2*/];
-	filter_mem_i[13/*FILTER:X2_L*/] = filter_mem_i[11/*FILTER:X1_L*/];
-	filter_mem_i[11/*FILTER:X1_L*/] = x0_l;
-	filter_mem_i[12/*FILTER:Y2_L*/] = filter_mem_i[10/*FILTER:Y1_L*/];
-	filter_mem_i[10/*FILTER:Y1_L*/] = y0_l;
-	x0_l = y0_l;
-
-	y0_r = x0_r*filter_mem_i[2/*FILTER:B0*/]
-		+ filter_mem_i[15/*FILTER:X1_R*/]*filter_mem_i[3/*FILTER:B1*/]
-		+ filter_mem_i[17/*FILTER:X2_R*/]*filter_mem_i[4/*FILTER:B2*/]
-		- filter_mem_i[14/*FILTER:Y1_R*/]*filter_mem_i[0/*FILTER:A1*/]
-		- filter_mem_i[16/*FILTER:Y2_R*/]*filter_mem_i[1/*FILTER:A2*/];
-	filter_mem_i[17/*FILTER:X2_R*/] = filter_mem_i[15/*FILTER:X1_R*/];
-	filter_mem_i[15/*FILTER:X1_R*/] = x0_r;
-	filter_mem_i[16/*FILTER:Y2_R*/] = filter_mem_i[14/*FILTER:Y1_R*/];
-	filter_mem_i[14/*FILTER:Y1_R*/] = y0_r;
-	x0_r = y0_r;
-
-	i += 1;
+		y0 = x0*filter_mem_i[2/*FILTER:B0*/]
+			+ filter_mem_i[11/*FILTER:X1*/]*filter_mem_i[3/*FILTER:B1*/]
+			+ filter_mem_i[13/*FILTER:X2*/]*filter_mem_i[4/*FILTER:B2*/]
+			- filter_mem_i[10/*FILTER:Y1*/]*filter_mem_i[0/*FILTER:A1*/]
+			- filter_mem_i[12/*FILTER:Y2*/]*filter_mem_i[1/*FILTER:A2*/];
+		filter_mem_i[13/*FILTER:X2*/] = filter_mem_i[11/*FILTER:X1*/];
+		filter_mem_i[11/*FILTER:X1*/] = x0;
+		filter_mem_i[12/*FILTER:Y2*/] = filter_mem_i[10/*FILTER:Y1*/];
+		filter_mem_i[10/*FILTER:Y1*/] = y0;
+		x0 = y0;
+		i += 1;
+	);
+	x0;
 );
 
-spl0 = x0_l;
-spl1 = x0_r;
+spl0 = filter(spl0, filter_mem_l);
+spl1 = filter(spl1, filter_mem_r);
 
-step_filters();
+step_filters(filter_mem_l);
+step_filters(filter_mem_r);
 
-cycle_phase += cycle_phase_step;
-while (cycle_phase >= 1) (
-	shift_filters_down();
+cycle_phase_left += cycle_phase_step;
+while (cycle_phase_left >= 1) (
+	cycle_phase_left -= 1;
+	shift_filters_down(filter_mem_l);
+	calculate_filters(filter_mem_l, cycle_phase_left);
 );
-while (cycle_phase < 0) (
-	shift_filters_up();
+while (cycle_phase_left < 0) (
+	cycle_phase_left += 1;
+	shift_filters_up(filter_mem_l);
+	calculate_filters(filter_mem_l, cycle_phase_left);
+);
+cycle_phase_right += cycle_phase_step;
+while (cycle_phase_right >= 1) (
+	cycle_phase_right -= 1;
+	shift_filters_down(filter_mem_r);
+	calculate_filters(filter_mem_r, cycle_phase_right);
+);
+while (cycle_phase_right < 0) (
+	cycle_phase_right += 1;
+	shift_filters_up(filter_mem_r);
+	calculate_filters(filter_mem_r, cycle_phase_right);
 );
 
 samples_to_next_block -= 1;
@@ -406,13 +372,24 @@ ui_screen() == "main" ? (
 	ui_pop();
 
 	control_background_technical();
+
 	g_i = 0;
 	loop(g_buffer_length,
 		g_freq = 20*exp(log(18000/20)*g_i/g_buffer_length);
-		g_buffer[g_i] = log(correction_amp(g_freq))*20/log(10);
+		g_buffer[g_i] = log(correction_amp(filter_mem_l, g_freq))*20/log(10);
 		g_i += 1;
 	);
 	ui_graph(g_buffer, g_buffer_length, -20, 20);
+
+	ui_color(96, 192, 256, 0.6);
+	g_i = 0;
+	loop(g_buffer_length,
+		g_freq = 20*exp(log(18000/20)*g_i/g_buffer_length);
+		g_buffer[g_i] = log(correction_amp(filter_mem_r, g_freq))*20/log(10);
+		g_i += 1;
+	);
+	ui_graph(g_buffer, g_buffer_length, -20, 20);
+
 	control_finish_technical();
 ) : control_system();
 
