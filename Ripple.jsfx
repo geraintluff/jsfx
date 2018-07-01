@@ -13,7 +13,7 @@ slider4:cycle_phase_offset=0.5<0,1>Phase Offset
 slider5:cycle_phase_stereo_offset=0.15<-0.5,0.5>Stereo Offset
 slider6:cycle_phase_lfo_hz=0<-10,10>Phase LFO (hz)
 slider7:cycle_phase_invbeat=0.5<-4,4,0.5>Phase LFO (/beat)
-slider8:filter_mode=0<0,1,1{cut, boost}>Filter type
+slider8:filter_mode=0<0,1,1{cut,boost}>Filter type
 slider9:filter_db=60<0,60,0.1>Filter strength (dB)
 slider10:filter_width_factor=0.3<0.01,0.7>Filter width
 
@@ -38,15 +38,16 @@ function filters_to_mem() (
 	0;
 );
 
-function filters_from_mem() (
-	actual_band_count = band_count + 2;
+function filters_from_mem(bands) (
+	// Eventually, this will unpack into fixed filters
+	actual_band_count = bands;
 );
 
 function gain_window(x) (
 	0.5 - 0.5*cos(x*2*$pi);
 );
 
-function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i) (
+function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_gain, bw, future_samples, future_factor, future_phase, filter_mem_i, actual_band_count) (
 	filters_to_mem();
 
 	// Calculate filter targets
@@ -64,14 +65,24 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 
 	bw = filter_width_factor*(log(high_freq/low_freq)/log(2)/band_count);
 
+	actual_band_count = band_count + 2;
 	i = 0;
 	loop(band_count + 2,
 		filter_mem_i = filter_mem + 14/*FILTER: A1, A2, B0, B1, B2, A1_STEP, A2_STEP, B0_STEP, B1_STEP, B2_STEP, Y1, X1, Y2, X2*/*i;
 		i >= band_count ? (
-			band_width = filter_width_factor*log(high_freq/low_freq)/log(2)/band_count;
-			filter_mode == 0 ? (
+			band_gain = pow(10, -filter_db/20);
+			filter_mode == 1 ? (
+				gain = sqrt(band_gain)*(0.1 + filter_width_factor);
+				gain = pow(10, -0.6*filter_db*(0.1 + filter_width_factor)/20);
+				i == band_count ? (
+					freq = 1/(1.18 + band_gain)*low_freq*exp(log(high_freq/low_freq)*(band_count - 0.4)/band_count);
+					target_filter.filter_highshelf_gainslope(freq/srate, 1/gain, 1);
+				) : (
+					freq = (1.18 + band_gain)*low_freq*exp(log(high_freq/low_freq)*(0.4)/band_count);
+					target_filter.filter_highshelf_gainslope(freq/srate, gain, 1);
+				);
+			) : (
 				// Magic equations found through trial and error!
-				band_gain = pow(10, -filter_db/20);
 				gain = 1 + (1 - band_gain)*1.2*filter_width_factor*filter_width_factor;
 				i == band_count ? (
 					freq = 1/(1.18 + band_gain)*low_freq*exp(log(high_freq/low_freq)*(band_count - 0.4)/band_count);
@@ -80,21 +91,11 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 					freq = (1.18 + band_gain)*low_freq*exp(log(high_freq/low_freq)*(0.4)/band_count);
 					target_filter.filter_highshelf_gainslope(freq/srate, gain, 1.8 - band_gain);
 				);
-			) : (
-				band_gain = pow(10, -filter_db/20);
-				gain = pow(10, -filter_db*(0.5 + filter_width_factor)*1.5/20);
-				i == band_count ? (
-					freq = 1/(1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(band_count - 1 - min(0.4, filter_width_factor))*1/band_count);
-					target_filter.filter_highshelf_gainslope(freq/srate, 1/gain, 1);
-				) : (
-					freq = (1.18 + 0*band_gain)*low_freq*exp(log(high_freq/low_freq)*(1 +  min(0.4, filter_width_factor))/band_count);
-					target_filter.filter_highshelf_gainslope(freq/srate, gain, 1);
-				);
 			);
 		) : (
 			freq = low_freq*exp(log(high_freq/low_freq)*(i + future_phase)/band_count);
 			filter_mode == 1 ? (
-				gain = pow(10, filter_db*gain_window((i + future_phase)/band_count)/20);
+				gain = pow(10, 0.5*filter_db*gain_window((i + future_phase)/band_count)/20);
 				target_filter.filter_band(freq, gain, bw);
 			) : (
 				gain = pow(10, -filter_db*gain_window((i + future_phase)/band_count)/20);
@@ -118,7 +119,7 @@ function calculate_filters(filter_mem, current_phase) local(i, freq, gain, band_
 		i += 1;
 	);
 
-	filters_from_mem();
+	filters_from_mem(actual_band_count);
 );
 
 function step_filters(filter_mem) local(i, filter_mem_i) (
