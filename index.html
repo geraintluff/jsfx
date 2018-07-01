@@ -190,7 +190,7 @@ h3 {
 [b]Delay[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#Echo-Cycles]Echo-Cycles[/url] - a delay effect where the feedback system moves echoes through the stereo field
 [*][url=https://geraintluff.github.io/jsfx#Cross-Polyphonic-FM]Cross-Polyphonic-FM[/url] - MIDI-controlled frequency-modulation effect
-[*][url=https://geraintluff.github.io/jsfx#Ripple]Ripple[/url] - Delay effect
+[*][url=https://geraintluff.github.io/jsfx#Ripple]Ripple[/url] - Phaser-like sounds, endlessly ascending/descending
 [*][url=https://geraintluff.github.io/jsfx#Spring-Box]Spring-Box[/url] - an echo/chorus effect
 [*][url=https://geraintluff.github.io/jsfx#Stereo%20Alignment%20Delay]Stereo Alignment Delay[/url] - delay and phase/delay analysis (stereo channels, or between instances)
 [*][url=https://geraintluff.github.io/jsfx#Vibrato]Vibrato[/url] - MIDI-note triggered vibrato[/list]
@@ -226,7 +226,8 @@ h3 {
 </li>
 <li><a href="#Cross-Polyphonic-FM">Cross-Polyphonic-FM</a> - MIDI-controlled frequency-modulation effect
 </li>
-<li><a href="#Ripple">Ripple</a> - Delay effect</li>
+<li><a href="#Ripple">Ripple</a> - Phaser-like sounds, endlessly ascending/descending
+</li>
 <li><a href="#Spring-Box">Spring-Box</a> - an echo/chorus effect
 </li>
 <li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
@@ -313,6 +314,12 @@ h3 {
 <p><img src="Smooth Limiter.png" alt="screenshot"></p>
 <p>The &quot;distortion&quot; parameter changes the correction mode - at 0%, the correction is applied by scaling the output signal.  At 100%, the correction is applied using a non-linear distortion (smooth, not a hard-clip), which can sound good for some applications such as drums.  The display in the bottom-left shows the current correction response.</p>
 </div>
+<div class="reapack-package" id="Ripple"><div class="reapack-links"><audio controls preload="none" src="audio-demos/ripple-smooth.mp3"></audio><audio controls preload="none" src="audio-demos/ripple.mp3"></audio><a href="Ripple.jsfx.rpl" target="_blank">presets</a></div><h1 id="ripple">Ripple</h1>
+<p>Ripple is a phaser-like effect which continually rises or falls.</p>
+<p>The filters fade out (go to 0dB) at some definable limit, so you can modulate some areas of the spectrum while leaving others in tact.</p>
+<p>It has a variable number of filters (up to 20), stereo phase-offset and a tempo-synced LFO.</p>
+<p><img src="doc/images/Ripple.png" alt="screenshot"></p>
+</div>
 <div class="reapack-package" id="Learning Sampler"><h1 id="learning-sampler">Learning Sampler</h1>
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>
 <p>To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.</p>
@@ -349,12 +356,6 @@ h3 {
 <p>This displays MIDI notes as a scrolling piano roll.</p>
 <p>It was created as a nice way to display keyboard input when making demo videos.</p>
 <p><img src="doc/images/Piano Display.png" alt="screenshot"></p>
-</div>
-<div class="reapack-package" id="Ripple"><div class="reapack-links"><audio controls preload="none" src="audio-demos/ripple-smooth.mp3"></audio><audio controls preload="none" src="audio-demos/ripple.mp3"></audio><a href="Ripple.jsfx.rpl" target="_blank">presets</a></div><h1 id="ripple">Ripple</h1>
-<p>Ripple is a phaser-like effect which continually rises or falls.</p>
-<p>The filters fade out (go to 0dB) at some definable limit, so you can modulate some areas of the spectrum while leaving others in tact.</p>
-<p>It has a variable number of filters (up to 20), stereo phase-offset and a tempo-synced LFO.</p>
-<p><img src="doc/images/Ripple.png" alt="screenshot"></p>
 </div>
 <div class="reapack-package" id="Sandwich Amp"><div class="reapack-links"><audio controls preload="none" src="audio-demos/sandwich-amp.mp3"></audio><a href="Sandwich Amp.jsfx.rpl" target="_blank">presets</a></div><h1 id="sandwich-amp">Sandwich Amp</h1>
 <p>Sandwich Amp is a distortion effect with a set of paired filters on either side, to provide a range of timbres.  (<a href="audio-demos/sandwich-amp.mp3">audio demo</a>)</p>

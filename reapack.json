@@ -559,6 +559,8 @@
 		"Ripple": {
 			"type": "effect",
 			"category": "Delay",
+			"sort": 15,
+			"summary": "Phaser-like sounds, endlessly ascending/descending",
 			"files": {
 				"Ripple.jsfx": {
 					"main": false
