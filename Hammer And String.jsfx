@@ -180,7 +180,13 @@ function labelled_switch(value, label, format_text) local(height) (
 
 control_start("main", "tron");
 
-ui_screen() == "main" ? (
+ui_screen() == "deprecated-popup" ? (
+	seen_popup = 1;
+	control_dialog("Notice");
+	ui_wraptext("Hammer and String is no longer maintained.\n\nAll its features should be present in Hammer and Chord.  For portamento settings, see Hammer and Chord's \"config\" page.");
+) : ui_screen() == "main" ? (
+	!seen_popup ? ui_screen_open("deprecated-popup");
+
 	control_navbar("Hammer And String", -1, -1);
 	ui_split_topratio(0.5);
 		ui_split_leftratio(0.5);
