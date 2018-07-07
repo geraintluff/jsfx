@@ -1,0 +1,72 @@
+@init
+
+function ui_pad2(v, h) (
+	ui_pad(v, h);
+);
+
+function ui_pad4(l, t, r, b) (
+	ui_pad(l, t, r, b);
+);
+
+function ui_screen_close_id(id) (
+	while (ui_screen_level() && ui_screen() == id) (
+		ui_screen_close();
+	);
+);
+
+function ui_screen_close_to(id) (
+	while (ui_screen_level() && ui_screen() != id) (
+		ui_screen_close();
+	);
+);
+
+function ui_screen_get(index) (
+	ui_screen_arg(index);
+);
+
+function ui_screen_set(index, value) (
+	ui_screen_arg(index, value);
+);
+
+function ui_colora(r, g, b, a) (
+	ui_color(r, g, b, a);
+);
+
+function control_indicator_button(text, enabled) (
+	control_button(text, enabled);
+);
+
+function ui_hpadding() (
+	ui_padding_x();
+);
+
+function ui_vpadding() (
+	ui_padding_y();
+);
+
+function ui_graph(buffer, length, low, high) (
+	// New implementation chooses default step so it draws at most 4 points per pixel
+	ui_graph_step(buffer, length, 1, low, high);
+);
+function ui_graph_circular(buffer, length, step, offset, low, high) (
+	ui_graph_step(buffer, length, step, offset, length, low, high);
+);
+function ui_graph_circular(buffer, length, step, offset, modulo_length, low, high) (
+	ui_graph_step(buffer, length, step, offset, modulo_length, low, high);
+);
+
+function control_hslider(value, range_low, range_high, curve_bias) (
+	control_slider_left(value, range_low, range_high, curve_bias);
+);
+
+function control_vslider(value, range_low, range_high, curve_bias) (
+	control_slider_bottom(value, range_low, range_high, curve_bias);
+);
+
+function control_dial(value, range_low, range_high, curve_bias) (
+	control_dial_left(value, range_low, range_high, curve_bias);
+);
+
+function control_textnumber(actual, display, format) (
+	control_hidden_textnumber(actual, display, format);
+);
