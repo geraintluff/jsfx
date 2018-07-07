@@ -2,7 +2,7 @@
 
 This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  ([audio demo](audio-demos/hammer-and-chord.mp3))
 
-![screenshot](images/Hammer And Chord.png)
+![screenshot](images/Hammer and Chord.png)
 
 It has two resonators for each note (left and right) and they can be detuned ([audio demo](audio-demos/Hammer And Chord detune demo.mp3)).
 
