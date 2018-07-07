@@ -928,7 +928,7 @@
 		</reapack>
 		<reapack name="Hammer And String" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Hammer And String\b}\line\line This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}})\line\line The portamento affects how quickly the resonator changes pitch.  The &quot;Anticipation&quot; control starts the portamento before the actual note (this adds latency), which can give more natural movement.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.jsfx.rpl&quot;}}{\fldrslt presets}}\line\line {\fs48\b Hammer And String\b}\line\line This effect is deprecated.  Everything should be covered by the &quot;legato&quot; settings in Hammer and Chord.\line\line This effect is a monophonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio.  ({\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3&quot;}}{\fldrslt audio demo}})\line\line The portamento affects how quickly the resonator changes pitch.  The &quot;Anticipation&quot; control starts the portamento before the actual note (this adds latency), which can give more natural movement.  To produce a legato effect for the synth, provide a note with low velocity to change the resonator pitch without an audible impulse.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/Hammer%20And%20String.png&quot;}}{\fldrslt screenshot}}\line\line }</description>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/hammer-and-string.mp3</link>
 				<link rel="presets">https://geraintluff.github.io/jsfx/Hammer%20And%20String.jsfx.rpl</link>
 			</metadata>
@@ -955,6 +955,13 @@
 				<source file="Hammer-And-String/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/ui-lib.jsfx-inc</source>
 				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/delay-utils.jsfx-inc</source>
 				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.3/Hammer-And-String/synth-framework.jsfx-inc</source>
+			</version>
+			<version name="1.0.4" author="Geraint Luff" time="2018-07-07T12:55:25.835Z">
+				<source file="Hammer-And-String/Hammer And String.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.4/Hammer-And-String/Hammer%20And%20String.jsfx</source>
+				<source file="Hammer-And-String/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.4/Hammer-And-String/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-String/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.4/Hammer-And-String/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-String/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-String/1.0.4/Hammer-And-String/synth-framework.jsfx-inc</source>
+				<changelog><![CDATA[DEPRECATED - use Hammer and Chord instead]]></changelog>
 			</version>
 		</reapack>
 		<reapack name="Hammer And Chord" type="effect">
