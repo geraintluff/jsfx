@@ -1,0 +1,86 @@
+@init
+
+function frequency_graph_init(low_freq, high_freq, low_db, high_db) (
+	this.low_freq = low_freq;
+	this.high_freq = high_freq;
+	this.low_db = low_db;
+	this.high_db = high_db;
+);
+
+function frequency_graph_x_hz(freq) local(xratio) (
+	xratio = log(freq/this.low_freq)/log(this.high_freq/this.low_freq);
+	ui_left() + xratio*ui_width();
+);
+
+function frequency_graph_y_db(db) local(yratio) (
+	yratio = (db - this.high_db)/(this.low_db - this.high_db);
+	ui_top() + yratio*ui_height();
+);
+
+function frequency_graph_grid() local(fi, fmag, freq, xratio, db) (
+	ui_push();
+		ui_retina(1);
+		fi = 1;
+		fmag = 10;
+		while (fi*fmag < this.high_freq) (
+			freq = fi*fmag;
+			freq > this.low_freq ? (
+				gfx_x = this.frequency_graph_x_hz(freq);
+				gfx_y = ui_top();
+				ui_color(255, 255, 255, 0.3);
+				gfx_lineto(gfx_x, ui_bottom());
+
+				fi == 1 ? (
+					ui_fontsize(10*ui_retina());
+					ui_color(255, 255, 255, 0.5);
+					gfx_x += ui_texth()*0.5;
+					gfx_y = ui_bottom() - ui_texth()*1.5;
+					fmag >= 1000 ? (
+						gfx_printf("%ikHz", freq/1000);
+					) : (
+						gfx_printf("%iHz", freq);
+					);
+				);
+			);
+			fi += 1;
+			fi >= 10 ? (
+				fi /= 10;
+				fmag *= 10;
+			);
+		);
+
+		db = 0;
+		debug.plot = 0;
+		while (abs(db) < max(abs(this.high_db), abs(this.low_db))) (
+			debug.plot += 1;
+			debug.db = db;
+			debug.y = this.frequency_graph_y_db(db);
+			db > this.low_db && db < this.high_db ? (
+				gfx_y = this.frequency_graph_y_db(db);
+				debug.y = gfx_y;
+				gfx_x = ui_left();
+				db == 0 ? (
+					ui_color(255, 255, 255, 0.5);
+				) : (
+					ui_color(255, 255, 255, 0.15);
+				);
+				gfx_lineto(ui_right(), gfx_y);
+
+				ui_fontsize(10*ui_retina());
+				abs(gfx_y - this.frequency_graph_y_db(db*0.25)) > ui_texth() ? (
+					ui_color(255, 255, 255, 0.5);
+					gfx_x = ui_left() + ui_texth()*0.5;
+					gfx_y -= ui_texth()*1;
+					gfx_printf("%idB", dB);
+				);
+			);
+			db == 0 ? (
+				db = 3;
+			) : db > 0 ? (
+				db = -db;
+			) : (
+				db = -2*db;
+			);
+		);
+	ui_pop();
+);

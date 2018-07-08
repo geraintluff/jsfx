@@ -777,6 +777,13 @@
 				<source file="Ripple/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.2/Ripple/frequency-graph.jsfx-inc</source>
 				<source file="Ripple/Ripple.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.2/Ripple/Ripple.jsfx.rpl</source>
 			</version>
+			<version name="1.0.3" author="Geraint Luff" time="2018-07-08T14:47:56.155Z">
+				<source file="Ripple/Ripple.jsfx">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.3/Ripple/Ripple.jsfx</source>
+				<source file="Ripple/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.3/Ripple/ui-lib.jsfx-inc</source>
+				<source file="Ripple/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.3/Ripple/filter-utils.jsfx-inc</source>
+				<source file="Ripple/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.3/Ripple/frequency-graph.jsfx-inc</source>
+				<source file="Ripple/Ripple.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.3/Ripple/Ripple.jsfx.rpl</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
