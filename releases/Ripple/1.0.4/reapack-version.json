@@ -1,0 +1,26 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"sort": 15,
+	"summary": "Phaser-like sounds, endlessly ascending/descending",
+	"files": {
+		"Ripple/Ripple.jsfx": {
+			"main": false
+		},
+		"Ripple/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/filter-utils.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/frequency-graph.jsfx-inc": {
+			"main": false
+		},
+		"Ripple/Ripple.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.0.4",
+	"package": "Ripple",
+	"time": "2018-07-08T14:53:14.053Z"
+}
