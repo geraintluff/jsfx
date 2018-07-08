@@ -819,6 +819,12 @@
 				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/ui-lib-compat.jsfx-inc</source>
 				<source file="PadSynth/pad-synth.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.10/PadSynth/pad-synth.jsfx.rpl</source>
 			</version>
+			<version name="1.1.11" author="Geraint Luff" time="2018-07-07T17:45:51.856Z">
+				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.11/PadSynth/pad-synth.jsfx</source>
+				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.11/PadSynth/ui-lib.jsfx-inc</source>
+				<source file="PadSynth/ui-lib-compat.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.11/PadSynth/ui-lib-compat.jsfx-inc</source>
+				<source file="PadSynth/pad-synth.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.11/PadSynth/pad-synth.jsfx.rpl</source>
+			</version>
 			<version name="1.1.2" author="Geraint Luff" time="2017-08-19T21:32:38.954Z">
 				<source file="PadSynth/pad-synth.jsfx">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.2/PadSynth/pad-synth.jsfx</source>
 				<source file="PadSynth/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/PadSynth/1.1.2/PadSynth/ui-lib.jsfx-inc</source>
