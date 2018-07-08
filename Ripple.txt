@@ -7,7 +7,7 @@ out_pin:Right
 
 slider1:control_band_count=4<2,20,1>-Number of bands
 slider2:low_freq=100<30,2000>-Low freq
-slider3:high_freq=12000<1000,20000>-High freq
+slider3:high_freq=12000<1000,20480>-High freq
 slider4:cycle_phase_offset=0<0,1>-Phase Offset
 slider5:cycle_phase_stereo_offset=0<-0.5,0.5>-Stereo Offset
 slider6:cycle_phase_lfo_hz=0<-10,10>-Phase LFO (hz)
@@ -596,7 +596,7 @@ ui_screen() == "main" ? (
 					ui_automate(low_freq, min(high_freq*0.5, control_dial(low_freq, 20, 2000, 5, 100)));
 				ui_split_next();
 					labels("High", high_freq, "%i Hz");
-					ui_automate(high_freq, max(low_freq*2, control_dial(high_freq, 1000, 20000, 5, 12000)));
+					ui_automate(high_freq, max(low_freq*2, control_dial(high_freq, 1000, 20480, 5, 12000)));
 				ui_pop();
 			ui_pop();
 
