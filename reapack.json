@@ -267,6 +267,9 @@
 				},
 				"Hammer And Chord.jsfx.rpl": {
 					"main": false
+				},
+				"synth-framework-obj-ui.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "1.5.4",
