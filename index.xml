@@ -1184,6 +1184,15 @@
 				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.4/Hammer-And-Chord/filter-utils.jsfx-inc</source>
 				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.4/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
 			</version>
+			<version name="1.5.5" author="Geraint Luff" time="2018-07-19T08:41:00.308Z">
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/Hammer%20And%20Chord.jsfx</source>
+				<source file="Hammer-And-Chord/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/delay-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/ui-lib.jsfx-inc</source>
+				<source file="Hammer-And-Chord/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/synth-framework-obj.jsfx-inc</source>
+				<source file="Hammer-And-Chord/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/filter-utils.jsfx-inc</source>
+				<source file="Hammer-And-Chord/Hammer And Chord.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/Hammer%20And%20Chord.jsfx.rpl</source>
+				<source file="Hammer-And-Chord/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Hammer-And-Chord/1.5.5/Hammer-And-Chord/synth-framework-obj-ui.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Humonica" type="effect">
 			<metadata>
