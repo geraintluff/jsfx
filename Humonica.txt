@@ -5,8 +5,8 @@ in_pin:Right
 out_pin:Left
 out_pin:Right
 
-slider1:attack_ms=5<0,1000,1>-Attack (ms)
-slider2:release_ms=10<1,2000,1>-Release (ms)
+slider1:attack_ms=5<0,1000,1>-Env. Attack (ms)
+slider2:release_ms=10<1,2000,1>-Env. Release (ms)
 slider3:window_ms=30<20,150,1>-Window (ms)
 slider4:crossover_ratio=1.25<1,10,0.25>-Window crossover factor
 slider5:latency_switch=1<0,1,1{live,compensated}>-Latency compensation
@@ -22,6 +22,11 @@ slider14:vib_lfo_scale_cents=5<0,100,1>-Vib LFO cents
 slider15:vib_lfo_hz=4.7<0.5,10,.01>-Vib LFO Hz
 slider16:vib_lfo_attack_ms=350<1,2000,1>-Vib LFO attack (ms)
 slider17:stereo_width=0.5<0,1,0>-Stereo Width
+slider18:timbre_shift_sustain_semitones=0<-48,12>-Timbre shift sustain (semitones)
+slider19:timbre_shift_decay_ms=150<1,2000>-Timbre shift decay (ms)
+slider20:timbre_shift_velocity_semitones=0<-12,12>-Timbre shift velocity (semitones)
+slider21:env_sustain=1<0,1>-Env. Sustain
+slider22:env_decay_ms=300<1,2000,1>-Env. Decay (ms)
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
@@ -38,8 +43,6 @@ gfx_ext_retina = 1;
 // We already had to introduce a minimum for srate because otherwise certain important lengths == 0, which caused infinite loops.
 !srate ? srate = max(last_srate, 8000);
 last_srate = srate;
-
-debug.init_count += 1;
 
 FFT_MAX_SIZE = 32768;
 MAX_WINDOW_MS = 200;
@@ -120,9 +123,14 @@ smoothing = smoother_block(timbre_shift_semitones)
 
 crossover_percent = 100 - 50/crossover_ratio;
 
+
 attack_samples = srate*attack_ms*0.001;
 release_samples = srate*release_ms*0.001;
 window_samples = max(srate, 8000)*window_ms*0.001;
+env_decay_samples = srate*env_decay_ms*0.001;
+env_decay_factor = exp(-1/env_decay_samples);
+timbre_shift_decay_samples = srate*timbre_shift_decay_ms*0.001;
+timbre_shift_decay_factor = exp(-1/timbre_shift_decay_samples);
 interval_samples = window_samples*(1 - crossover_percent/100);
 old_fft_size = fft_size;
 fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
@@ -201,7 +209,8 @@ pdc_top_ch = 2;
 pdc_delay = latency_samples;
 
 function note_block(note*) (
-	note.TIMBRE_FACTOR = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
+	timbre_semitones = timbre_shift_tracking*(synth_midinote(note) - 60) + timbre_shift_velocity_semitones*(synth_velocity(note) - 64)/64;
+	note.TIMBRE_FACTOR = pow(2, timbre_semitones/12);
 	synth_continue(note);
 );
 note_block(synth1)
@@ -445,7 +454,7 @@ function interp_sample(index, wavelength, kernelA, kernelB) local(result, phase,
 	result + (value - result)*kernel_crossfade;
 );
 
-function process_note(note*) (
+function process_note(note*) local(env_semitones, timbre_semitones) (
 	synth_sample_each(note) ? (
 		synth_needs_init(note) ? (
 			note.WAVELENGTH_L = srate/synth_freq(note);
@@ -456,7 +465,11 @@ function process_note(note*) (
 			note.INDEX_R = lr_detune_cents > 0 ? floor(rand()*note.WAVELENGTH_R) : note.INDEX_L;
 			note.LFO_PHASE_R = lr_detune_cents > 0 ? rand() : note.LFO_PHASE_L;
 			note.LFO_FREQ_DIFF_R = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
-			note.TIMBRE_FACTOR = pow(2, timbre_shift_tracking*(synth_midinote(note) - 60)/12);
+			timbre_semitones = timbre_shift_tracking*(synth_midinote(note) - 60) + timbre_shift_velocity_semitones*(synth_velocity(note) - 64)/64;
+			note.TIMBRE_FACTOR = pow(2, timbre_semitones/12);
+
+			note.ENV_DECAY = 1;
+			note.TIMBRE_DECAY = 1;
 		);
 
 		amp = synth_velocity(note)/127;
@@ -474,6 +487,8 @@ function process_note(note*) (
 					amp *= (1 - release/release_samples);
 				);
 			);
+			note.ENV_DECAY *= env_decay_factor;
+			amp = amp*(note.ENV_DECAY*(1 - env_sustain) + env_sustain);
 
 			index_l = (note.INDEX_L += 1);
 			wavelength_l = note.WAVELENGTH_L;
@@ -518,9 +533,14 @@ function process_note(note*) (
 			);
 
 			timbre_factor = timbre_shift_factor*note.TIMBRE_FACTOR;
+			timbre_shift_sustain_semitones ? (
+				note.TIMBRE_DECAY *= timbre_shift_decay_factor;
+
+				env_semitones = timbre_shift_sustain_semitones*(1 - note.TIMBRE_DECAY);
+				timbre_factor *= pow(2, env_semitones/12);
+			);
 
 			// Left
-			wavelength_floor = floor(note.WAVELENGTH_R*timbre_factor);
 			left = interp_sample(index_l, wavelength_l, kernelA0, kernelB0);
 			right = interp_sample(index_r, wavelength_r, kernelA1_read, kernelB1_read);
 
@@ -556,36 +576,38 @@ spls = (spl0 - spl1)*0.5*smoother_value(stereo_width);
 spl0 = splm + spls;
 spl1 = splm - spls;
 
-@gfx 645 400
+@gfx 780 400
 
-function labelled_dial(value, low, high, bias, label, number_format, default) (
-	ui_push_height(50);
+function labelled_dial(value, low, high, bias, label, number_format, default) local(h) (
+	h = min(50, ui_height()*0.5);
+	ui_push_height(h);
 		value = control_dial(value, low, high, bias, default);
 	ui_pop();
-	ui_push_above(50);
+	ui_push_above(h);
 		ui_align(0.5, 0.85);
 		ui_text(label);
 	ui_pop();
-	ui_push_below(50);
+	ui_push_below(h);
 		ui_align(0.5, 0.15);
 		number_format >= 0 ? (
-			ui_textnumber(value, number_format);
+			ui_textnumber(value*1.000001, number_format);
 		);
 	ui_pop();
 	value;
 );
 
-function labelled_switch(value, label, text) (
-	ui_push_height(30);
+function labelled_switch(value, label, text) local(h) (
+	h = min(50, ui_height()*0.5);
+	ui_push_height(min(30, h));
 		ui_push_width(60);
 			value = control_switch(value);
 		ui_pop();
 	ui_pop();
-	ui_push_above(50);
+	ui_push_above(h);
 		ui_align(0.5, 0.85);
 		ui_text(label);
 	ui_pop();
-	ui_push_below(50);
+	ui_push_below(h);
 		ui_align(0.5, 0.15);
 		ui_text(text);
 	ui_pop();
@@ -603,7 +625,7 @@ ui_screen() == "main" ? (
 	ui_pop();
 
 	ui_split_topratio(0.5);
-		ui_split_leftratio(4/7);
+		ui_split_leftratio(4/10);
 			control_group("Analysis");
 			ui_pad(-1, 0);
 			ui_split_leftratio(1/4);
@@ -617,20 +639,32 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(3/3);
+		ui_split_leftratio(4/6);
 			control_group("Timbre");
 			ui_pad(-1, 0);
-			ui_split_leftratio(1/3);
+			ui_split_leftratio(1/4);
 				ui_automate(timbre_shift_semitones, labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0));
 			ui_split_next();
-				ui_automate(timbre_shift_tracking, labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "(relative to\nmiddle C)", 0));
+				ui_automate(timbre_shift_tracking, labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "Pitch", 0));
+			ui_split_next();
+				ui_automate(timbre_shift_velocity_semitones, labelled_dial(timbre_shift_velocity_semitones, -12, 12, 0, "Tracking", "Velocity", 0));
 			ui_split_next();
 				ui_automate(lowpass_freq_khz, labelled_dial(lowpass_freq_khz, 1, 20, 2, "Filter", "%.f kHz", 8));
 			ui_pop();
 		ui_pop();
+
+		ui_split_leftratio(2/2);
+			control_group("Sweep");
+			ui_pad(-1, 0);
+			ui_split_leftratio(1/2);
+				ui_automate(timbre_shift_sustain_semitones, labelled_dial(timbre_shift_sustain_semitones, -48, 12, -3, "Sweep", "%.1f st", 0));
+			ui_split_next();
+				ui_automate(timbre_shift_decay_ms, labelled_dial(timbre_shift_decay_ms, 1, 2000, 4, "Speed", timbre_shift_decay_ms < 5 ? "%.1fms" : "%ims", 150));
+			ui_pop();
+		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(2/8);
+	ui_split_leftratio(2/10);
 		control_group("Stereo");
 		ui_split_leftratio(1/2);
 			ui_automate(lr_detune_cents, labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3));
@@ -639,7 +673,7 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(4/6);
+	ui_split_leftratio(4/8);
 		control_group("Vibrato");
 		ui_split_leftratio(1/4);
 			vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
@@ -664,10 +698,14 @@ ui_screen() == "main" ? (
 		ui_pop();
 	ui_pop();
 
-	ui_split_leftratio(2/2);
+	ui_split_leftratio(4/4);
 		control_group("Envelope");
-		ui_split_leftratio(1/2);
+		ui_split_leftratio(1/4);
 			attack_ms = labelled_dial(attack_ms, 0, 1000, 5, "Attack", "%ims", 5);
+		ui_split_next();
+			env_decay_ms = labelled_dial(env_decay_ms, 0, 2000, 5, "Decay", "%ims", 300);
+		ui_split_next();
+			env_sustain = labelled_dial(env_sustain, 0, 1, 1, "Sustain", "", 1);
 		ui_split_next();
 			release_ms = labelled_dial(release_ms, 0, 2000, 5, "Release", "%ims", 10);
 		ui_pop();
