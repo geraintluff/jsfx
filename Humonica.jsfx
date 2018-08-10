@@ -658,7 +658,7 @@ ui_screen() == "main" ? (
 			control_group("Sweep");
 			ui_pad(-1, 0);
 			ui_split_leftratio(1/2);
-				ui_automate(timbre_shift_sustain_semitones, labelled_dial(timbre_shift_sustain_semitones, -48, 12, -3, "Sweep", "%.1f st", 0));
+				ui_automate(timbre_shift_sustain_semitones, labelled_dial(timbre_shift_sustain_semitones, -48, 12, -2.8, "Sweep", "%.1f st", 0));
 			ui_split_next();
 				ui_automate(timbre_shift_decay_ms, labelled_dial(timbre_shift_decay_ms, 1, 2000, 4, "Speed", timbre_shift_decay_ms < 5 ? "%.1fms" : "%ims", 150));
 			ui_pop();
@@ -721,7 +721,15 @@ ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 3;
+preset_version = 4;
 file_var(0, preset_version);
 
 synth_serialize(preset_version < 3);
+
+preset_version < 4 ? (
+	timbre_shift_sustain_semitones = 0;
+	timbre_shift_decay_ms = 150;
+	timbre_shift_velocity_semitones = 0;
+	env_sustain = 1;
+	env_decay_ms = 300;
+);
