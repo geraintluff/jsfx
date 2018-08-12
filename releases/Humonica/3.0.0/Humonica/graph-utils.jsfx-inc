@@ -1,0 +1,304 @@
+@init
+
+/* Usage:
+
+graph.graph_range_x(-1, 1);
+graph.graph_range_y(-30, 10);
+
+gfx_x = graph_x(value);
+gfx_x = graph_log_x(value);
+gfx_y = graph_y(value);
+
+graph_grid_color(r, g, b, ?a);
+
+// Linear graphs
+graph_grid_x(ref, step, format);
+graph_grid_y(-6, 1, "%i x");
+
+// Specialised versions
+graph_grid_x_logfreq();
+graph_grid_y_db();
+*/
+
+function graph_range_x(low, high) (
+	this.x_low = low;
+	this.x_high = high;
+);
+function graph_range_y(low, high) (
+	this.y_low = low;
+	this.y_high = high;
+);
+function graph_range(x_low, x_high, y_low, y_high) (
+	this.graph_range_x(x_low, x_high);
+	this.graph_range_y(y_low, y_high);
+);
+
+function graph_log_x(value) local(ratio) (
+	ratio = log(value/this.x_low)/log(this.x_high/this.x_low);
+	ui_left() + ratio*ui_width();
+);
+function graph_x(value) local(ratio) (
+	ratio = (value - this.x_low)/(this.x_high - this.x_low);
+	ui_left() + ratio*ui_width();
+);
+function graph_log_y(value) local(ratio) (
+	ratio = log(value/this.y_high)/log(this.y_low/this.y_high);
+	ui_top() + ratio*ui_height();
+);
+function graph_y(value) local(ratio) (
+	ratio = (value - this.y_high)/(this.y_low - this.y_high);
+	ui_top() + ratio*ui_height();
+);
+
+function graph_grid_color(r, g, b, a) (
+	this.grid_r = r/255;
+	this.grid_g = g/255;
+	this.grid_b = b/255;
+	this.grid_a = a;
+);
+function graph_grid_color(r, g, b) (
+	this.graph_grid_color(r, g, b, 0.5);
+);
+
+function graph_grid_y(ref, step, format) local(value, labeltop) (
+	!this.grid_a ? (
+		this.grid_r = this.grid_g = this.grid_b = 1;
+		this.grid_a = 0.5;
+	);
+	ui_push();
+		ui_retina(1);
+		ui_fontsize(min(10*ui_retina(), this.graph_y(value) - this.graph_y(value + step*0.6)));
+		gfx_r = this.grid_r;
+		gfx_g = this.grid_g;
+		gfx_b = this.grid_b;
+
+		value = ref;
+		while (value <= this.y_high) (
+			gfx_y = this.graph_y(value);
+			gfx_y <= ui_bottom() ? (
+				gfx_x = ui_left();
+				gfx_a = (value == ref) ? this.grid_a : this.grid_a*0.6;
+				gfx_lineto(ui_right(), gfx_y);
+
+				labeltop = gfx_y - gfx_texth;
+				labeltop >= ui_top() ? (
+					gfx_a = this.grid_a;
+					gfx_x = ui_left();
+					gfx_y = labeltop;
+					gfx_printf(format, value*1.00000001);
+				);
+			);
+			value += step;
+		);
+		value = ref - step;
+		while (value > this.y_low) (
+			gfx_y = this.graph_y(value);
+			gfx_y >= ui_top() ? (
+				gfx_x = ui_left();
+				gfx_a = this.grid_a*0.6;
+				gfx_lineto(ui_right(), gfx_y);
+
+				labeltop = gfx_y - gfx_texth;
+				labeltop >= ui_top() ? (
+					gfx_a = this.grid_a;
+					gfx_x = ui_left();
+					gfx_y = labeltop;
+					gfx_printf(format, value*1.00000001);
+				);
+			);
+			value -= step;
+		);
+	ui_pop();
+);
+function graph_grid_x(ref, step, format) local(value, labelleft, labelright, w, h, minlabelleft) (
+	!this.grid_a ? (
+		this.grid_r = this.grid_g = this.grid_b = 1;
+		this.grid_a = 0.5;
+	);
+	ui_push();
+		ui_retina(1);
+		ui_fontsize(10*ui_retina());
+		gfx_r = this.grid_r;
+		gfx_g = this.grid_g;
+		gfx_b = this.grid_b;
+
+		value = ref;
+		minlabelleft = labelleft = this.graph_x(ref);
+		labelright = ui_left();
+		while (value < this.x_high) (
+			gfx_x = this.graph_x(value);
+			gfx_x >= ui_left() ? (
+				gfx_y = ui_top();
+				gfx_a = (value == ref) ? this.grid_a : this.grid_a*0.6;
+
+				sprintf(#graph_x_label, format, value*1.00000001);
+				gfx_measurestr(#graph_x_label, w, h);
+				labelleft = gfx_x - w*0.6;
+
+				labelleft >= labelright ? (
+					minlabelleft = min(minlabelleft, labelleft);
+					gfx_lineto(gfx_x, ui_bottom());
+					labelright = gfx_x + w*0.6;
+					debug.labelleft = labelleft;
+					debug.labelright = labelright;
+					debug.ui_right = ui_right();
+					labelleft >= ui_left() && labelright <= ui_right() ? (
+						debug.counter += 1;
+						gfx_a = this.grid_a;
+						gfx_x = labelleft;
+						gfx_y = ui_bottom() - gfx_texth;
+						gfx_printf(#graph_x_label);
+					);
+				) : (
+					gfx_lineto(gfx_x, ui_bottom() - gfx_texth);
+				);
+			);
+			value += step;
+		);
+
+		value = ref - step;
+		labelleft = minlabelleft;
+		while (value >= this.x_low) (
+			gfx_x = this.graph_x(value);
+			gfx_x >= ui_left() ? (
+				gfx_y = ui_top();
+				gfx_a = (value == ref) ? this.grid_a : this.grid_a*0.6;
+
+				sprintf(#graph_x_label, format, value*1.00000001);
+				gfx_measurestr(#graph_x_label, w, h);
+				labelright = gfx_x + w*0.6;
+
+				labelright <= labelleft ? (
+					gfx_lineto(gfx_x, ui_bottom());
+					labelleft = gfx_x - w*0.6;
+					labelleft >= ui_left() && labelright <= ui_right() ? (
+						gfx_a = this.grid_a;
+						gfx_x = labelleft;
+						gfx_y = ui_bottom() - gfx_texth;
+						gfx_printf(#graph_x_label);
+					);
+				) : (
+					gfx_lineto(gfx_x, ui_bottom() - gfx_texth);
+				);
+			);
+			value -= step;
+		);
+	ui_pop();
+);
+
+function graph_grid_x_logfreq() local(fi, fmag, freq) (
+	!this.grid_a ? (
+		this.grid_r = this.grid_g = this.grid_b = 1;
+		this.grid_a = 0.5;
+	);
+	ui_push();
+		ui_retina(1);
+		gfx_r = this.grid_r;
+		gfx_g = this.grid_g;
+		gfx_b = this.grid_b;
+		fi = 1;
+		fmag = 10;
+		while (fi*fmag < this.x_high) (
+			freq = fi*fmag;
+			freq > this.x_low ? (
+				gfx_x = this.graph_log_x(freq);
+				gfx_y = ui_top();
+				gfx_a = this.grid_a*0.6;
+				gfx_lineto(gfx_x, ui_bottom());
+
+				fi == 1 ? (
+					ui_fontsize(10*ui_retina());
+					gfx_a = this.grid_a*0.6;
+					gfx_x += ui_texth()*0.5;
+					gfx_y = ui_bottom() - ui_texth()*1.5;
+					fmag >= 1000 ? (
+						gfx_printf("%ikHz", freq/1000);
+					) : (
+						gfx_printf("%iHz", freq);
+					);
+				);
+			);
+			fi += 1;
+			fi >= 10 ? (
+				fi /= 10;
+				fmag *= 10;
+			);
+		);
+	ui_pop();
+);
+
+function graph_grid_y_db() local(fmag, freq, db) (
+	!this.grid_a ? (
+		this.grid_r = this.grid_g = this.grid_b = 1;
+		this.grid_a = 0.5;
+	);
+	ui_push();
+		ui_retina(1);
+		gfx_r = this.grid_r;
+		gfx_g = this.grid_g;
+		gfx_b = this.grid_b;
+		db = 0;
+		while (abs(db) < max(abs(this.y_high), abs(this.y_low))) (
+			db > this.y_low && db < this.y_high ? (
+				gfx_y = this.graph_y(db);
+				debug.y = gfx_y;
+				gfx_x = ui_left();
+				db == 0 ? (
+					gfx_a = this.grid_a;
+					ui_color(255, 255, 255, 0.5);
+				) : (
+					gfx_a = this.grid_a*0.3;
+				);
+				gfx_lineto(ui_right(), gfx_y);
+
+				ui_fontsize(10*ui_retina());
+				!db || (abs(db) >= 3 && abs(gfx_y - this.graph_y(db*0.25)) > ui_texth() && gfx_y - ui_top() > ui_texth()) ? (
+					gfx_a = this.grid_a;
+					gfx_x = ui_left() + ui_texth()*0.5;
+					gfx_y -= ui_texth()*1;
+					gfx_printf("%idB", dB);
+				);
+			);
+			db == 0 ? (
+				db = 1;
+			) : db > 0 ? (
+				db = -db;
+			) : db > -3 ? (
+				db = 1 - db;
+			) : (
+				db = -2*db;
+			);
+		);
+	ui_pop();
+);
+
+function graph_edit(buffer, N, low, high) local(start, end, i, i1, i2, r, v1, v2) (
+	ui_press() || ui_drag()? (
+		i1 = (N - 1)*ui_mouse_x()/ui_width();
+		v1 = high + (low - high)*ui_mouse_y()/ui_height();
+
+		mouse_cap&8 ? (
+			i2 = (N - 1)*(ui_mouse_x() - ui_drag_x())/ui_width();
+			v2 = high + (low - high)*(ui_mouse_y() - ui_drag_y())/ui_height();
+		) : (
+			i2 = (N - 1)*(ui_mouse_x() - ui_mouse_dx())/ui_width();
+			v2 = high + (low - high)*(ui_mouse_y() - ui_mouse_dy())/ui_height();
+		);
+
+		(ui_mouse_dx() || ui_mouse_dy) && (i1 != i2 || v1 != v2)? (
+			v1 = min(high, max(low, v1));
+			v2 = min(high, max(low, v2));
+
+			start = ceil(min(i1, i2));
+			end = ceil(max(i1, i2));
+			start = max(0, min(N, start));
+			end = max(0, min(N, end));
+			i = start;
+			while (i < end) (
+				r = (i - i1)/(i2 - i1);
+				buffer[i] = v1 + (v2 - v1)*r;
+				i += 1;
+			);
+		);
+	);
+);

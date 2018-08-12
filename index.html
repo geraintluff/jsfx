@@ -186,8 +186,8 @@ h3 {
 <!-- forum code:
 [b]Synth[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#PadSynth]PadSynth[/url] - a synth that produces thick sounds, including per-note effects and modulators
-[*][url=https://geraintluff.github.io/jsfx#Hammer%20And%20Chord]Hammer And Chord[/url] - a polyphonic string resonator/synth
 [*][url=https://geraintluff.github.io/jsfx#Humonica]Humonica[/url] - harmoniser
+[*][url=https://geraintluff.github.io/jsfx#Hammer%20And%20Chord]Hammer And Chord[/url] - a polyphonic string resonator/synth
 [*][url=https://geraintluff.github.io/jsfx#Soft-Bell]Soft-Bell[/url] - a synth that produces gentle bells and chimes
 [*][url=https://geraintluff.github.io/jsfx#Learning%20Sampler]Learning Sampler[/url] - a basic sampler that records incoming audio and plays it back[/list]
 
@@ -218,9 +218,9 @@ h3 {
 
 --><div class="reapack-nav"><h3>Synth</h3><ul><li><a href="#PadSynth">PadSynth</a> - a synth that produces thick sounds, including per-note effects and modulators
 </li>
-<li><a href="#Hammer And Chord">Hammer And Chord</a> - a polyphonic string resonator/synth
-</li>
 <li><a href="#Humonica">Humonica</a> - harmoniser
+</li>
+<li><a href="#Hammer And Chord">Hammer And Chord</a> - a polyphonic string resonator/synth
 </li>
 <li><a href="#Soft-Bell">Soft-Bell</a> - a synth that produces gentle bells and chimes
 </li>
@@ -267,16 +267,18 @@ h3 {
 <p>The per-note effects can re-ordered and renamed, and the modulators can modulate any later effect in the chain, including other modulators.</p>
 <p><img src="doc/images/PadSynth2.png" alt="screenshot"></p>
 </div>
+<div class="reapack-package reapack-package-with-links" id="Humonica"><div class="reapack-links"><audio controls preload="none" src="audio-demos/humonica-legato.mp3"></audio><audio controls preload="none" src="audio-demos/humonica-spring-box.mp3"></audio><audio controls preload="none" src="audio-demos/humonica-sweeps.mp3"></audio><a href="https://www.youtube.com/watch?v=eTiwH886nAc&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="humonica">Humonica</h1>
+<p>This effect is anywhere between a vocoder and a synth with sharp filter-sweeps.</p>
+<p>It can use input audio for its timbre to act as a vocoder (&quot;audio&quot; mode) or use a spectrum which you can draw precisely with the mouse, allowing extremely sharp cutoffs.  You can shift this timbre up or down based on pitch, velocity, or a per-note envelope (&quot;sweep&quot;).</p>
+<p><img src="doc/images/Humonica.png" alt="screenshot"></p>
+<p>In &quot;audio&quot; mode, you can control how much audio is used to calculate the timbre (window) and how often (overlap).  There is a zero-latency mode for live performance, and a latency-compensated one.  The &quot;Volume&quot; section acts like a basic compressor - turn both dials to 0 to disable.</p>
+<p>The &quot;fixed&quot; mode lets you draw the spectrum for a single pulse of the oscillator using the mouse.  Shift-click lets you draw straight lines.</p>
+</div>
 <div class="reapack-package reapack-package-with-links" id="Hammer And Chord"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Hammer And Chord detune demo.mp3"></audio><audio controls preload="none" src="audio-demos/Hammer And Chord resonator demo.mp3"></audio><audio controls preload="none" src="audio-demos/Hammer And Chord ringmod demo.mp3"></audio><audio controls preload="none" src="audio-demos/hammer-and-chord-expressive.mp3"></audio><audio controls preload="none" src="audio-demos/hammer-and-chord-legato.mp3"></audio><audio controls preload="none" src="audio-demos/hammer-and-chord.mp3"></audio><a href="https://www.youtube.com/watch?v=0MmKuW2nEkk&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a><a href="https://www.youtube.com/watch?v=E_3ILfZsrs4&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="hammer-and-chord">Hammer And Chord</h1>
 <p>This effect is a polyphonic string resonator.  It can provide its own impulse (to act as a synth) as well as resonating the incoming audio (e.g. a drum loop).  (<a href="audio-demos/hammer-and-chord.mp3">audio demo</a>)</p>
 <p><img src="doc/images/Hammer and Chord.png" alt="screenshot"></p>
 <p>It has two resonators for each note (left and right) and they can be detuned (<a href="audio-demos/Hammer And Chord detune demo.mp3">audio demo</a>).</p>
 <p>If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. (<a href="audio-demos/Hammer And Chord ringmod demo.mp3">audio demo</a>)</p>
-</div>
-<div class="reapack-package reapack-package-with-links" id="Humonica"><div class="reapack-links"><audio controls preload="none" src="audio-demos/humonica-legato.mp3"></audio><audio controls preload="none" src="audio-demos/humonica-spring-box.mp3"></audio><audio controls preload="none" src="audio-demos/humonica-sweeps.mp3"></audio><a href="https://www.youtube.com/watch?v=eTiwH886nAc&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="humonica">Humonica</h1>
-<p>This effect is a harmoniser - it works by periodically sampling the input, converting to a zero-phase impulse, and using that result to resynthesise notes.</p>
-<p><img src="doc/images/Humonica.png" alt="screenshot"></p>
-<p>You can control how much audio is used to calculate the timbre (window) and how often (overlap).  There is a zero-latency mode (&quot;live&quot;: notes are played instantly, but the timbre will be slightly behind), and a latency-compensated one.</p>
 </div>
 <div class="reapack-package reapack-package-with-links" id="Echo-Cycles"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Echo-Cycles.mp3"></audio><a href="https://www.youtube.com/watch?v=BZ-1z7IKYTs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="echo-cycles">Echo Cycles</h1>
 <p>This is a feedback delay effect where the echoes move through the stereo space.  (<a href="https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3">audio demo</a>)</p>

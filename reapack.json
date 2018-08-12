@@ -301,7 +301,7 @@
 			"type": "effect",
 			"category": "Synth",
 			"summary": "harmoniser",
-			"sort": 1,
+			"sort": 0.5,
 			"files": {
 				"Humonica.jsfx": {
 					"main": false
@@ -328,7 +328,7 @@
 					"main": false
 				}
 			},
-			"version": "2.1.5",
+			"version": "3.0.0",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=eTiwH886nAc&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
