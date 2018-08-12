@@ -300,7 +300,7 @@
 		"Humonica": {
 			"type": "effect",
 			"category": "Synth",
-			"summary": "harmoniser",
+			"summary": "harmoniser and synth",
 			"sort": 0.5,
 			"files": {
 				"Humonica.jsfx": {
