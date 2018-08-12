@@ -39,7 +39,7 @@ import smoother.jsfx-inc
 import graph-utils.jsfx-inc
 
 @init
-gfx_ext_retina = 1;
+!gfx_ext_retina ? gfx_ext_retina = 1;
 
 // TODO: why do we need this?
 // On init (playback), the UI flashes an "unknown screen" error briefly
@@ -54,6 +54,16 @@ MAX_WINDOW_SAMPLES = srate*MAX_WINDOW_MS*0.001;
 
 freemem = 0;
 freemem = (fft_block = freemem) + FFT_MAX_SIZE*2;
+
+// This has to be in a fixed position, or it gets overwritten when we change samplerate
+SPECTRUM_MAX_N = 1000;
+!spectrum_low_freq ? (
+	spectrum_low_freq = 20;
+	spectrum_high_freq = 20000;
+	spectrum_min_db = -60;
+);
+freemem = (spectrum_db = freemem) + SPECTRUM_MAX_N;
+
 kernel_length = MAX_WINDOW_SAMPLES;
 freemem = (kernelA0 = freemem) + kernel_length;
 freemem = (kernelA1_read = kernelA1 = freemem) + kernel_length;
@@ -62,6 +72,13 @@ freemem = (kernelB1_read = kernelB1 = freemem) + kernel_length;
 input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
+
+// Wipe all buffers
+i = kernelA0;
+while (i < freemem) (
+	i[] = 0;
+	i += 1;
+);
 
 function default_spectrum_db(freq, mode) (
 	mode == 2 ? (
@@ -80,18 +97,6 @@ function default_spectrum_db(freq, mode) (
 	);
 );
 
-// Wipe all buffers
-i = 0;
-while (i < freemem) (
-	i[] = 0;
-	i += 1;
-);
-
-SPECTRUM_MAX_N = 1000;
-spectrum_low_freq = 20;
-spectrum_high_freq = 20000;
-spectrum_min_db = -60;
-freemem = (spectrum_db = freemem) + SPECTRUM_MAX_N;
 function reset_spectrum(N, mode) local(i, freq) (
 	spectrum_N = min(SPECTRUM_MAX_N, N);
 	i = 0;
