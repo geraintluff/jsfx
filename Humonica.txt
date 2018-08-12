@@ -27,12 +27,16 @@ slider19:timbre_shift_decay_ms=150<1,2000>-Timbre shift decay (ms)
 slider20:timbre_shift_velocity_semitones=0<-12,12>-Timbre shift velocity (semitones)
 slider21:env_sustain=1<0,1>-Env. Sustain
 slider22:env_decay_ms=300<1,2000,1>-Env. Decay (ms)
+slider23:waveform_mode=1<0,1,1{fixed,analysis}>-Waveform mode
+slider24:volume_target_db=-12<-24,0,1>-Target volume (dB)
+slider25:volume_max_gain_db=24<0,48,1>-Max volume boost (dB)
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
 import synth-framework-obj-ui.jsfx-inc
 import filter-utils.jsfx-inc
 import smoother.jsfx-inc
+import graph-utils.jsfx-inc
 
 @init
 gfx_ext_retina = 1;
@@ -59,12 +63,52 @@ input_buffer_length = MAX_WINDOW_SAMPLES + 10;
 freemem = (input_buffer0 = freemem) + input_buffer_length;
 freemem = (input_buffer1 = freemem) + input_buffer_length;
 
+function default_spectrum_db(freq, mode) (
+	mode == 2 ? (
+		freq < 1500 ? (
+			-20 - 12*max(0, log(freq/800))
+			+ 6*exp(-pow((freq - 400)/150, 2))
+			+ 4*exp(-pow((freq - 1200)/400, 2))
+			+ 4*exp(-pow((freq - 1400)/100, 2))
+			+ 4*exp(-pow((freq - 800)/130, 2))
+		) : spectrum_min_db;
+	) : (
+		-24 - 24*max(0, log(freq/1000))
+		+ 9*exp(-pow((freq - 2000)/300, 2))
+		+ 9*exp(-pow((freq - 2800)/200, 2))
+		+ 6*exp(-pow((freq - 800)/500, 2));
+	);
+);
+
 // Wipe all buffers
 i = 0;
 while (i < freemem) (
 	i[] = 0;
 	i += 1;
 );
+
+SPECTRUM_MAX_N = 1000;
+spectrum_low_freq = 20;
+spectrum_high_freq = 20000;
+spectrum_min_db = -60;
+freemem = (spectrum_db = freemem) + SPECTRUM_MAX_N;
+function reset_spectrum(N, mode) local(i, freq) (
+	spectrum_N = min(SPECTRUM_MAX_N, N);
+	i = 0;
+	while (i < spectrum_N) (
+		freq = spectrum_low_freq*exp(log(spectrum_high_freq/spectrum_low_freq)*i/spectrum_N);
+		spectrum_db[i] = default_spectrum_db(freq, mode);
+		i += 1;
+	);
+	spectrum_kernel_is_up_to_date = 0;
+);
+function reset_spectrum(N) (
+	reset_spectrum(N, 1);
+);
+!spectrum_N ? (
+	reset_spectrum(300);
+);
+spectrum_kernel_is_up_to_date = 0;
 
 freemem = ui_setup(freemem);
 freemem = synth_setup(freemem);
@@ -123,7 +167,6 @@ smoothing = smoother_block(timbre_shift_semitones)
 
 crossover_percent = 100 - 50/crossover_ratio;
 
-
 attack_samples = srate*attack_ms*0.001;
 release_samples = srate*release_ms*0.001;
 window_samples = max(srate, 8000)*window_ms*0.001;
@@ -133,7 +176,12 @@ timbre_shift_decay_samples = srate*timbre_shift_decay_ms*0.001;
 timbre_shift_decay_factor = exp(-1/timbre_shift_decay_samples);
 interval_samples = window_samples*(1 - crossover_percent/100);
 old_fft_size = fft_size;
-fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
+waveform_mode ? (
+	fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
+) : (
+	waveform_samples = max(srate, 8000)*0.05;
+	fft_size = pow(2, ceil(log(waveform_samples*1.5)/log(2)));
+);
 old_fft_size !== fft_size ? (
 	i = 0;
 	while (i < fft_size*0.5) (
@@ -156,6 +204,80 @@ old_fft_size !== fft_size ? (
 		i += 1;
 	);
 	!high_half_bitmask ? ui_error("Something has changed with the FFT implementation\n\nThis is a BIG PROBLEM.\n\nPlease contact luffgd@gmail.com to get it fixed");
+);
+
+action_reset_spectrum > 0 ? (
+	reset_spectrum(spectrum_N, action_reset_spectrum);
+	action_reset_spectrum = 0;
+	uix_undo_point();
+);
+
+function copy_spectrum_from_input(buffer0, buffer1) local(i, ratio, window_value, real, imag, mag2, low_freq, high_freq, low_index, high_index, sum, j, db, max_db) (
+	i = 0;
+	// Fill with (stereo) input
+	while (i < fft_size) (
+		ratio = i/window_samples;
+		window_value = 0.5 - 0.5*cos(ratio*2*$pi);
+		index = input_index - i;
+		while (index < 0) (
+			index += input_buffer_length;
+		);
+		fft_block[i*2] = buffer0[index]*window_value;
+		fft_block[i*2 + 1] = buffer1[index]*window_value;
+		i += 1;
+	);
+
+	fft(fft_block, fft_size);
+	fft_permute(fft_block, fft_size);
+
+	i = 0;
+	while (i < fft_size) (
+		real = fft_block[i*2];
+		imag = fft_block[i*2 + 1];
+		mag2 = real*real + imag*imag;
+		fft_block[i] = mag2;
+		i += 1;
+	);
+
+	i = 0;
+	while (i < spectrum_N) (
+		low_freq = spectrum_low_freq*exp(log(spectrum_high_freq/spectrum_low_freq)*(i - 0.5)/spectrum_N);
+		high_freq = spectrum_low_freq*exp(log(spectrum_high_freq/spectrum_low_freq)*(i + 0.5)/spectrum_N);
+		low_index = floor(fft_size*(low_freq/srate));
+		high_index = ceil(fft_size*(high_freq/srate));
+		low_index = max(1, min(fft_size*0.5, low_index));
+		high_index = max(1, min(fft_size*0.5, high_index));
+
+		mag2 = 0;
+		j = low_index;
+		while (j <= high_index) (
+			mag2 += fft_buffer[j] + fft_buffer[fft_size - j];
+			j += 1;
+		);
+		high_index > low_index ? (mag2 /= (high_index - low_index)) : mag2 = 0;
+		db = 10*log(max(mag2, 0.000000000001))/log(10);
+		spectrum_db[i] = db;
+		i += 1;
+	);
+	max_db = 0;
+	i = 0;
+	while (i < spectrum_N) (
+		max_db = max(max_db, spectrum_db[i]);
+		i += 1;
+	);
+
+	i = 0;
+	while (i < spectrum_N) (
+		spectrum_db[i] = max(spectrum_db[i] - max_db, spectrum_min_db);
+		i += 1;
+	);
+
+	spectrum_kernel_is_up_to_date = 0;
+);
+action_sample_audio ? (
+	action_sample_audio = 0;
+	copy_spectrum_from_input(input_buffer0, input_buffer1);
+	uix_undo_point();
 );
 
 abs(timbre_shift_semitones) > 0.1 ? (
@@ -202,7 +324,7 @@ synth_block_each(synth1)
 && synth_block_each(synth15)
 && synth_block_each(synth16);
 
-latency_samples = latency_switch ? window_samples*0.5 + interval_samples : 0;
+latency_samples = (waveform_mode && latency_switch) ? window_samples*0.5 + interval_samples : 0;
 
 pdc_bot_ch = 0;
 pdc_top_ch = 2;
@@ -276,7 +398,7 @@ input_index >= input_buffer_length ? (
 	input_index = 0;
 );
 
-function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, max_abs, i, i2, ratio, window_value, index, real, imag, mag) (
+function fill_kernel_from_input(kernel, buffer, secondary_buffer) local(peak, norm_factor, sum1, sum2, max_abs, i, i2, ratio, window_value, scaling_factor, index, real, imag, mag, mag2, mag2sum, max_abs) (
 	i = 0;
 	max_abs = 0;
 	// Fill with input
@@ -310,11 +432,13 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		fft_block[0] = fft_block[1] = 0;
 		i = 1;
 
+		mag2sum = 0;
 		while (i < fft_size) (
 			real = fft_block[i*2];
 			imag = fft_block[i*2 + 1];
 			mag2 = real*real + imag*imag;
 			mag = sqrt(mag2);
+			mag2sum += mag2;
 
 			fft_block[i*2] = 0;
 			fft_block[i*2 + 1] = mag/fft_size;
@@ -325,20 +449,29 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 		fft_ipermute(fft_block, fft_size);
 		ifft(fft_block, fft_size);
 
+		max_abs = 0;
+		i = 0;
+		while (i < fft_size) (
+			max_abs = max(max_abs, abs(fft_block[i]));
+			i += 2;
+		);
+
 		// Zero out kernel
 		memset(kernel, 0, kernel_length);
 
 		// Place result in kernel
 		i = 0;
-		window_value = (secondary_buffer >= 0) ? sqrt(0.5) : 1;
+		scaling_factor = (secondary_buffer >= 0) ? sqrt(0.5) : 1;
+		mag = sqrt(mag2sum)/fft_size + max_abs;
+		scaling_factor *= min(pow(10, volume_max_gain_db/20), 2*pow(10, volume_target_db/20)/mag);
 		while (i < fft_size*0.5 && i < half_kernel_length) (
-			kernel[i] = fft_block[i*2];
+			kernel[i] = fft_block[i*2]*scaling_factor;
 			i += 1;
 		);
 		i = 1;
 		while (i < fft_size*0.5 && i < half_kernel_length) (
 			i2 = kernel_length - i;
-			kernel[i2] = fft_block[(fft_size - i)*2]*window_value;
+			kernel[i2] = fft_block[(fft_size - i)*2]*scaling_factor;
 			i += 1;
 		);
 	) : (
@@ -347,67 +480,139 @@ function fill_kernel(kernel, buffer, secondary_buffer) local(peak, norm_factor, 
 	);
 );
 
+function fill_kernel_from_spectrum(kernel) local(i, db, mag, mag2, scaling, freq, weight) (
+	i = 0;
+	mag2 = 0;
+	while (i < fft_size) (
+		freq = min(i, fft_size - i)/fft_size*srate;
+		freq_index = log(freq/spectrum_low_freq)/log(spectrum_high_freq/spectrum_low_freq)*spectrum_N;
+		freq_index < 0 || freq_index > spectrum_N - 1 ? (
+			mag = 0;
+		) : (
+			db = spectrum_db[floor(freq_index + 0.5)];
+			mag = (db <= spectrum_min_db) ? 0 : pow(10, db/20);
+		);
+		weight = (freq < 200) ? freq/200 : freq > 4000 ? min(3, freq/4000) : 1;
+		mag2 += mag*mag*weight;
+
+		fft_block[i*2] = 0;
+		fft_block[i*2 + 1] = mag;
+		i < fft_size/2 ? fft_block[i*2 + 1] *= -1;
+
+		i += 1;
+	);
+	fft_ipermute(fft_block, fft_size);
+	ifft(fft_block, fft_size);
+
+	// Zero out kernel
+	memset(kernel, 0, kernel_length);
+
+	scaling = mag2 ? 10*pow(10, volume_target_db/20)/sqrt(mag2*fft_size) : 0;
+
+	// Place result in kernel
+	i = 0;
+	while (i < fft_size*0.5 && i < half_kernel_length) (
+		kernel[i] = fft_block[i*2]*scaling;
+		i += 1;
+	);
+	i = 1;
+	while (i < fft_size*0.5 && i < half_kernel_length) (
+		i2 = kernel_length - i;
+		kernel[i2] = fft_block[(fft_size - i)*2]*scaling;
+		i += 1;
+	);
+);
+
 interval_index += 1;
 any_notes_active ? (
-	interval_index >= interval_samples ? (
-		interval_index = 0;
+	waveform_mode ? (
+		interval_index >= interval_samples ? (
+			instant_crossfade = interval_index >= interval_samples*1.2;
+			interval_index = 0;
 
-		// Swap kernels
-		tmp = kernelA0;
-		kernelA0 = kernelB0;
-		kernelB0 = tmp;
-		tmp = kernelA1;
-		kernelA1 = kernelB1;
-		kernelB1 = tmp;
-		tmp = kernelA1_read;
-		kernelA1_read = kernelB1_read;
-		kernelB1_read = tmp;
+			// Swap kernels
+			tmp = kernelA0;
+			kernelA0 = kernelB0;
+			kernelB0 = tmp;
+			tmp = kernelA1;
+			kernelA1 = kernelB1;
+			kernelB1 = tmp;
+			tmp = kernelA1_read;
+			kernelA1_read = kernelB1_read;
+			kernelB1_read = tmp;
 
-		stereo_switch ? (
-			fill_kernel(kernelB0, input_buffer0, -1);
-			fill_kernel(kernelB1, input_buffer1, -1);
-			kernelB1_read = kernelB1;
-		) : (
-			fill_kernel(kernelB0, input_buffer0, input_buffer1);
-			kernelB1_read = kernelB0;
-		);
-
-		vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
-			lowest_value = 0;
-			highest_value = 0;
-			highest_index = 0;
-			i = 0;
-			while (i < kernel_length/2) (
-				value = (kernelB0[i] + kernelB1_read[i]);
-				value < lowest_value ? (
-					highest_value = highest_index = 0;
-					lowest_value = value;
-				) : value > highest_value ? (
-					highest_value = value;
-					highest_index = i;
+			stereo_switch ? (
+				fill_kernel_from_input(kernelB0, input_buffer0, -1);
+				fill_kernel_from_input(kernelB1, input_buffer1, -1);
+				kernelB1_read = kernelB1;
+			) : (
+				fill_kernel_from_input(kernelB0, input_buffer0, input_buffer1);
+				kernelB1_read = kernelB0;
+			);
+			instant_crossfade ? (
+				memcpy(kernelA0, kernelB0, kernel_length);
+				stereo_switch ? (
+					memcpy(kernelA1, kernelB1, kernel_length);
 				);
-				i += 1;
-			);
-			highest_index ? (
-				target_wavelength = highest_index;
 			);
 
-			tonality_limit ? (
-				first_value = (kernelB0[0] + kernelB1_read[0]);
-				tonality = first_value ? highest_value/first_value : 0;
-				factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
-				tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
-
+			vib_mode == 0 && (vibrato_tracking || tonality_limit) ? (
+				lowest_value = 0;
+				highest_value = 0;
+				highest_index = 0;
 				i = 0;
-				while (i < kernel_length) (
-					kernelB0[i] *= tonality_factor;
-					kernelB1_read[i] *= tonality_factor;
+				while (i < kernel_length/2) (
+					value = (kernelB0[i] + kernelB1_read[i]);
+					value < lowest_value ? (
+						highest_value = highest_index = 0;
+						lowest_value = value;
+					) : value > highest_value ? (
+						highest_value = value;
+						highest_index = i;
+					);
 					i += 1;
 				);
+				highest_index ? (
+					target_wavelength = highest_index;
+				);
+
+				tonality_limit ? (
+					first_value = (kernelB0[0] + kernelB1_read[0]);
+					tonality = first_value ? highest_value/first_value : 0;
+					factor = max(0, min(1, (tonality - tonality_limit)/tonality_limit));
+					tonality_factor += (factor - tonality_factor)*tonality_smooth_slew*interval_samples;
+
+					i = 0;
+					while (i < kernel_length) (
+						kernelB0[i] *= tonality_factor;
+						kernelB1_read[i] *= tonality_factor;
+						i += 1;
+					);
+				);
 			);
 		);
+	) : spectrum_kernel_is_up_to_date < 2 ? (
+		// Spectrum-based
+		interval_index >= interval_samples ? (
+			spectrum_kernel_is_up_to_date += 1;
+
+			// Swap kernels
+			tmp = kernelA0;
+			kernelA0 = kernelB0;
+			kernelB0 = tmp;
+			tmp = kernelA1;
+			kernelA1 = kernelB1;
+			kernelB1 = tmp;
+			tmp = kernelA1_read;
+			kernelA1_read = kernelB1_read;
+			kernelB1_read = tmp;
+
+			fill_kernel_from_spectrum(kernelB0);
+			kernelB1_read = kernelB0;
+			interval_index = 0;
+		);
 	);
-	kernel_crossfade = smooth_fade(interval_index/interval_samples);
+	kernel_crossfade = interval_index < interval_samples ? smooth_fade(interval_index/interval_samples) : 1;
 );
 
 vibrato_tracking ? (
@@ -576,7 +781,7 @@ spls = (spl0 - spl1)*0.5*smoother_value(stereo_width);
 spl0 = splm + spls;
 spl1 = splm - spls;
 
-@gfx 780 400
+@gfx 674 444
 
 function labelled_dial(value, low, high, bias, label, number_format, default) local(h) (
 	h = min(50, ui_height()*0.5);
@@ -618,36 +823,96 @@ control_start("main", "default");
 ui_screen() == "main" ? (
 	control_navbar("Humonica", "config", "synth.config");
 
-	ui_split_bottomratio(0.15);
+	ui_split_bottom(min(ui_height()*0.1, 50));
 		control_background_technical();
 		ui_graph(kernelA0[1] !== 0 ? kernelA0 : kernelA1, window_samples, -window_samples*0.5, kernel_length, 0.00000001, 0.00000001);
 		control_finish_technical();
 	ui_pop();
 
-	ui_split_topratio(0.5);
-		ui_split_leftratio(4/10);
-			control_group("Analysis");
-			ui_pad(-1, 0);
-			ui_split_leftratio(1/4);
-				window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims", 30);
+	ui_split_topratio(1/3);
+		ui_split_leftratio(1/7);
+			waveform_mode = labelled_switch(waveform_mode, "Mode", waveform_mode ? "audio" : "fixed");
+		ui_pop();
+
+		waveform_mode ? (
+			ui_split_leftratio(4/6);
+				control_group("Analysis");
+				ui_split_leftratio(1/4);
+					window_ms = labelled_dial(window_ms, 5, 150, 1.5, "Window", "%ims", 30);
+				ui_split_next();
+					crossover_ratio = labelled_dial(crossover_ratio, 1, 10, 3, "Overlap", "x%.2f", 1.25);
+				ui_split_next();
+					latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero (live)");
+				ui_split_next();
+					stereo_switch = labelled_switch(stereo_switch, "Stereo", stereo_switch ? "separate" : "joined");
+				ui_pop();
+			ui_pop();
+
+			control_group("Volume");
+			ui_split_leftratio(1/2);
+				ui_automate(volume_target_db, labelled_dial(volume_target_db, -24, 0, 0, "Target", "%.1fdB", -12));
 			ui_split_next();
-				crossover_ratio = labelled_dial(crossover_ratio, 1, 10, 3, "Overlap", "x%.2f", 1.25);
+				ui_automate(volume_max_gain_db, labelled_dial(volume_max_gain_db, 0, 48, 0, "Max Boost", "%.1fdB", 24));
+			ui_pop();
+		) : (
+			ui_split_rightratio(1/7);
+				ui_automate(volume_target_db, labelled_dial(volume_target_db, -24, 0, 0, "Volume", "%.1fdB", -12));
+				ui_press() || ui_drag() ? (
+					spectrum_kernel_is_up_to_date = 0;
+				);
+			ui_pop();
+
+			ui_fontsize(12);
+			ui_split_righttext("Sample audio");
+				ui_split_topratio(1/3);
+					control_button("Sample audio") ? action_sample_audio = 1;
+				ui_split_next();
+					control_button("Reset 1") ? action_reset_spectrum = 1;
+				ui_split_next();
+					control_button("Reset 2") ? action_reset_spectrum = 2;
+				ui_pop();
+			ui_pop();
+
+			control_background_technical();
+
+			g_graph.graph_range_x(20, 20000);
+			g_graph.graph_range_y(spectrum_min_db, 0);
+
+			// Specialised versions
+			g_graph.graph_grid_color(255, 255, 255, 0.6);
+			g_graph.graph_grid_x_logfreq();
+			g_graph.graph_grid_color(255, 255, 255, 0.4);
+			g_graph.graph_grid_y(0, 6, "%idB");
+
+			ui_graph(spectrum_db, spectrum_N, spectrum_min_db, 0);
+			graph_edit(spectrum_db, spectrum_N, spectrum_min_db, 0);
+			control_finish_technical();
+			ui_mouse_up() ? (
+				uix_undo_point(1);
+			);
+
+			ui_press() || ui_drag() || ui_mouse_up() ? (
+				spectrum_kernel_is_up_to_date = 0;
+			);
+		);
+	ui_split_next();
+		ui_split_leftratio(2/8);
+			control_group("Stereo");
+			ui_split_leftratio(1/2);
+				ui_automate(lr_detune_cents, labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3));
 			ui_split_next();
-				latency_switch = labelled_switch(latency_switch, "Latency", latency_switch ? "compensated" : "zero (live)");
-			ui_split_next();
-				stereo_switch = labelled_switch(stereo_switch, "Stereo", stereo_switch ? "separate" : "joined");
+				ui_automate(stereo_width, labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5));
 			ui_pop();
 		ui_pop();
 
 		ui_split_leftratio(4/6);
 			control_group("Timbre");
-			ui_pad(-1, 0);
 			ui_split_leftratio(1/4);
 				ui_automate(timbre_shift_semitones, labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0));
 			ui_split_next();
-				ui_automate(timbre_shift_tracking, labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Tracking", "Pitch", 0));
+				ui_automate(timbre_shift_tracking, labelled_dial(timbre_shift_tracking, -0.5, 0.5, 0, "Pitch", "", 0));
 			ui_split_next();
-				ui_automate(timbre_shift_velocity_semitones, labelled_dial(timbre_shift_velocity_semitones, -12, 12, 0, "Tracking", "Velocity", 0));
+				ui_automate(timbre_shift_velocity_semitones, labelled_dial(timbre_shift_velocity_semitones, -12, 12, 0, "Velocity", "Velocity", 0));
 			ui_split_next();
 				ui_automate(lowpass_freq_khz, labelled_dial(lowpass_freq_khz, 1, 20, 2, "Filter", "%.f kHz", 8));
 			ui_pop();
@@ -655,59 +920,55 @@ ui_screen() == "main" ? (
 
 		ui_split_leftratio(2/2);
 			control_group("Sweep");
-			ui_pad(-1, 0);
 			ui_split_leftratio(1/2);
 				ui_automate(timbre_shift_sustain_semitones, labelled_dial(timbre_shift_sustain_semitones, -48, 12, -2.8, "Sweep", "%.1f st", 0));
 			ui_split_next();
 				ui_automate(timbre_shift_decay_ms, labelled_dial(timbre_shift_decay_ms, 1, 2000, 4, "Speed", timbre_shift_decay_ms < 5 ? "%.1fms" : "%ims", 150));
 			ui_pop();
 		ui_pop();
-	ui_pop();
-
-	ui_split_leftratio(2/10);
-		control_group("Stereo");
-		ui_split_leftratio(1/2);
-			ui_automate(lr_detune_cents, labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3));
-		ui_split_next();
-			ui_automate(stereo_width, labelled_dial(stereo_width, 0, 1, 0, "Width", "", 0.5));
+	ui_split_next();
+		ui_split_leftratio(3/7);
+			control_group("Vibrato");
+			ui_split_leftratio(1/3);
+				/*
+				waveform_mode ? (
+					vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
+				) : (
+					ui_text("LFO");
+				);
+			ui_split_next();
+			*/
+				vib_mode ? (
+					ui_automate(vib_lfo_scale_cents, labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 5));
+				) : (
+					vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Tracking", "strength", 0));
+				);
+			ui_split_next();
+				vib_mode ? (
+					ui_automate(vib_lfo_hz, labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4.7));
+				) : (
+					tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit", 0);
+				);
+			ui_split_next();
+				vib_mode ? (
+					vib_lfo_attack_ms = labelled_dial(vib_lfo_attack_ms, 1, 2000, 4, "Attack", "%ims", 350);
+				) : (
+					0;
+				);
+			ui_pop();
 		ui_pop();
-	ui_pop();
 
-	ui_split_leftratio(4/8);
-		control_group("Vibrato");
-		ui_split_leftratio(1/4);
-			vib_mode = labelled_switch(vib_mode, "Vibrato", vib_mode ? "LFO" : "tracking");
-		ui_split_next();
-			vib_mode ? (
-				ui_automate(vib_lfo_scale_cents, labelled_dial(vib_lfo_scale_cents, 0, 100, 4, "Depth", "%i cents", 5));
-			) : (
-				vibrato_tracking = max(0, labelled_dial(vibrato_tracking, -0.001, 1, 0, "Tracking", "strength", 0));
-			);
-		ui_split_next();
-			vib_mode ? (
-				ui_automate(vib_lfo_hz, labelled_dial(vib_lfo_hz, 0.5, 10, 3, "Freq", "%.1f Hz", 4.7));
-			) : (
-				tonality_limit = labelled_dial(tonality_limit, 0, 0.5, 0, "Tonality", "limit", 0);
-			);
-		ui_split_next();
-			vib_mode ? (
-				vib_lfo_attack_ms = labelled_dial(vib_lfo_attack_ms, 1, 2000, 4, "Attack", "%ims", 350);
-			) : (
-				0;
-			);
-		ui_pop();
-	ui_pop();
-
-	ui_split_leftratio(4/4);
-		control_group("Envelope");
-		ui_split_leftratio(1/4);
-			attack_ms = labelled_dial(attack_ms, 0, 1000, 5, "Attack", "%ims", 5);
-		ui_split_next();
-			env_decay_ms = labelled_dial(env_decay_ms, 0, 2000, 5, "Decay", "%ims", 300);
-		ui_split_next();
-			env_sustain = labelled_dial(env_sustain, 0, 1, 1, "Sustain", "", 1);
-		ui_split_next();
-			release_ms = labelled_dial(release_ms, 0, 2000, 5, "Release", "%ims", 10);
+		ui_split_leftratio(4/4);
+			control_group("Envelope");
+			ui_split_leftratio(1/4);
+				attack_ms = labelled_dial(attack_ms, 0, 1000, 5, "Attack", "%ims", 5);
+			ui_split_next();
+				env_decay_ms = labelled_dial(env_decay_ms, 0, 2000, 5, "Decay", "%ims", 300);
+			ui_split_next();
+				env_sustain = labelled_dial(env_sustain, 0, 1, 1, "Sustain", "", 1);
+			ui_split_next();
+				release_ms = labelled_dial(release_ms, 0, 2000, 5, "Release", "%ims", 10);
+			ui_pop();
 		ui_pop();
 	ui_pop();
 
@@ -720,7 +981,7 @@ ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 4;
+preset_version = 5;
 file_var(0, preset_version);
 
 synth_serialize(preset_version < 3);
@@ -732,3 +993,22 @@ preset_version < 4 ? (
 	env_sustain = 1;
 	env_decay_ms = 300;
 );
+preset_version < 5 ? (
+	waveform_mode = 1;
+	reset_spectrum(300);
+
+	volume_target_db = -12;
+	volume_max_gain_db = 0;
+) : (
+	file_var(0, spectrum_low_freq);
+	file_var(0, spectrum_high_freq);
+	file_var(0, spectrum_min_db);
+	file_var(0, spectrum_N);
+	s_i = 0;
+	while (s_i < spectrum_N) (
+		file_var(0, spectrum_db[s_i]);
+		s_i += 1;
+	);
+);
+
+spectrum_kernel_is_up_to_date = 0;

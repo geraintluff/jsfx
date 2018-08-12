@@ -323,6 +323,9 @@
 				},
 				"smoother.jsfx-inc": {
 					"main": false
+				},
+				"graph-utils.jsfx-inc": {
+					"main": false
 				}
 			},
 			"version": "2.1.5",
