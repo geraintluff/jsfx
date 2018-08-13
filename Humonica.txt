@@ -1,4 +1,4 @@
-desc:Humonica - Harmoniser/Harmonizer (by Geraint Luff)
+desc:Humonica - Synth & Harmoniser (by Geraint Luff)
 
 in_pin:Left
 in_pin:Right
@@ -30,6 +30,7 @@ slider22:env_decay_ms=300<1,2000,1>-Env. Decay (ms)
 slider23:waveform_mode=1<0,1,1{fixed,analysis}>-Waveform mode
 slider24:volume_target_db=-12<-24,0,1>-Target volume (dB)
 slider25:volume_max_gain_db=24<0,48,1>-Max volume boost (dB)
+//slider26:oversampling_factor_log2=0<0,3,1{x1,x2,x4,x8}>Oversampling
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
@@ -182,10 +183,14 @@ timbre_shift_decay_factor = exp(-1/timbre_shift_decay_samples);
 interval_samples = window_samples*(1 - crossover_percent/100);
 old_fft_size = fft_size;
 waveform_mode ? (
-	fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)));
+	oversampling_factor = 1;
+	fft_size = pow(2, ceil(log(window_samples*1.5)/log(2)))*oversampling_factor;
 ) : (
+	// TODO: have this as a setting, instead of a constant
+	// Fixed 4x oversampling
+	oversampling_factor = 4;
 	waveform_samples = max(srate, 8000)*0.05;
-	fft_size = pow(2, ceil(log(waveform_samples*1.5)/log(2)));
+	fft_size = pow(2, ceil(log(waveform_samples*1.5)/log(2)))*oversampling_factor;
 );
 old_fft_size !== fft_size ? (
 	i = 0;
@@ -209,6 +214,7 @@ old_fft_size !== fft_size ? (
 		i += 1;
 	);
 	!high_half_bitmask ? ui_error("Something has changed with the FFT implementation\n\nThis is a BIG PROBLEM.\n\nPlease contact luffgd@gmail.com to get it fixed");
+	spectrum_kernel_is_up_to_date = 0;
 );
 
 action_reset_spectrum > 0 ? (
@@ -337,7 +343,7 @@ pdc_delay = latency_samples;
 
 function note_block(note*) (
 	timbre_semitones = timbre_shift_tracking*(synth_midinote(note) - 60) + timbre_shift_velocity_semitones*(synth_velocity(note) - 64)/64;
-	note.TIMBRE_FACTOR = pow(2, timbre_semitones/12);
+	note.TIMBRE_FACTOR = pow(2, timbre_semitones/12)*oversampling_factor;
 	synth_continue(note);
 );
 note_block(synth1)
@@ -489,7 +495,7 @@ function fill_kernel_from_spectrum(kernel) local(i, db, mag, mag2, scaling, freq
 	i = 0;
 	mag2 = 0;
 	while (i < fft_size) (
-		freq = min(i, fft_size - i)/fft_size*srate;
+		freq = min(i, fft_size - i)/fft_size*srate*oversampling_factor;
 		freq_index = log(freq/spectrum_low_freq)/log(spectrum_high_freq/spectrum_low_freq)*spectrum_N;
 		freq_index < 0 || freq_index > spectrum_N - 1 ? (
 			mag = 0;
@@ -512,7 +518,7 @@ function fill_kernel_from_spectrum(kernel) local(i, db, mag, mag2, scaling, freq
 	// Zero out kernel
 	memset(kernel, 0, kernel_length);
 
-	scaling = mag2 ? 10*pow(10, volume_target_db/20)/sqrt(mag2*fft_size) : 0;
+	scaling = mag2 ? 0.125*pow(10, volume_target_db/20)/sqrt(mag2) : 0;
 
 	// Place result in kernel
 	i = 0;
@@ -676,7 +682,7 @@ function process_note(note*) local(env_semitones, timbre_semitones) (
 			note.LFO_PHASE_R = lr_detune_cents > 0 ? rand() : note.LFO_PHASE_L;
 			note.LFO_FREQ_DIFF_R = lr_detune_cents > 0 ? 0.9 + 0.2*rand() : 1;
 			timbre_semitones = timbre_shift_tracking*(synth_midinote(note) - 60) + timbre_shift_velocity_semitones*(synth_velocity(note) - 64)/64;
-			note.TIMBRE_FACTOR = pow(2, timbre_semitones/12);
+			note.TIMBRE_FACTOR = pow(2, timbre_semitones/12)*oversampling_factor;
 
 			note.ENV_DECAY = 1;
 			note.TIMBRE_DECAY = 1;
