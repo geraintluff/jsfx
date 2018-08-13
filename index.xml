@@ -1415,6 +1415,16 @@
 				<source file="Humonica/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.1/Humonica/smoother.jsfx-inc</source>
 				<source file="Humonica/graph-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.1/Humonica/graph-utils.jsfx-inc</source>
 			</version>
+			<version name="3.0.2" author="Geraint Luff" time="2018-08-13T08:39:59.792Z">
+				<source file="Humonica/Humonica.jsfx">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/Humonica.jsfx</source>
+				<source file="Humonica/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/synth-framework-obj.jsfx-inc</source>
+				<source file="Humonica/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/ui-lib.jsfx-inc</source>
+				<source file="Humonica/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/filter-utils.jsfx-inc</source>
+				<source file="Humonica/Humonica.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/Humonica.jsfx.rpl</source>
+				<source file="Humonica/synth-framework-obj-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/synth-framework-obj-ui.jsfx-inc</source>
+				<source file="Humonica/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/smoother.jsfx-inc</source>
+				<source file="Humonica/graph-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Humonica/3.0.2/Humonica/graph-utils.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Soft-Bell" type="effect">
 			<metadata>
