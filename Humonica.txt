@@ -32,12 +32,13 @@ slider24:volume_target_db=-12<-24,0,1>-Target volume (dB)
 slider25:volume_max_gain_db=24<0,48,1>-Max volume boost (dB)
 slider26:detuning_random_amount=0<0,0.1>-Growl
 slider27:detuning_random_halving=0<0,0.5>-Grit
+slider28:timbre_shift_decay_velocity_log2=0<-4,4>-Timbre shift decay velocity-sensitivity
 //slider40:oversampling_factor_log2=0<0,3,1{x1,x2,x4,x8}>Oversampling
 
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
 import synth-framework-obj-ui.jsfx-inc
-import filter-utils.jsfx-inc
+import filter-utils.jsfx-in
 import smoother.jsfx-inc
 import graph-utils.jsfx-inc
 
@@ -180,8 +181,6 @@ release_samples = srate*release_ms*0.001;
 window_samples = max(srate, 8000)*window_ms*0.001;
 env_decay_samples = srate*env_decay_ms*0.001;
 env_decay_factor = exp(-1/env_decay_samples);
-timbre_shift_decay_samples = srate*timbre_shift_decay_ms*0.001;
-timbre_shift_decay_factor = exp(-1/timbre_shift_decay_samples);
 interval_samples = window_samples*(1 - crossover_percent/100);
 old_fft_size = fft_size;
 waveform_mode ? (
@@ -680,7 +679,7 @@ function random_detune() (
 	(1 + (rand() - 0.5)*detuning_random_amount)*(rand() < detuning_random_halving ? 2 : 1);
 );
 
-function process_note(note*) local(env_semitones, timbre_semitones) (
+function process_note(note*) local(env_semitones, timbre_semitones, timbre_shift_decay_samples) (
 	synth_sample_each(note) ? (
 		synth_needs_init(note) ? (
 			note.WAVELENGTH_L = srate/synth_freq(note)*random_detune();
@@ -694,8 +693,13 @@ function process_note(note*) local(env_semitones, timbre_semitones) (
 			timbre_semitones = timbre_shift_tracking*(synth_midinote(note) - 60) + timbre_shift_velocity_semitones*(synth_velocity(note) - 64)/64;
 			note.TIMBRE_FACTOR = pow(2, timbre_semitones/12)*oversampling_factor;
 
+
 			note.ENV_DECAY = 1;
 			note.TIMBRE_DECAY = 1;
+
+			timbre_shift_decay_samples = srate*timbre_shift_decay_ms*0.001;
+			timbre_shift_decay_samples *= pow(2, timbre_shift_decay_velocity_log2*(synth_velocity(note) - 63.5)/63.5);
+			note.TIMBRE_DECAY_FACTOR = exp(-1/timbre_shift_decay_samples);
 		);
 
 		amp = synth_velocity(note)/127;
@@ -760,7 +764,7 @@ function process_note(note*) local(env_semitones, timbre_semitones) (
 
 			timbre_factor = timbre_shift_factor*note.TIMBRE_FACTOR;
 			timbre_shift_sustain_semitones ? (
-				note.TIMBRE_DECAY *= timbre_shift_decay_factor;
+				note.TIMBRE_DECAY *= note.TIMBRE_DECAY_FACTOR;
 
 				env_semitones = timbre_shift_sustain_semitones*(1 - note.TIMBRE_DECAY);
 				timbre_factor *= pow(2, env_semitones/12);
@@ -917,7 +921,7 @@ ui_screen() == "main" ? (
 			);
 		);
 	ui_split_next();
-		ui_split_leftratio(2/8);
+		ui_split_leftratio(2/9);
 			control_group("Stereo");
 			ui_split_leftratio(1/2);
 				ui_automate(lr_detune_cents, labelled_dial(lr_detune_cents, 0, 100, 4, "Detune", lr_detune_cents < 2 ? "%.1f cents" : "%i cents", 3));
@@ -926,7 +930,7 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(4/6);
+		ui_split_leftratio(4/7);
 			control_group("Timbre");
 			ui_split_leftratio(1/4);
 				ui_automate(timbre_shift_semitones, labelled_dial(timbre_shift_semitones, -12, 12, 0, "Shift", "%.1f st", 0));
@@ -939,12 +943,14 @@ ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(2/2);
+		ui_split_leftratio(3/3);
 			control_group("Sweep");
-			ui_split_leftratio(1/2);
+			ui_split_leftratio(1/3);
 				ui_automate(timbre_shift_sustain_semitones, labelled_dial(timbre_shift_sustain_semitones, -48, 12, -2.8, "Sweep", "%.1f st", 0));
 			ui_split_next();
 				ui_automate(timbre_shift_decay_ms, labelled_dial(timbre_shift_decay_ms, 1, 2000, 4, "Speed", timbre_shift_decay_ms < 5 ? "%.1fms" : "%ims", 150));
+			ui_split_next();
+				ui_automate(timbre_shift_decay_velocity_log2, labelled_dial(timbre_shift_decay_velocity_log2, -2, 2, 0, "Velocity", "", 0));
 			ui_pop();
 		ui_pop();
 	ui_split_next();
@@ -1011,7 +1017,7 @@ ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 7;
+preset_version = 8;
 file_var(0, preset_version);
 
 synth_serialize(preset_version < 3);
@@ -1045,6 +1051,9 @@ preset_version < 6 ? (
 );
 preset_version < 7 ? (
 	detuning_random_halving = 0;
+);
+preset_version < 8 ? (
+	timbre_shift_decay_velocity_log2 = 0;
 );
 
 spectrum_kernel_is_up_to_date = 0;
