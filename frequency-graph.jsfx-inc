@@ -9,12 +9,53 @@ function frequency_graph_init(low_freq, high_freq, low_db, high_db) (
 
 function frequency_graph_x_hz(freq) local(xratio) (
 	xratio = log(freq/this.low_freq)/log(this.high_freq/this.low_freq);
+	//xratio = xratio*0.9 + 0.1*(freq - this.low_freq)/(this.high_freq - this.low_freq);
 	ui_left() + xratio*ui_width();
 );
 
 function frequency_graph_y_db(db) local(yratio) (
 	yratio = (db - this.high_db)/(this.low_db - this.high_db);
 	ui_top() + yratio*ui_height();
+);
+
+function frequency_graph_graph(buffer, count, high_freq, logfreq, dbAmpOrPower) local(i, hz, db, x, y) (
+	ui_push();
+		ui_retina(1);
+		i = 0;
+		while (i < count) (
+			hz = logfreq == 0 ? i/count*high_freq : this.low_freq*exp(log(this.high_freq/this.low_freq)*i/count);
+			db = dbAmpOrPower == 0 ? buffer[i] : (
+				buffer[i] !== 0 ? (
+					dbAmpOrPower == 1 ? 20*log10(buffer[i]) : 10*log10(buffer[i]);
+				) : (
+					-360;
+				)
+			);
+
+			x = this.frequency_graph_x_hz(hz);
+			y = this.frequency_graph_y_db(db);
+			
+			x = max(ui_left(), min(ui_right(), x));
+			y = max(ui_top(), min(ui_bottom(), y));
+			
+			debug.i = i;
+			debug.hz = hz;
+			debug.db = db;
+			debug.x = x;
+			debug.y = y;
+			
+			i == 0 ? (
+				gfx_x = x;
+				gfx_y = y;
+			) : (
+				gfx_lineto(x, y);
+			);
+			i += 1;
+		);
+	ui_pop();
+);
+function frequency_graph_hz_db(buffer, count, high_freq) (
+	this.frequency_graph_graph(buffer, count, high_freq, 0, 0);
 );
 
 function frequency_graph_grid() local(fi, fmag, freq, xratio, db) (
@@ -50,11 +91,8 @@ function frequency_graph_grid() local(fi, fmag, freq, xratio, db) (
 		);
 
 		db = 0;
-		debug.plot = 0;
 		while (abs(db) < max(abs(this.high_db), abs(this.low_db))) (
 			debug.plot += 1;
-			debug.db = db;
-			debug.y = this.frequency_graph_y_db(db);
 			db > this.low_db && db < this.high_db ? (
 				gfx_y = this.frequency_graph_y_db(db);
 				debug.y = gfx_y;

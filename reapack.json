@@ -575,6 +575,21 @@
 				}
 			},
 			"version": "1.0.4"
+		},
+		"Atlantis Reverb": {
+			"type": "effect",
+			"category": "Delay",
+			"files": {
+				"frequency-graph.jsfx-inc": {
+					"main": false
+				},
+				"atlantis-reverb.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

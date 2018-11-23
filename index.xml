@@ -792,6 +792,10 @@
 				<source file="Ripple/Ripple.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Ripple/1.0.4/Ripple/Ripple.jsfx.rpl</source>
 			</version>
 		</reapack>
+		<reapack name="Atlantis Reverb" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 	<category name="Synth">
 		<reapack name="PadSynth" type="effect">
