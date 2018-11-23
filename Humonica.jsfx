@@ -39,7 +39,7 @@ slider28:timbre_shift_decay_velocity_log2=0<-4,4>-Timbre shift decay velocity-se
 import ui-lib.jsfx-inc
 import synth-framework-obj.jsfx-inc
 import synth-framework-obj-ui.jsfx-inc
-import filter-utils.jsfx-in
+import filter-utils.jsfx-inc
 import smoother.jsfx-inc
 import graph-utils.jsfx-inc
 
