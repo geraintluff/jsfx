@@ -1,0 +1,289 @@
+desc:Atlantis Reverb (by Geraint Luff)
+
+in_pin:left
+in_pin:right
+out_pin:left
+out_pin:right
+
+slider1:wet_db=-12<-60,12>-Wet (dB)
+slider2:dry_db=0<-60,12>-Dry (dB)
+slider3:window_ms=150<10,500>-Grain size (ms)
+slider4:decay_seconds=0.3<0.01,5>-Decay Period (s)
+slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
+slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
+slider7:damping_strength=3<1,100>-Damping (strength)
+slider8:sparkle_factor=0<0,1>-Sparkle
+
+import ui-lib.jsfx-inc
+import frequency-graph.jsfx-inc
+
+@init
+
+interval_index = 0;
+
+!srate ? srate = 44100;
+
+window_overlap_factor = 4; // Must be a multiple of 2 so that things add up nicely
+
+MAX_FFT_SIZE = 32768;
+buffer_length = MAX_FFT_SIZE*2; // Store as complex stereo buffer
+
+freemem = 0;
+freemem = (fft_buffer = freemem) + MAX_FFT_SIZE*2;
+freemem = (energy_buffer = freemem) + MAX_FFT_SIZE;
+freemem = (input_buffer = freemem) + buffer_length;
+freemem = (output_buffer = freemem) + buffer_length;
+freemem = (window_buffer = freemem) + MAX_FFT_SIZE;
+freemem = (display_spectrum_buffer = freemem) + MAX_FFT_SIZE;
+
+memset(energy_buffer, 0, MAX_FFT_SIZE);
+
+freemem = ui_setup(freemem);
+
+function window(r) local(s, c) (
+	s = sin(r*$pi);
+	c = cos(r*$pi);
+	s*s/sqrt(s*s*s*s + c*c*c*c);
+);
+
+@block
+
+window_samples = min(32760, ceil(srate*0.001*window_ms));
+fft_size = pow(2, ceil(log(window_samples + 1)/log(2)));
+
+interval_samples = ceil(window_samples/window_overlap_factor);
+decay_intervals = srate*decay_seconds/interval_samples;
+decay_interval_factor = exp(-1/decay_intervals);
+damped_extra_interval_factor = pow(decay_interval_factor, damping_strength - 1);
+
+wet_factor = pow(10, wet_db/20);
+dry_factor = pow(10, dry_db/20);
+
+prev_fft_size != fft_size || prev_window_samples != window_samples  ? (
+	memset(energy_buffer, 0, MAX_FFT_SIZE);
+	prev_fft_size = fft_size;
+	prev_window_samples = window_samples;
+
+	i = 0;
+	loop(window_samples,
+		window_buffer[i] = window((i + 0.5)/window_samples);
+		i += 1
+	);
+);
+
+octave_up_rate_persecond = pow(8, sparkle_factor) - 1;
+octave_up_rate_perinterval = min(0.75, octave_up_rate_persecond/srate*interval_samples);
+
+low_damping_hz = max(20, min(low_damping_hz, high_damping_hz));
+high_damping_hz = min(18000, max(low_damping_hz, high_damping_hz));
+
+high_damping_index = high_damping_hz/srate*fft_size;
+high_damping_index_low = high_damping_index*0.75;
+high_damping_index_high = high_damping_index*1.5;
+
+low_damping_index = low_damping_hz/srate*fft_size;
+low_damping_index_low = low_damping_index*0.5;
+low_damping_index_high = low_damping_index*1.5;
+
+@sample
+
+function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, mult_factor) (
+	i = 0;
+	loop(window_samples,
+		w = window_buffer[i>>1];
+
+		i2 = buffer_pos - window_samples*2 + i;
+		i2 < 0 ? i2 += buffer_length;
+
+		fft_buffer[i] = input_buffer[i2]*w;
+		fft_buffer[i + 1] = input_buffer[i2 + 1]*w;
+		i += 2;
+	);
+	loop(fft_size - window_samples,
+		fft_buffer[i] = 0;
+		fft_buffer[i + 1] = 0;
+		i += 2;
+	);
+
+	fft(fft_buffer, fft_size);
+	fft_permute(fft_buffer, fft_size);
+
+	i = 1;
+	mult_factor = 0.5/window_overlap_factor*pow(window_samples/(fft_size*fft_size), 2);
+	mult_factor *= window_samples/(0.1*srate);
+
+	fft_buffer[0] = fft_buffer[1] = fft_buffer[fft_size] = fft_buffer[fft_size + 1] = 0;
+	loop(fft_size/2 - 1,
+		i2 = fft_size - i;
+		real = fft_buffer[2*i];
+		imag = fft_buffer[2*i + 1];
+		real2 = fft_buffer[2*i2];
+		imag2 = fft_buffer[2*i2 + 1];
+
+		mag2 = (real*real + imag*imag + real2*real2 + imag2*imag2)*mult_factor;
+		display_spectrum_buffer[i] = mag2;
+
+		decay = decay_interval_factor;
+		extra_decay = i <= high_damping_index_low ? (
+			1;
+		) : i >= high_damping_index_high ? (
+			damped_extra_interval_factor;
+		) : (
+			r = (i - high_damping_index_low)/(high_damping_index_high - high_damping_index_low);
+			1 + (damped_extra_interval_factor - 1)*r*r;
+		);
+		i < low_damping_index_high ? (
+			i > low_damping_index_low ? (
+				r = (i - low_damping_index_high)/(low_damping_index_low - low_damping_index_high);
+				extra_decay *= 1 + (damped_extra_interval_factor - 1)*r*r;
+			) : (
+				extra_decay *= damped_extra_interval_factor;
+			);
+		);
+		energy_buffer[i] = (energy_buffer[i]*decay + mag2)*extra_decay;
+		i += 1;
+	);
+
+	octave_up_rate_perinterval ? (
+		i = fft_size/2 - 1;
+		loop(fft_size/2 - 2,
+			current = energy_buffer[i];
+			2*i + 1 < fft_size/2 ? (
+				energy_buffer[2*i - 1] += 0.25*octave_up_rate_perinterval*current;
+				energy_buffer[2*i] += 0.5*octave_up_rate_perinterval*current;
+				energy_buffer[2*i + 1] += 0.25*octave_up_rate_perinterval*current;
+			);
+			energy_buffer[i] = (1 - octave_up_rate_perinterval)*current;
+
+			i -= 1;
+		);
+	);
+
+	// Assign energy spectrum to FFT buffer
+	i = 1;
+	loop(fft_size/2 - 1,
+		i2 = fft_size - i;
+		mag = sqrt(mag2 = energy_buffer[i]);
+
+		phase1 = rand()*2*$pi;
+		phase2 = rand()*2*$pi;
+
+		fft_buffer[2*i] = cos(phase1)*mag;
+		fft_buffer[2*i + 1] = sin(phase1)*mag;
+		fft_buffer[2*i2] = cos(phase2)*mag;
+		fft_buffer[2*i2 + 1] = sin(phase2)*mag;
+
+		i += 1;
+	);
+	fft_ipermute(fft_buffer, fft_size);
+	ifft(fft_buffer, fft_size);
+
+	i = 0;
+	loop(window_samples,
+		w = window_buffer[i>>1];
+
+		i2 = buffer_pos + i;
+		i2 >= buffer_length ? i2 -= buffer_length;
+
+		output_buffer[i2] += fft_buffer[i]*w;
+		output_buffer[i2 + 1] += fft_buffer[i + 1]*w;
+		i += 2;
+	);
+);
+
+input_buffer[buffer_pos] = spl0;
+input_buffer[buffer_pos + 1] = spl1;
+
+interval_index += 1;
+interval_index >= interval_samples ? (
+	interval_index = 0;
+	reverb_block();
+);
+
+spl0 = spl0*dry_factor + output_buffer[buffer_pos]*wet_factor;
+spl1 = spl1*dry_factor + output_buffer[buffer_pos + 1]*wet_factor;
+output_buffer[buffer_pos] = 0;
+output_buffer[buffer_pos + 1] = 0;
+
+buffer_pos += 2;
+buffer_pos >= buffer_length ? buffer_pos = 0;
+
+@gfx 600 300
+
+control_start("main", "tron");
+
+function labels(label, value, number_format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_align(0.5, 1);
+		ui_text(label);
+	ui_pop();
+	ui_split_bottom(h);
+		ui_align(0.5, 0);
+		number_format >= 0 ? (
+			ui_textnumber(value*1.0000001, number_format);
+		);
+	ui_pop();
+);
+
+srate && ui_screen() == "main" ? (
+	control_navbar("Atlantis Reverb");
+	ui_split_top(120);
+		ui_split_leftratio(1/8);
+			control_group("");
+			labels("grain", window_ms, "%i ms");
+			window_ms = control_dial(window_ms, 10, 500, 1.5, 150);
+		ui_pop();
+
+		ui_split_leftratio(2/7);
+			control_group("mix");
+			ui_split_leftratio(1/2);
+				labels("dry", dry_db, "%.1f db");
+				ui_automate(dry_db, control_dial(dry_db, -60, 12, -3.3, 0));
+			ui_split_next();
+				labels("wet", wet_db, "%.1f db");
+				ui_automate(wet_db, control_dial(wet_db, -60, 12, -3.3, -12));
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(2/5);
+			control_group("decay");
+			ui_split_leftratio(1/2);
+				labels("period", decay_seconds, "%.2f s");
+				ui_automate(decay_seconds, control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3));
+			ui_split_next();
+				labels("sparkle", octave_up_rate_persecond, "%.1f oct/s");
+				ui_automate(sparkle_factor, control_dial(sparkle_factor, 0, 1, 2, 0));
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(3/3);
+			control_group("damping");
+			ui_split_leftratio(1/3);
+				labels("damping", damping_strength, "x %.1f");
+				ui_automate(damping_strength, control_dial(damping_strength, 1, 100, 6, 3));
+			ui_split_next();
+				labels("low", low_damping_hz, "%i Hz");
+				ui_automate(low_damping_hz, control_dial(low_damping_hz, 20, 500, 3, 120));
+			ui_split_next();
+				labels("high", high_damping_hz, "%i Hz");
+				ui_automate(high_damping_hz, control_dial(high_damping_hz, 100, 18000, 3, 6000));
+			ui_pop();
+		ui_pop();
+	ui_pop();
+
+	ui_split_topratio(1/1);
+		graph.frequency_graph_init(50, 20000, -120, 0);
+		control_background_technical();
+		graph.frequency_graph_grid();
+		graph.frequency_graph_graph(energy_buffer, fft_size/2, srate/2, 0, 2);
+		ui_color(255, 255, 0, 0.5);
+		graph.frequency_graph_graph(display_spectrum_buffer, fft_size/2, srate/2, 0, 2);
+		control_finish_technical();
+	ui_pop();
+) : control_system();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);

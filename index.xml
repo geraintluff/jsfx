@@ -794,11 +794,17 @@
 		</reapack>
 		<reapack name="Atlantis Reverb" type="effect">
 			<metadata>
-				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-epic-swell.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-piano-sparkle.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Atlantis Reverb\b}\line\line This is a reverb that specialises in long ambient sounds and shimmering textures.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Atlantis-Reverb.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;grain&quot; size controls the frequency/time resolution.  Longer grains will give smooth and pure tones, which shorter ones will result in a thicker and more wavering result.\line\line Additionally the &quot;sparkle&quot; control feeds back octave-shifted versions of the same spectrum, adding extra brightness to the reverb.\line\line }</description>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-1-piano-sparkle.mp3&quot;}}{\fldrslt audio demo}} / {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-2-epic-swell.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Atlantis Reverb\b}\line\line This is a reverb that specialises in long ambient sounds and shimmering textures.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Atlantis-Reverb.png&quot;}}{\fldrslt screenshot}}\line\line The &quot;grain&quot; size controls the frequency/time resolution.  Longer grains will give smooth and pure tones, which shorter ones will result in a thicker and more wavering result.\line\line Additionally the &quot;sparkle&quot; control feeds back octave-shifted versions of the same spectrum, adding extra brightness to the reverb.\line\line }</description>
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Atlantis-Reverb.png</link>
-				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-epic-swell.mp3</link>
-				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-piano-sparkle.mp3</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-1-piano-sparkle.mp3</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/atlantis-reverb-2-epic-swell.mp3</link>
 			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2018-11-24T18:29:19.509Z">
+				<source file="Atlantis-Reverb/atlantis-reverb.jsfx">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.0.0/Atlantis-Reverb/atlantis-reverb.jsfx</source>
+				<source file="Atlantis-Reverb/atlantis-reverb.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.0.0/Atlantis-Reverb/atlantis-reverb.jsfx.rpl</source>
+				<source file="Atlantis-Reverb/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.0.0/Atlantis-Reverb/frequency-graph.jsfx-inc</source>
+				<source file="Atlantis-Reverb/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.0.0/Atlantis-Reverb/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
