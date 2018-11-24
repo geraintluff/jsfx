@@ -579,11 +579,16 @@
 		"Atlantis Reverb": {
 			"type": "effect",
 			"category": "Delay",
+			"summary": "produces mellow spaces, and shimmering highlights",
+			"sort": 3,
 			"files": {
-				"frequency-graph.jsfx-inc": {
+				"atlantis-reverb.jsfx": {
 					"main": false
 				},
-				"atlantis-reverb.jsfx": {
+				"atlantis-reverb.jsfx.rpl": {
+					"main": false
+				},
+				"frequency-graph.jsfx-inc": {
 					"main": false
 				},
 				"ui-lib.jsfx-inc": {

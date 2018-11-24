@@ -12,7 +12,7 @@ slider4:decay_seconds=0.3<0.01,5>-Decay Period (s)
 slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
 slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
 slider7:damping_strength=3<1,100>-Damping (strength)
-slider8:octave_up_rate_persecond=0<0,10>-Sparkle (/s)
+slider8:sparkle_factor=0<0,1>-Sparkle
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -36,6 +36,8 @@ freemem = (output_buffer = freemem) + buffer_length;
 freemem = (window_buffer = freemem) + MAX_FFT_SIZE;
 freemem = (display_spectrum_buffer = freemem) + MAX_FFT_SIZE;
 
+memset(energy_buffer, 0, MAX_FFT_SIZE);
+
 freemem = ui_setup(freemem);
 
 function window(r) local(s, c) (
@@ -57,9 +59,10 @@ damped_extra_interval_factor = pow(decay_interval_factor, damping_strength - 1);
 wet_factor = pow(10, wet_db/20);
 dry_factor = pow(10, dry_db/20);
 
-prev_fft_size != fft_size ? (
+prev_fft_size != fft_size || prev_window_samples != window_samples  ? (
 	memset(energy_buffer, 0, MAX_FFT_SIZE);
 	prev_fft_size = fft_size;
+	prev_window_samples = window_samples;
 
 	i = 0;
 	loop(window_samples,
@@ -68,6 +71,7 @@ prev_fft_size != fft_size ? (
 	);
 );
 
+octave_up_rate_persecond = pow(8, sparkle_factor) - 1;
 octave_up_rate_perinterval = min(0.75, octave_up_rate_persecond/srate*interval_samples);
 
 low_damping_hz = max(20, min(low_damping_hz, high_damping_hz));
@@ -248,8 +252,8 @@ srate && ui_screen() == "main" ? (
 				labels("period", decay_seconds, "%.2f s");
 				ui_automate(decay_seconds, control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3));
 			ui_split_next();
-				labels("sparkle", 0, -1);
-				ui_automate(octave_up_rate_persecond, control_dial(octave_up_rate_persecond, 0, 10, 2, 0));
+				labels("sparkle", octave_up_rate_persecond, "%.1f oct/s");
+				ui_automate(sparkle_factor, control_dial(sparkle_factor, 0, 1, 2, 0));
 			ui_pop();
 		ui_pop();
 
@@ -278,3 +282,8 @@ srate && ui_screen() == "main" ? (
 		control_finish_technical();
 	ui_pop();
 ) : control_system();
+
+@serialize
+
+preset_version = 1;
+file_var(0, preset_version);

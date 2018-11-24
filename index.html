@@ -192,10 +192,10 @@ h3 {
 [*][url=https://geraintluff.github.io/jsfx#Learning%20Sampler]Learning Sampler[/url] - a basic sampler that records incoming audio and plays it back[/list]
 
 [b]Delay[/b]
-[list][*][url=https://geraintluff.github.io/jsfx#Echo-Cycles]Echo-Cycles[/url] - a delay effect where the feedback system moves echoes through the stereo field
+[list][*][url=https://geraintluff.github.io/jsfx#Atlantis%20Reverb]Atlantis Reverb[/url] - produces mellow spaces, and shimmering highlights
+[*][url=https://geraintluff.github.io/jsfx#Echo-Cycles]Echo-Cycles[/url] - a delay effect where the feedback system moves echoes through the stereo field
 [*][url=https://geraintluff.github.io/jsfx#Cross-Polyphonic-FM]Cross-Polyphonic-FM[/url] - MIDI-controlled frequency-modulation effect
 [*][url=https://geraintluff.github.io/jsfx#Ripple]Ripple[/url] - Phaser-like sounds, endlessly ascending/descending
-[*][url=https://geraintluff.github.io/jsfx#Atlantis%20Reverb]Atlantis Reverb[/url] - Delay effect
 [*][url=https://geraintluff.github.io/jsfx#Spring-Box]Spring-Box[/url] - an echo/chorus effect
 [*][url=https://geraintluff.github.io/jsfx#Stereo%20Alignment%20Delay]Stereo Alignment Delay[/url] - delay and phase/delay analysis (stereo channels, or between instances)
 [*][url=https://geraintluff.github.io/jsfx#Vibrato]Vibrato[/url] - MIDI-note triggered vibrato[/list]
@@ -227,13 +227,14 @@ h3 {
 </li>
 <li><a href="#Learning Sampler">Learning Sampler</a> - a basic sampler that records incoming audio and plays it back
 </li></ul>
-<h3>Delay</h3><ul><li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
+<h3>Delay</h3><ul><li><a href="#Atlantis Reverb">Atlantis Reverb</a> - produces mellow spaces, and shimmering highlights
+</li>
+<li><a href="#Echo-Cycles">Echo-Cycles</a> - a delay effect where the feedback system moves echoes through the stereo field
 </li>
 <li><a href="#Cross-Polyphonic-FM">Cross-Polyphonic-FM</a> - MIDI-controlled frequency-modulation effect
 </li>
 <li><a href="#Ripple">Ripple</a> - Phaser-like sounds, endlessly ascending/descending
 </li>
-<li><a href="#Atlantis Reverb">Atlantis Reverb</a> - Delay effect</li>
 <li><a href="#Spring-Box">Spring-Box</a> - an echo/chorus effect
 </li>
 <li><a href="#Stereo Alignment Delay">Stereo Alignment Delay</a> - delay and phase/delay analysis (stereo channels, or between instances)
@@ -282,6 +283,12 @@ h3 {
 <p>It has two resonators for each note (left and right) and they can be detuned (<a href="audio-demos/Hammer And Chord detune demo.mp3">audio demo</a>).</p>
 <p>If your input audio is tonal (e.g. speech) and those frequencies are coming through, the &quot;de-tonal&quot; setting puts a ring-modulator before each resonator to make it atonal. (<a href="audio-demos/Hammer And Chord ringmod demo.mp3">audio demo</a>)</p>
 </div>
+<div class="reapack-package reapack-package-with-links" id="Atlantis Reverb"><div class="reapack-links"><audio controls preload="none" src="audio-demos/atlantis-reverb-epic-swell.mp3"></audio><audio controls preload="none" src="audio-demos/atlantis-reverb-piano-sparkle.mp3"></audio></div><h1 id="atlantis-reverb">Atlantis Reverb</h1>
+<p>This is a reverb that specialises in long ambient sounds and shimmering textures.</p>
+<p><img src="doc/images/Atlantis-Reverb.png" alt="screenshot"></p>
+<p>The &quot;grain&quot; size controls the frequency/time resolution.  Longer grains will give smooth and pure tones, which shorter ones will result in a thicker and more wavering result.</p>
+<p>Additionally the &quot;sparkle&quot; control feeds back octave-shifted versions of the same spectrum, adding extra brightness to the reverb.</p>
+</div>
 <div class="reapack-package reapack-package-with-links" id="Echo-Cycles"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Echo-Cycles.mp3"></audio><a href="https://www.youtube.com/watch?v=BZ-1z7IKYTs&amp;list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK" target="_blank">YouTube</a></div><h1 id="echo-cycles">Echo Cycles</h1>
 <p>This is a feedback delay effect where the echoes move through the stereo space.  (<a href="https://geraintluff.github.io/jsfx/audio-demos/Echo-Cycles.mp3">audio demo</a>)</p>
 <p>This is not done using an LFO, it uses a feedback structure with three delay lines for two channels - this means that the stereo position of the echoes is independent, which is good for building up textures.</p>
@@ -328,7 +335,6 @@ h3 {
 <p>It has a variable number of filters (up to 20), stereo phase-offset and a tempo-synced LFO.</p>
 <p><img src="doc/images/Ripple.png" alt="screenshot"></p>
 </div>
-<div class="reapack-package" id="Atlantis Reverb"><h1>Atlantis Reverb</h1></div>
 <div class="reapack-package" id="Learning Sampler"><h1 id="learning-sampler">Learning Sampler</h1>
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>
 <p>To record the samples, set the appropriate controller to a value of 64 or above.  While this controller is down, when you play a MIDI note the sampler will remember the start/end positions in the buffer.  When you have recorded all the samples, reset the controller to 0, and it will enter playback mode.</p>
