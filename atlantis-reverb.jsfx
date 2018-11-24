@@ -12,7 +12,7 @@ slider4:decay_seconds=0.3<0.01,5>-Decay Period (s)
 slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
 slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
 slider7:damping_strength=3<1,100>-Damping (strength)
-slider8:sparkle_factor=0<0,1>-Sparkle
+slider8:shimmer_factor=0<0,1>-Shimmer
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -71,7 +71,7 @@ prev_fft_size != fft_size || prev_window_samples != window_samples  ? (
 	);
 );
 
-octave_up_rate_persecond = pow(8, sparkle_factor) - 1;
+octave_up_rate_persecond = pow(8, shimmer_factor) - 1;
 octave_up_rate_perinterval = min(0.75, octave_up_rate_persecond/srate*interval_samples);
 
 low_damping_hz = max(20, min(low_damping_hz, high_damping_hz));
@@ -252,8 +252,8 @@ srate && ui_screen() == "main" ? (
 				labels("period", decay_seconds, "%.2f s");
 				ui_automate(decay_seconds, control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3));
 			ui_split_next();
-				labels("sparkle", octave_up_rate_persecond, "%.1f oct/s");
-				ui_automate(sparkle_factor, control_dial(sparkle_factor, 0, 1, 2, 0));
+				labels("shimmer", octave_up_rate_persecond, "%.1f oct/s");
+				ui_automate(shimmer_factor, control_dial(shimmer_factor, 0, 1, 2, 0));
 			ui_pop();
 		ui_pop();
 
