@@ -12,6 +12,7 @@ slider4:decay_seconds=0.3<0.01,5>-Decay Period (s)
 slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
 slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
 slider7:damping_strength=3<1,100>-Damping (strength)
+slider8:octave_up_rate_persecond=0<0,10>-Sparkle (/s)
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -59,13 +60,15 @@ dry_factor = pow(10, dry_db/20);
 prev_fft_size != fft_size ? (
 	memset(energy_buffer, 0, MAX_FFT_SIZE);
 	prev_fft_size = fft_size;
-	
+
 	i = 0;
 	loop(window_samples,
 		window_buffer[i] = window((i + 0.5)/window_samples);
 		i += 1
 	);
 );
+
+octave_up_rate_perinterval = min(0.75, octave_up_rate_persecond/srate*interval_samples);
 
 low_damping_hz = max(20, min(low_damping_hz, high_damping_hz));
 high_damping_hz = min(18000, max(low_damping_hz, high_damping_hz));
@@ -84,7 +87,7 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 	i = 0;
 	loop(window_samples,
 		w = window_buffer[i>>1];
-		
+
 		i2 = buffer_pos - window_samples*2 + i;
 		i2 < 0 ? i2 += buffer_length;
 
@@ -97,14 +100,14 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 		fft_buffer[i + 1] = 0;
 		i += 2;
 	);
-	
+
 	fft(fft_buffer, fft_size);
 	fft_permute(fft_buffer, fft_size);
-	
+
 	i = 1;
 	mult_factor = 0.5/window_overlap_factor*pow(window_samples/(fft_size*fft_size), 2);
 	mult_factor *= window_samples/(0.1*srate);
-	
+
 	fft_buffer[0] = fft_buffer[1] = fft_buffer[fft_size] = fft_buffer[fft_size + 1] = 0;
 	loop(fft_size/2 - 1,
 		i2 = fft_size - i;
@@ -112,10 +115,10 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 		imag = fft_buffer[2*i + 1];
 		real2 = fft_buffer[2*i2];
 		imag2 = fft_buffer[2*i2 + 1];
-		
+
 		mag2 = (real*real + imag*imag + real2*real2 + imag2*imag2)*mult_factor;
 		display_spectrum_buffer[i] = mag2;
-		
+
 		decay = decay_interval_factor;
 		extra_decay = i <= high_damping_index_low ? (
 			1;
@@ -133,12 +136,34 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 				extra_decay *= damped_extra_interval_factor;
 			);
 		);
-		mag2 = energy_buffer[i] = (energy_buffer[i]*decay + mag2)*extra_decay;
-		mag = sqrt(mag2);
-		
+		energy_buffer[i] = (energy_buffer[i]*decay + mag2)*extra_decay;
+		i += 1;
+	);
+
+	octave_up_rate_perinterval ? (
+		i = fft_size/2 - 1;
+		loop(fft_size/2 - 2,
+			current = energy_buffer[i];
+			2*i + 1 < fft_size/2 ? (
+				energy_buffer[2*i - 1] += 0.25*octave_up_rate_perinterval*current;
+				energy_buffer[2*i] += 0.5*octave_up_rate_perinterval*current;
+				energy_buffer[2*i + 1] += 0.25*octave_up_rate_perinterval*current;
+			);
+			energy_buffer[i] = (1 - octave_up_rate_perinterval)*current;
+
+			i -= 1;
+		);
+	);
+
+	// Assign energy spectrum to FFT buffer
+	i = 1;
+	loop(fft_size/2 - 1,
+		i2 = fft_size - i;
+		mag = sqrt(mag2 = energy_buffer[i]);
+
 		phase1 = rand()*2*$pi;
 		phase2 = rand()*2*$pi;
-		
+
 		fft_buffer[2*i] = cos(phase1)*mag;
 		fft_buffer[2*i + 1] = sin(phase1)*mag;
 		fft_buffer[2*i2] = cos(phase2)*mag;
@@ -148,11 +173,11 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 	);
 	fft_ipermute(fft_buffer, fft_size);
 	ifft(fft_buffer, fft_size);
-	
+
 	i = 0;
 	loop(window_samples,
 		w = window_buffer[i>>1];
-		
+
 		i2 = buffer_pos + i;
 		i2 >= buffer_length ? i2 -= buffer_length;
 
@@ -179,7 +204,7 @@ output_buffer[buffer_pos + 1] = 0;
 buffer_pos += 2;
 buffer_pos >= buffer_length ? buffer_pos = 0;
 
-@gfx 520 300
+@gfx 600 300
 
 control_start("main", "tron");
 
@@ -200,41 +225,49 @@ function labels(label, value, number_format) local(h) (
 srate && ui_screen() == "main" ? (
 	control_navbar("Atlantis Reverb");
 	ui_split_top(120);
-		ui_split_leftratio(1/7);
+		ui_split_leftratio(1/8);
 			control_group("");
 			labels("grain", window_ms, "%i ms");
 			window_ms = control_dial(window_ms, 10, 500, 1.5, 150);
 		ui_pop();
 
-		ui_split_leftratio(2/6);
+		ui_split_leftratio(2/7);
 			control_group("mix");
 			ui_split_leftratio(1/2);
 				labels("dry", dry_db, "%.1f db");
-				dry_db = control_dial(dry_db, -60, 12, -3.3, 0);
+				ui_automate(dry_db, control_dial(dry_db, -60, 12, -3.3, 0));
 			ui_split_next();
 				labels("wet", wet_db, "%.1f db");
-				wet_db = control_dial(wet_db, -60, 12, -3.3, -12);
+				ui_automate(wet_db, control_dial(wet_db, -60, 12, -3.3, -12));
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(4/4);
+		ui_split_leftratio(2/5);
 			control_group("decay");
-			ui_split_leftratio(1/4);
+			ui_split_leftratio(1/2);
 				labels("period", decay_seconds, "%.2f s");
-				decay_seconds = control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3);
+				ui_automate(decay_seconds, control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3));
 			ui_split_next();
+				labels("sparkle", 0, -1);
+				ui_automate(octave_up_rate_persecond, control_dial(octave_up_rate_persecond, 0, 10, 2, 0));
+			ui_pop();
+		ui_pop();
+
+		ui_split_leftratio(3/3);
+			control_group("damping");
+			ui_split_leftratio(1/3);
 				labels("damping", damping_strength, "x %.1f");
-				damping_strength = control_dial(damping_strength, 1, 100, 6, 3);
+				ui_automate(damping_strength, control_dial(damping_strength, 1, 100, 6, 3));
 			ui_split_next();
 				labels("low", low_damping_hz, "%i Hz");
-				low_damping_hz = control_dial(low_damping_hz, 20, 500, 3, 120);
+				ui_automate(low_damping_hz, control_dial(low_damping_hz, 20, 500, 3, 120));
 			ui_split_next();
 				labels("high", high_damping_hz, "%i Hz");
-				high_damping_hz = control_dial(high_damping_hz, 100, 18000, 3, 6000);
+				ui_automate(high_damping_hz, control_dial(high_damping_hz, 100, 18000, 3, 6000));
 			ui_pop();
 		ui_pop();
 	ui_pop();
-	
+
 	ui_split_topratio(1/1);
 		graph.frequency_graph_init(50, 20000, -120, 0);
 		control_background_technical();
