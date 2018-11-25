@@ -13,6 +13,7 @@ slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
 slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
 slider7:damping_strength=3<1,100>-Damping (strength)
 slider8:shimmer_factor=0<0,1>-Shimmer
+slider9:shimmer_tone=0<0,0.2>-Shimmer complexity
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -73,6 +74,10 @@ prev_fft_size != fft_size || prev_window_samples != window_samples  ? (
 
 octave_up_rate_persecond = pow(8, shimmer_factor) - 1;
 octave_up_rate_perinterval = min(0.75, octave_up_rate_persecond/srate*interval_samples);
+
+shimmer_double = octave_up_rate_perinterval*(1 - shimmer_tone);
+shimmer_triple = octave_up_rate_perinterval/1.5*shimmer_tone;
+shimmer_remainder = (1 - shimmer_double - shimmer_triple);
 
 low_damping_hz = max(20, min(low_damping_hz, high_damping_hz));
 high_damping_hz = min(18000, max(low_damping_hz, high_damping_hz));
@@ -148,12 +153,28 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 		i = fft_size/2 - 1;
 		loop(fft_size/2 - 2,
 			current = energy_buffer[i];
-			2*i + 1 < fft_size/2 ? (
-				energy_buffer[2*i - 1] += 0.25*octave_up_rate_perinterval*current;
-				energy_buffer[2*i] += 0.5*octave_up_rate_perinterval*current;
-				energy_buffer[2*i + 1] += 0.25*octave_up_rate_perinterval*current;
+			shimmer_tone ? (
+				2*i + 1 < fft_size/2 ? (
+					energy_buffer[2*i - 1] += 0.25*shimmer_double*current;
+					energy_buffer[2*i] += 0.5*shimmer_double*current;
+					energy_buffer[2*i + 1] += 0.25*shimmer_double*current;
+				);
+
+				3*i + 1 < fft_size/2 ? (
+					energy_buffer[3*i - 2] += 0.11*shimmer_triple*current;
+					energy_buffer[3*i - 1] += 0.22*shimmer_triple*current;
+					energy_buffer[3*i] += 0.34*shimmer_triple*current;
+					energy_buffer[3*i + 1] += 0.22*shimmer_triple*current;
+					energy_buffer[3*i + 2] += 0.21*shimmer_triple*current;
+				);
+			) : (
+				2*i + 1 < fft_size/2 ? (
+					energy_buffer[2*i - 1] += 0.25*shimmer_double*current;
+					energy_buffer[2*i] += 0.5*shimmer_double*current;
+					energy_buffer[2*i + 1] += 0.25*shimmer_double*current;
+				);
 			);
-			energy_buffer[i] = (1 - octave_up_rate_perinterval)*current;
+			energy_buffer[i] = shimmer_remainder*current;
 
 			i -= 1;
 		);
