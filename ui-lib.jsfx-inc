@@ -564,6 +564,26 @@ function ui_fill() (
 	gfx_rect(ui_left_retina(), ui_top_retina(), ui_width_retina(), ui_height_retina());
 );
 
+function ui_image_fill(imageBuffer, width, height, alpha) local(scaling, visibleWidth, visibleHeight, a) (
+	scaling = max(ui_width()/width, ui_height()/height);
+	visibleWidth = ui_width()/scaling;
+	visibleHeight = ui_height()/scaling;
+	a = gfx_a;
+	gfx_a = alpha;
+	gfx_blit(imageBuffer, scaling, 0, (width - visibleWidth)*uix_drawconfig_current[20/*uix_DRAWCONFIG:HALIGN*/], (height - visibleHeight)*uix_drawconfig_current[21/*uix_DRAWCONFIG:VALIGN*/], visibleWidth, visibleHeight, ui_left(), ui_top(), ui_width(), ui_height());
+	gfx_a = a;
+);
+function ui_image_fill(imageBuffer, width, height) (
+	ui_image_fill(imageBuffer, width, height, 1);
+);
+function ui_image_fill(imageBuffer, alpha) local(width, height) (
+	gfx_getimgdim(imageBuffer, width, height);
+	ui_image_fill(imageBuffer, width, height, alpha);
+);
+function ui_image_fill(imageBuffer) (
+	ui_image_fill(imageBuffer, 1);
+);
+
 function ui_texth_retina() (
 	uix_setgfxfont();
 	gfx_texth;
@@ -1277,6 +1297,7 @@ function ui_graph_step(buffer, length, step, offset, modulo_length, low, high) l
 		low = min(low, 2*mid - high);
 		high = max(high, 2*mid - low);
 	);
+	length < 1 ? length = 1;
 
 	modulo_length = max(1, max(length>>4, modulo_length));
 
@@ -1453,7 +1474,6 @@ function control_start(defaultPage, theme, imageBuffer) local(reset, i, x, y) (
 			gfx_dest = -1;
 		);
 		gfx_x = gfx_y = 0;
-		// TODO: how does retina affect this?
 		gfx_blit(uix_control_reserved_screen, 1, 0);
 		ui_color(245, 255, 255);
 		ui_fontface("Verdana");
@@ -1784,7 +1804,7 @@ function control_background_inset(state) (
 		ui_fill();
 		ui_color(255, 255, 255);
 	) : uix_control_theme == 2/*uix_THEME:TRON*/ ? (
-		ui_color(32, 32, 32);
+		ui_color(0, 0, 0, 0.57);
 		ui_fill();
 		ui_color(205, 167, 119);
 	) : uix_control_theme == 3/*uix_THEME:BITMAP_SIMPLE*/ ? (
