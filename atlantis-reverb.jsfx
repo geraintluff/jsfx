@@ -344,7 +344,7 @@ srate && ui_screen() == "main" ? (
 			control_group("input comp");
 			ui_split_leftratio(1/2);
 				labels("threshold", compressor_threshold_db, "%idB");
-				ui_automate(compressor_threshold_db, control_dial(compressor_threshold_db, -60, 0, 2, 0));
+				ui_automate(compressor_threshold_db, control_dial(compressor_threshold_db, -60, 0, -2, 0));
 			ui_split_next();
 				labels("ratio", compressor_ratio, "x%.1f");
 				ui_automate(compressor_ratio, control_dial(compressor_ratio, 1, 10, 3, 2));
