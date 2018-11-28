@@ -138,6 +138,19 @@ release_mode ? (
 @sample
 
 function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, mult_factor, mag2sum) (
+	action_release || release_mode ? (
+		action_release = 0;
+		// Transfer all energy from main buffer to release buffer
+		release_decay_seconds < decay_seconds ? (
+			i = 0;
+			loop(fft_size/2,
+				release_buffer[i] += energy_buffer[i];
+				energy_buffer[i] = 0;
+				i += 1;
+			);
+		);
+	);
+
 	i = 0;
 	mag2sum = 0;
 	loop(window_samples,
@@ -249,19 +262,6 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 			release_buffer[i] = shimmer_remainder*release_current;
 
 			i -= 1;
-		);
-	);
-
-	action_release || release_mode ? (
-		action_release = 0;
-		// Transfer all energy from main buffer to release buffer
-		release_decay_seconds < decay_seconds ? (
-			i = 0;
-			loop(fft_size/2,
-				release_buffer[i] += energy_buffer[i];
-				energy_buffer[i] = 0;
-				i += 1;
-			);
 		);
 	);
 
