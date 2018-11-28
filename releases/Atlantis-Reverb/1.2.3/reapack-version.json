@@ -1,0 +1,23 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"summary": "produces mellow spaces, and shimmering highlights",
+	"sort": 3,
+	"files": {
+		"Atlantis-Reverb/atlantis-reverb.jsfx": {
+			"main": false
+		},
+		"Atlantis-Reverb/atlantis-reverb.jsfx.rpl": {
+			"main": false
+		},
+		"Atlantis-Reverb/frequency-graph.jsfx-inc": {
+			"main": false
+		},
+		"Atlantis-Reverb/ui-lib.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.2.3",
+	"package": "Atlantis Reverb",
+	"time": "2018-11-28T12:11:53.021Z"
+}
