@@ -16,6 +16,9 @@ slider8:shimmer_factor=0<0,1>-Shimmer
 slider9:shimmer_tone=0<0,0.3>-Shimmer tone
 slider10:compressor_threshold_db=0<-60,0>-Compressor threshold
 slider11:compressor_ratio=2<1,10>-Compressor ratio
+slider12:release_decay_seconds=0.2<0.01,5>-Release Decay Period (s)
+slider13:release_mode=0<0,1,1{sustain,release}>-Release mode
+slider14:release_cc64=0<0,1,1{off.on}>-Release CC-64
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -34,12 +37,14 @@ buffer_length = MAX_FFT_SIZE*2; // Store as complex stereo buffer
 freemem = 0;
 freemem = (fft_buffer = freemem) + MAX_FFT_SIZE*2;
 freemem = (energy_buffer = freemem) + MAX_FFT_SIZE;
+freemem = (release_buffer = freemem) + MAX_FFT_SIZE;
 freemem = (input_buffer = freemem) + buffer_length;
 freemem = (output_buffer = freemem) + buffer_length;
 freemem = (window_buffer = freemem) + MAX_FFT_SIZE;
 freemem = (display_spectrum_buffer = freemem) + MAX_FFT_SIZE;
 
 memset(energy_buffer, 0, MAX_FFT_SIZE);
+memset(release_buffer, 0, MAX_FFT_SIZE);
 memset(input_buffer, 0, buffer_length);
 memset(output_buffer, 0, buffer_length);
 
@@ -51,14 +56,22 @@ function window(r) local(s, c) (
 	s*s/sqrt(s*s*s*s + c*c*c*c);
 );
 
+midi_cc64 = 0;
+release_mode = 0;
+
 @block
 
 window_samples = min(32760, ceil(srate*0.001*window_ms));
 fft_size = pow(2, ceil(log(window_samples + 1)/log(2)));
 
 interval_samples = ceil(window_samples/window_overlap_factor);
+// Decay
 decay_intervals = srate*decay_seconds/interval_samples;
 decay_interval_factor = exp(-1/decay_intervals);
+// Release mode
+release_decay_intervals = srate*min(release_decay_seconds, decay_seconds)/interval_samples;
+release_decay_interval_factor = exp(-1/release_decay_intervals);
+// Damping
 damped_extra_interval_factor = pow(decay_interval_factor, damping_strength - 1);
 
 wet_factor = pow(10, wet_db/20);
@@ -96,6 +109,24 @@ low_damping_index_high = low_damping_index*1.5;
 
 compressor_threshold_power = pow(10, compressor_threshold_db/10);
 compressor_ratio_inv = 1/compressor_ratio;
+
+while (midirecv(offset, midi_msg1, midi_msg2, midi_msg3)) (
+	midisend(offset, midi_msg1, midi_msg2, midi_msg3);
+
+	midi_type = midi_msg1>>4;
+	midi_channel = midi_msg1&0x0f;
+
+	midi_type == 11 ? (
+		midi_msg2 == 121 ? ( // Reset controllers
+			midi_cc64 = 0;
+		) : midi_msg2 == 64 ? (
+			midi_cc64 = midi_msg3;
+		);
+	);
+);
+release_cc64 && midi_cc64 < 64 && release_decay_seconds < decay_seconds ? (
+	action_release = 1;
+);
 
 @sample
 
@@ -166,6 +197,7 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 			);
 		);
 		energy_buffer[i] = (energy_buffer[i]*decay + mag2)*extra_decay;
+		release_buffer[i] *= release_decay_interval_factor*extra_decay;
 		i += 1;
 	);
 
@@ -173,11 +205,15 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 		i = fft_size/2 - 1;
 		loop(fft_size/2 - 2,
 			current = energy_buffer[i];
+			release_current = release_buffer[i];
 			shimmer_tone ? (
 				2*i + 1 < fft_size/2 ? (
 					energy_buffer[2*i - 1] += 0.25*shimmer_double*current;
 					energy_buffer[2*i] += 0.5*shimmer_double*current;
 					energy_buffer[2*i + 1] += 0.25*shimmer_double*current;
+					release_buffer[2*i - 1] += 0.25*shimmer_double*release_current;
+					release_buffer[2*i] += 0.5*shimmer_double*release_current;
+					release_buffer[2*i + 1] += 0.25*shimmer_double*release_current;
 				);
 
 				3*i + 1 < fft_size/2 ? (
@@ -186,17 +222,39 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 					energy_buffer[3*i] += 0.34*shimmer_triple*current;
 					energy_buffer[3*i + 1] += 0.22*shimmer_triple*current;
 					energy_buffer[3*i + 2] += 0.21*shimmer_triple*current;
+					release_buffer[3*i - 2] += 0.11*shimmer_triple*release_current;
+					release_buffer[3*i - 1] += 0.22*shimmer_triple*release_current;
+					release_buffer[3*i] += 0.34*shimmer_triple*release_current;
+					release_buffer[3*i + 1] += 0.22*shimmer_triple*release_current;
+					release_buffer[3*i + 2] += 0.21*shimmer_triple*release_current;
 				);
 			) : (
 				2*i + 1 < fft_size/2 ? (
 					energy_buffer[2*i - 1] += 0.25*shimmer_double*current;
 					energy_buffer[2*i] += 0.5*shimmer_double*current;
 					energy_buffer[2*i + 1] += 0.25*shimmer_double*current;
+					release_buffer[2*i - 1] += 0.25*shimmer_double*release_current;
+					release_buffer[2*i] += 0.5*shimmer_double*release_current;
+					release_buffer[2*i + 1] += 0.25*shimmer_double*release_current;
 				);
 			);
 			energy_buffer[i] = shimmer_remainder*current;
+			release_buffer[i] = shimmer_remainder*release_current;
 
 			i -= 1;
+		);
+	);
+
+	action_release || release_mode ? (
+		action_release = 0;
+		// Transfer all energy from main buffer to release buffer
+		release_decay_seconds < decay_seconds ? (
+			i = 0;
+			loop(fft_size/2,
+				release_buffer[i] += energy_buffer[i];
+				energy_buffer[i] = 0;
+				i += 1;
+			);
 		);
 	);
 
@@ -204,7 +262,7 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 	i = 1;
 	loop(fft_size/2 - 1,
 		i2 = fft_size - i;
-		mag = sqrt(mag2 = energy_buffer[i]);
+		mag = sqrt(mag2 = energy_buffer[i] + release_buffer[i]);
 
 		phase1 = rand()*2*$pi;
 		phase2 = rand()*2*$pi;
@@ -249,7 +307,7 @@ output_buffer[buffer_pos + 1] = 0;
 buffer_pos += 2;
 buffer_pos >= buffer_length ? buffer_pos = 0;
 
-@gfx 740 300
+@gfx 760 300
 
 control_start("main", "tron");
 
@@ -265,6 +323,7 @@ function labels(label, value, number_format) local(h) (
 			ui_textnumber(value*1.0000001, number_format);
 		);
 	ui_pop();
+	h;
 );
 
 function draw_compressor_display() (
@@ -296,7 +355,7 @@ function draw_compressor_display() (
 srate && ui_screen() == "main" ? (
 	control_navbar("Atlantis Reverb");
 	ui_split_topratio(1/2);
-		ui_split_leftratio(2/8);
+		ui_split_leftratio(2/10);
 			control_group("mix");
 			ui_split_leftratio(1/2);
 				labels("dry", dry_db, "%.1f db");
@@ -307,11 +366,37 @@ srate && ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
-		ui_split_leftratio(1.1/6);
+		ui_split_leftratio(3/8);
 			control_group("decay");
-			ui_split_leftratio(1/1);
+			ui_split_leftratio(1/3);
 				labels("period", decay_seconds, "%.2f s");
 				ui_automate(decay_seconds, control_dial(decay_seconds, max(0.01, window_ms*0.001*0.3), 5, 5, 0.3));
+			ui_split_next();
+				labels("release", release_decay_seconds, release_decay_seconds >= decay_seconds ? "off" : "%.2f s");
+				ui_automate(release_decay_seconds, control_dial(release_decay_seconds, max(0.01, window_ms*0.001*0.3), 5.001, 5, 0.2));
+			ui_split_next();
+				ui_fontsize(10);
+				ui_split_topratio(0.45);
+					ui_pad(5, 5);
+					control_button("release");
+					ui_press() ? (
+						ui_automate(release_mode, 1);
+						action_release = 1;
+					);
+					ui_mouse_up() ? (
+						ui_automate(release_mode, 0);
+						midi_cc64 = 0;
+					);
+					(release_mode || (release_cc64 && midi_cc64 < 64)) && (release_decay_seconds < decay_seconds) ? (
+						ui_color(64, 255, 64, 0.3);
+						ui_fill();
+					);
+				ui_pop();
+
+				ui_split_topratio(1/3);
+					ui_text("MIDI CC-64");
+				ui_pop();
+				release_cc64 = control_switch(release_cc64);
 			ui_pop();
 		ui_pop();
 
@@ -340,7 +425,7 @@ srate && ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 	ui_split_next();
-		ui_split_leftratio(2/8);
+		ui_split_leftratio(2/10);
 			control_group("input comp");
 			ui_split_leftratio(1/2);
 				labels("threshold", compressor_threshold_db, "%idB");
@@ -367,6 +452,8 @@ srate && ui_screen() == "main" ? (
 			control_background_technical();
 			graph.frequency_graph_grid();
 			graph.frequency_graph_graph(energy_buffer, fft_size/2, srate/2, 0, 2);
+			ui_color(255, 255, 255, 0.4);
+			graph.frequency_graph_graph(release_buffer, fft_size/2, srate/2, 0, 2);
 			ui_color(255, 255, 0, 0.5);
 			graph.frequency_graph_graph(display_spectrum_buffer, fft_size/2, srate/2, 0, 2);
 			control_finish_technical();
@@ -376,11 +463,17 @@ srate && ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 2;
+preset_version = 3;
 file_var(0, preset_version);
 
 preset_version < 2 ? (
 	shimmer_tone = 0;
 	compressor_threshold_db = 0;
 	compressor_ratio = 2;
+);
+
+preset_version < 3 ? (
+	release_mode = 0;
+	release_cc64 = 0;
+	release_decay_seconds = 5;
 );
