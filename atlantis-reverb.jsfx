@@ -19,6 +19,7 @@ slider11:compressor_ratio=2<1,10>-Compressor ratio
 slider12:release_decay_seconds=0.2<0.01,5>-Release Decay Period (s)
 slider13:release_mode=0<0,1,1{sustain,release}>-Release mode
 slider14:release_cc64=0<0,1,1{off,on}>-Release MIDI sustain (CC-64)
+slider15:detune_cents_per_second=0<0,10>Detune rate
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -73,6 +74,10 @@ release_decay_intervals = srate*min(release_decay_seconds, decay_seconds)/interv
 release_decay_interval_factor = exp(-1/release_decay_intervals);
 // Damping
 damped_extra_interval_factor = pow(decay_interval_factor, damping_strength - 1);
+
+detune_cents_per_interval = detune_cents_per_second*srate/interval_samples;
+// We're going to sweep twice, once up and once down
+detune_factor = (pow(2, detune_cents_per_interval/1200) - 1)*0.5;
 
 wet_factor = pow(10, wet_db/20);
 dry_factor = pow(10, dry_db/20);
@@ -149,6 +154,29 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 				i += 1;
 			);
 		);
+	);
+
+	detune_factor ? (
+		i = 1;
+		loop(fft_size/2 - 1,
+			r = min(1, detune_factor*i);
+			energy_buffer[i - 1] += energy_buffer[i]*r;
+			energy_buffer[i] *= (1 - r);
+			release_buffer[i - 1] += release_buffer[i]*r;
+			release_buffer[i] *= (1 - r);
+			i += 1;
+		);
+		i = fft_size/2 - 1;
+		loop(fft_size/2 - 1,
+			r = min(1, detune_factor*i);
+			energy_buffer[i + 1] += energy_buffer[i]*r;
+			energy_buffer[i] *= (1 - r);
+			release_buffer[i + 1] += release_buffer[i]*r;
+			release_buffer[i] *= (1 - r);
+			i -= 1;
+		);
+		energy_buffer[0] = energy_buffer[fft_size/2] = 0;
+		release_buffer[0] = release_buffer[fft_size/2] = 0;
 	);
 
 	i = 0;
