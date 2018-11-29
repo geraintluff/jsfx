@@ -873,6 +873,12 @@
 				<source file="Atlantis-Reverb/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.3/Atlantis-Reverb/frequency-graph.jsfx-inc</source>
 				<source file="Atlantis-Reverb/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.3/Atlantis-Reverb/ui-lib.jsfx-inc</source>
 			</version>
+			<version name="1.2.4" author="Geraint Luff" time="2018-11-29T23:58:19.211Z">
+				<source file="Atlantis-Reverb/atlantis-reverb.jsfx">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.4/Atlantis-Reverb/atlantis-reverb.jsfx</source>
+				<source file="Atlantis-Reverb/atlantis-reverb.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.4/Atlantis-Reverb/atlantis-reverb.jsfx.rpl</source>
+				<source file="Atlantis-Reverb/frequency-graph.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.4/Atlantis-Reverb/frequency-graph.jsfx-inc</source>
+				<source file="Atlantis-Reverb/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Atlantis-Reverb/1.2.4/Atlantis-Reverb/ui-lib.jsfx-inc</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Synth">
