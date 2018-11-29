@@ -19,7 +19,8 @@ slider11:compressor_ratio=2<1,10>-Compressor ratio
 slider12:release_decay_seconds=0.2<0.01,5>-Release Decay Period (s)
 slider13:release_mode=0<0,1,1{sustain,release}>-Release mode
 slider14:release_cc64=0<0,1,1{off,on}>-Release MIDI sustain (CC-64)
-slider15:detune_cents_per_second=0<0,10>Detune rate
+slider15:detune_cents_per_second=0<0,100>-Detune rate
+slider16:detune_shift_bias=0<-1,1>-Detune shift
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -75,9 +76,10 @@ release_decay_interval_factor = exp(-1/release_decay_intervals);
 // Damping
 damped_extra_interval_factor = pow(decay_interval_factor, damping_strength - 1);
 
-detune_cents_per_interval = detune_cents_per_second*srate/interval_samples;
+detune_cents_per_interval = detune_cents_per_second/srate*interval_samples;
 // We're going to sweep twice, once up and once down
-detune_factor = (pow(2, detune_cents_per_interval/1200) - 1)*0.5;
+detune_factor_up = (pow(2, detune_cents_per_interval/1200) - 1)*0.5*(1 + detune_shift_bias);
+detune_factor_down = (pow(2, detune_cents_per_interval/1200) - 1)*0.5*(1 - detune_shift_bias);
 
 wet_factor = pow(10, wet_db/20);
 dry_factor = pow(10, dry_db/20);
@@ -142,7 +144,7 @@ release_mode ? (
 
 @sample
 
-function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, mult_factor, mag2sum) (
+function reverb_block() local(i, i2, r, r2, w, real, imag, real2, imag2, mag2, mag, mult_factor, mag2sum) (
 	action_release || release_mode ? (
 		action_release = 0;
 		// Transfer all energy from main buffer to release buffer
@@ -156,22 +158,22 @@ function reverb_block() local(i, i2, r, w, real, imag, real2, imag2, mag2, mag, 
 		);
 	);
 
-	detune_factor ? (
+	detune_cents_per_second ? (
 		i = 1;
 		loop(fft_size/2 - 1,
-			r = min(1, detune_factor*i);
-			energy_buffer[i - 1] += energy_buffer[i]*r;
+			r = 1 - 1/(detune_factor_up*i + 1);
+			energy_buffer[i + 1] += energy_buffer[i]*r;
 			energy_buffer[i] *= (1 - r);
-			release_buffer[i - 1] += release_buffer[i]*r;
+			release_buffer[i + 1] += release_buffer[i]*r;
 			release_buffer[i] *= (1 - r);
 			i += 1;
 		);
 		i = fft_size/2 - 1;
 		loop(fft_size/2 - 1,
-			r = min(1, detune_factor*i);
-			energy_buffer[i + 1] += energy_buffer[i]*r;
+			r = 1 - 1/(detune_factor_down*i + 1);
+			energy_buffer[i - 1] += energy_buffer[i]*r;
 			energy_buffer[i] *= (1 - r);
-			release_buffer[i + 1] += release_buffer[i]*r;
+			release_buffer[i - 1] += release_buffer[i]*r;
 			release_buffer[i] *= (1 - r);
 			i -= 1;
 		);
@@ -471,6 +473,17 @@ srate && ui_screen() == "main" ? (
 			ui_pop();
 		ui_pop();
 
+		ui_split_rightratio(2/8);
+			control_group("detune");
+			ui_split_leftratio(1/2);
+				labels("spread", detune_cents_per_second, "%i cent/s");
+				ui_automate(detune_cents_per_second, control_dial(detune_cents_per_second, 0, 100, 4, 0));
+			ui_split_next();
+				labels("shift", floor(abs(detune_shift_bias)*100 + 0.5), detune_shift_bias > 0 ? "%i%% up" : detune_shift_bias < 0 ? "%i%% down" : "off");
+				ui_automate(detune_shift_bias, control_dial(detune_shift_bias, -1, 1, 0, 0));
+			ui_pop();
+		ui_pop();
+
 		ui_split_left(30);
 			ui_pad(0, 0, 3, 0);
 			draw_compressor_display();
@@ -498,7 +511,7 @@ srate && ui_screen() == "main" ? (
 
 @serialize
 
-preset_version = 3;
+preset_version = 4;
 file_var(0, preset_version);
 
 preset_version < 2 ? (
@@ -511,4 +524,9 @@ preset_version < 3 ? (
 	release_mode = 0;
 	release_cc64 = 0;
 	release_decay_seconds = 0.2;
+);
+
+preset_version < 4 ? (
+	detune_cents_per_second = 0;
+	detune_shift_bias = 0;
 );
