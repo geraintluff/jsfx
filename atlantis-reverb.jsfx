@@ -7,7 +7,7 @@ out_pin:right
 
 slider1:wet_db=-12<-60,12>-Wet (dB)
 slider2:dry_db=0<-60,12>-Dry (dB)
-slider3:window_ms=150<10,500>-Grain size (ms)
+slider3:window_ms=200<10,500>-Grain size (ms)
 slider4:decay_seconds=0.3<0.01,5>-Decay Period (s)
 slider5:high_damping_hz=6000<100,18000>-High Damping (Hz)
 slider6:low_damping_hz=120<20,500>-Low Damping (Hz)
@@ -19,8 +19,8 @@ slider11:compressor_ratio=2<1,10>-Compressor ratio
 slider12:release_decay_seconds=0.2<0.01,5>-Release Decay Period (s)
 slider13:release_mode=0<0,1,1{sustain,release}>-Release mode
 slider14:release_cc64=0<0,1,1{off,on}>-Release MIDI sustain (CC-64)
-slider15:detune_cents_per_second=0<0,100>-Detune rate
-slider16:detune_shift_bias=0<-1,1>-Detune shift
+slider15:detune_cents_per_second=0<0,1200>-Detune rate (cents/second)
+slider16:detune_shift_bias=0<-1,1>-Detune shift (up/down)
 
 import ui-lib.jsfx-inc
 import frequency-graph.jsfx-inc
@@ -128,6 +128,10 @@ while (midirecv(offset, midi_msg1, midi_msg2, midi_msg3)) (
 			midi_cc64 = 0;
 		) : midi_msg2 == 64 ? (
 			midi_cc64 = midi_msg3;
+			// If it's below 64, make sure we release
+			release_cc64 && midi_cc64 < 64 && release_decay_seconds < decay_seconds ? (
+				action_release = 1;
+			);
 		);
 	);
 );
@@ -158,25 +162,40 @@ function reverb_block() local(i, i2, r, r2, w, real, imag, real2, imag2, mag2, m
 		);
 	);
 
+	// Detune by smudging the frequency bins
 	detune_cents_per_second ? (
 		i = 1;
+		current_energy = energy_buffer[i];
+		current_release = release_buffer[i];
+
 		loop(fft_size/2 - 1,
-			r = 1 - 1/(detune_factor_up*i + 1);
-			energy_buffer[i + 1] += energy_buffer[i]*r;
-			energy_buffer[i] *= (1 - r);
-			release_buffer[i + 1] += release_buffer[i]*r;
-			release_buffer[i] *= (1 - r);
+			r = 1/(detune_factor_up*i + 1);
+			// at this point: current_energy = energy_buffer[i]
+			// so this means: energy_buffer[i] *= r
+			energy_buffer[i] = current_energy*r;
+			// spread the remaining energy into the next bin, and update current_energy
+			// We don't actually need to assign energy_buffer[i + 1] = current_energy, because it will be done in the next step anyway
+			current_energy = energy_buffer[i + 1] + current_energy*(1 - r);
+
+			release_buffer[i] = current_release*r;
+			current_release = release_buffer[i + 1] + current_release*(1 - r);
 			i += 1;
 		);
-		i = fft_size/2 - 1;
+
+		current_energy = energy_buffer[i];
+		current_release = release_buffer[i];
 		loop(fft_size/2 - 1,
-			r = 1 - 1/(detune_factor_down*i + 1);
-			energy_buffer[i - 1] += energy_buffer[i]*r;
-			energy_buffer[i] *= (1 - r);
-			release_buffer[i - 1] += release_buffer[i]*r;
-			release_buffer[i] *= (1 - r);
+			r = 1/(detune_factor_down*i + 1);
+			energy_buffer[i] = current_energy*r;
+			current_energy = energy_buffer[i - 1] + current_energy*(1 - r);
+
+			release_buffer[i] = current_release*r;
+			current_release = release_buffer[i - 1] + current_release*(1 - r);
 			i -= 1;
 		);
+		energy_buffer[i] = current_energy;
+		release_buffer[i] = current_release;
+
 		energy_buffer[0] = energy_buffer[fft_size/2] = 0;
 		release_buffer[0] = release_buffer[fft_size/2] = 0;
 	);
@@ -477,9 +496,9 @@ srate && ui_screen() == "main" ? (
 			control_group("detune");
 			ui_split_leftratio(1/2);
 				labels("spread", detune_cents_per_second, "%i cent/s");
-				ui_automate(detune_cents_per_second, control_dial(detune_cents_per_second, 0, 100, 4, 0));
+				ui_automate(detune_cents_per_second, control_dial(detune_cents_per_second, 0, 1200, 8, 0));
 			ui_split_next();
-				labels("shift", floor(abs(detune_shift_bias)*100 + 0.5), detune_shift_bias > 0 ? "%i%% up" : detune_shift_bias < 0 ? "%i%% down" : "off");
+				labels("shift", floor(detune_shift_bias*100 + 0.5), detune_shift_bias ? "%i%%" : "off");
 				ui_automate(detune_shift_bias, control_dial(detune_shift_bias, -1, 1, 0, 0));
 			ui_pop();
 		ui_pop();
