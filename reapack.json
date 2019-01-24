@@ -596,6 +596,21 @@
 				}
 			},
 			"version": "1.2.6"
+		},
+		"Droplets": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Droplets.jsfx": {
+					"main": false
+				},
+				"ui-lib.jsfx-inc": {
+					"main": false
+				},
+				"piano-ui.jsfx-inc": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

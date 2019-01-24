@@ -1,0 +1,127 @@
+desc:Droplets (by Geraint Luff)
+
+slider1:note_midi=60<0,127,1>-note
+slider2:note_interval=0.5<0.01,5>-interval (s)
+slider3:note_interval_variation=1<0,5>-variation
+slider4:velocity_low=1<1,127>-velocity (low)
+slider5:velocity_high=127<1,127>-velocity (high)
+slider6:only_when_playing=1<0,1,1{off,on}>-only enabled when playing
+
+import ui-lib.jsfx-inc
+import piano-ui.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+function random_note_length() (
+       samples = srate*note_interval;
+       samples *= exp((rand() - 0.5)*note_interval_variation);
+);
+
+note_remaining_samples = random_note_length();
+note_active = 0;
+note_active_note = 0;
+note_velocity = 96;
+
+@block
+
+is_playing = (play_state == 1) || (play_state == 5);
+
+midi_offset = 0;
+
+only_when_playing && !is_playing ? (
+       note_active ? (
+              note_active = 0;
+              midisend(midi_offset, $x80, note_active_note, 0);
+       );
+) : (
+       loop(samplesblock,
+              note_remaining_samples -= 1;
+              note_remaining_samples <= 0 ? (
+                     note_active ? (
+                            midisend(midi_offset, $x80, note_active_note, 0);
+                     );
+
+                     note_remaining_samples = random_note_length();
+                     note_active = 1;
+                     note_active_note = note_midi;
+                     note_velocity = floor(0.5 + velocity_low + rand()*(velocity_high - velocity_low));
+
+                     midisend(midi_offset, $x90, note_active_note, note_velocity);
+              );
+              midi_offset += 1;
+       );
+);
+
+@gfx 450 130
+
+function gfx_ui_automate_slider(slidervar*, new_value) (
+	slidervar !== new_value ? (
+		slidervar = new_value;
+		slider_automate(slidervar);
+	);
+	new_value;
+);
+
+function gfx_ui_layout_textnumber(title, value, format) local(h) (
+	h = max((ui_height() - 60)/2, ui_height()*0.2);
+	ui_split_top(h);
+		ui_text(title);
+	ui_pop();
+	ui_split_bottom(h);
+		value = control_hidden_textnumber(value, value*1.00000001, format);
+	ui_pop();
+	value;
+);
+
+function gfx_ui_dial_rounded(slidervar*, low, high, bias, default, step) (
+	slidervar != floor(slidervar._ui_gen_float/step + 0.5)*step ? slidervar._ui_gen_float = slidervar;
+	slidervar._ui_gen_float = control_dial(slidervar._ui_gen_float, low, high, bias, default);
+	gfx_ui_automate_slider(slidervar, floor(slidervar._ui_gen_float/step + 0.5)*step);
+);
+
+control_start("main", "tron");
+
+ui_screen() === "main" ? (
+	ui_split_topratio(1/1); // single row
+              ui_split_leftratio(1/6);
+                     ui_click() && ui_clickcount() == 2 ? (
+                            ui_screen_open("piano.select-key");
+                            ui_screen_arg(0, "slider");
+                            ui_screen_arg(1, 1); // 4th slider
+                     );
+
+                     gfx_ui_automate_slider(note_midi, gfx_ui_layout_textnumber("note", note_midi, "%i"));
+                     gfx_ui_dial_rounded(note_midi, 0, 127, 0, 0, 1);
+              ui_pop();
+              ui_split_leftratio(2/5);
+			// row 1, group 1
+                     control_group("timing");
+			ui_split_leftratio(1/2);
+				gfx_ui_automate_slider(note_interval, gfx_ui_layout_textnumber("interval", note_interval, "%.4f s"));
+				gfx_ui_automate_slider(note_interval, control_dial(note_interval, 0.01, 5, log(5/0.01), 0.1));
+			ui_split_next();
+				gfx_ui_automate_slider(note_interval_variation, gfx_ui_layout_textnumber("variation", note_interval_variation, "%.4f"));
+				gfx_ui_automate_slider(note_interval_variation, control_dial(note_interval_variation, 0, 5, 2, 1));
+			ui_pop();
+		ui_pop();
+		ui_split_leftratio(2/4);
+			// row 1, group 2
+                     control_group("velocity");
+			ui_split_leftratio(1/2);
+				gfx_ui_automate_slider(velocity_low, gfx_ui_layout_textnumber("low", velocity_low, "%i"));
+				gfx_ui_automate_slider(velocity_low, control_dial(velocity_low, 1, 127, 1, 1));
+			ui_split_next();
+				gfx_ui_automate_slider(velocity_high, gfx_ui_layout_textnumber("high", velocity_high, "%i"));
+				gfx_ui_automate_slider(velocity_high, control_dial(velocity_high, 1, 127, 1, 127));
+			ui_pop();
+		ui_pop();
+
+              ui_split_leftratio(1/1);
+                     gfx_ui_layout_textnumber("active", 0, only_when_playing ? "when playing" : "always");
+                     only_when_playing = control_switch(only_when_playing);
+              ui_pop();
+	ui_pop();
+) : piano_screen() || control_system();

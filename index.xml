@@ -1833,5 +1833,9 @@
 			<metadata>
 			</metadata>
 		</reapack>
+		<reapack name="Droplets" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>
