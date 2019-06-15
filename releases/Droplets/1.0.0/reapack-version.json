@@ -1,0 +1,22 @@
+{
+	"type": "effect",
+	"category": "MIDI",
+	"summary": "randomly play the notes of a chord",
+	"files": {
+		"Droplets/Droplets.jsfx": {
+			"main": false
+		},
+		"Droplets/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Droplets/piano-ui.jsfx-inc": {
+			"main": false
+		},
+		"Droplets/Droplets.jsfx.rpl": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Droplets",
+	"time": "2019-06-15T20:48:53.820Z"
+}

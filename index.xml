@@ -593,6 +593,15 @@
 				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
 				<source file="Echo-Cycles/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.3/Echo-Cycles/smoother.jsfx-inc</source>
 			</version>
+			<version name="1.2.4" author="Geraint Luff" time="2019-06-15T20:49:02.418Z">
+				<source file="Echo-Cycles/Echo-Cycles.jsfx">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/Echo-Cycles.jsfx</source>
+				<source file="Echo-Cycles/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/ui-lib.jsfx-inc</source>
+				<source file="Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Echo-Cycles/delay-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/delay-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/filter-utils.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/filter-utils.jsfx-inc</source>
+				<source file="Echo-Cycles/Echo-Cycles.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/Echo-Cycles.jsfx.rpl</source>
+				<source file="Echo-Cycles/smoother.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Echo-Cycles/1.2.4/Echo-Cycles/smoother.jsfx-inc</source>
+			</version>
 		</reapack>
 		<reapack name="Vibrato" type="effect">
 			<metadata>
@@ -1833,6 +1842,12 @@
 				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Droplets.png</link>
 				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Droplets-01.mp3</link>
 			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2019-06-15T20:48:53.820Z">
+				<source file="Droplets/Droplets.jsfx">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/Droplets.jsfx</source>
+				<source file="Droplets/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/ui-lib.jsfx-inc</source>
+				<source file="Droplets/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/piano-ui.jsfx-inc</source>
+				<source file="Droplets/Droplets.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/Droplets.jsfx.rpl</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Misc">

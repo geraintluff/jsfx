@@ -414,7 +414,7 @@
 					"main": false
 				}
 			},
-			"version": "1.2.3",
+			"version": "1.2.4",
 			"links": {
 				"youtube": "https://www.youtube.com/watch?v=BZ-1z7IKYTs&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
 			}
@@ -614,7 +614,8 @@
 				"Droplets.jsfx.rpl": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",
