@@ -1848,6 +1848,12 @@
 				<source file="Droplets/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/piano-ui.jsfx-inc</source>
 				<source file="Droplets/Droplets.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Droplets/1.0.0/Droplets/Droplets.jsfx.rpl</source>
 			</version>
+			<version name="1.1.0" author="Geraint Luff" time="2019-06-15T23:14:09.971Z">
+				<source file="Droplets/Droplets.jsfx">https://geraintluff.github.io/jsfx/releases/Droplets/1.1.0/Droplets/Droplets.jsfx</source>
+				<source file="Droplets/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.1.0/Droplets/ui-lib.jsfx-inc</source>
+				<source file="Droplets/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.1.0/Droplets/piano-ui.jsfx-inc</source>
+				<source file="Droplets/Droplets.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Droplets/1.1.0/Droplets/Droplets.jsfx.rpl</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Misc">
