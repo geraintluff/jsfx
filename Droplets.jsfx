@@ -1,11 +1,10 @@
 desc:Droplets (by Geraint Luff)
 
-slider1:note_midi=60<0,127,1>-note
-slider2:note_interval=0.5<0.01,5>-interval (s)
-slider3:note_interval_variation=1<0,5>-variation
-slider4:velocity_low=1<1,127>-velocity (low)
-slider5:velocity_high=127<1,127>-velocity (high)
-slider6:only_when_playing=1<0,1,1{off,on}>-only enabled when playing
+slider1:note_rate_per_second=1<0.01,20,0.01>-notes per second
+slider2:note_spacing_factor=0.25<0,0.99,0.01>-regularity
+slider3:note_release_seconds=0.5<0.01,10,0.1>-release
+slider4:velocity_density_curve=0.5<0,1,0.01>-velocity sensitivity (density)
+slider5:velocity_response_curve=1<0,2,0.01>-velocity randomness (velocity)
 
 import ui-lib.jsfx-inc
 import piano-ui.jsfx-inc
@@ -15,113 +14,184 @@ import piano-ui.jsfx-inc
 freemem = 0;
 freemem = ui_setup(freemem);
 
-function random_note_length() (
-       samples = srate*note_interval;
-       samples *= exp((rand() - 0.5)*note_interval_variation);
-);
-
-note_remaining_samples = random_note_length();
-note_active = 0;
-note_active_note = 0;
-note_velocity = 96;
+freemem = (note_velocities = freemem) + 128;
+freemem = (note_active = freemem) + 128;
+freemem = (note_channel = freemem) + 128;
+freemem = (note_release = freemem) + 128;
+freemem = (note_attack = freemem) + 128;
+freemem = (controller_values = freemem) + 128;
 
 @block
 
-is_playing = (play_state == 1) || (play_state == 5);
-
-midi_offset = 0;
-
-only_when_playing && !is_playing ? (
-       note_active ? (
-              note_active = 0;
-              midisend(midi_offset, $x80, note_active_note, 0);
+function clear_note(note) (
+       note_active[note] ? (
+              midisend(midi_offset, ($x8<<4) + midi_channel[note], note, 0);
+              note_active[note] = 0;
        );
-) : (
-       loop(samplesblock,
-              note_remaining_samples -= 1;
-              note_remaining_samples <= 0 ? (
-                     note_active ? (
-                            midisend(midi_offset, $x80, note_active_note, 0);
-                     );
+       note_release[note] = 0;
+);
+function begin_note(note, velocity) local(offset) (
+       offset = floor(rand()*(samplesblock - 1)) + 1;
+       velocity = max(1, velocity);
 
-                     note_remaining_samples = random_note_length();
-                     note_active = 1;
-                     note_active_note = note_midi;
-                     note_velocity = floor(0.5 + velocity_low + rand()*(velocity_high - velocity_low));
+       note_active[note] ? (
+              midisend(offset - 1, ($x8<<4) + midi_channel[note], note, 0);
+       );
+       midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
+       note_active[note] = velocity;
+       note_release[note] = 0;
+       note_attack[note] = samplesblock - offset;
+);
 
-                     midisend(midi_offset, $x90, note_active_note, note_velocity);
+note_average_samples = srate/note_rate_per_second;
+note_spacing_samples = note_spacing_factor*note_average_samples;
+note_remainder_samples = (1 - note_spacing_factor)*note_average_samples;
+note_rate_per_block_first = samplesblock/note_average_samples;
+note_rate_per_block = (note_remainder_samples > 0) ? samplesblock/note_remainder_samples : 100;
+
+note_release_samples = note_release_seconds*srate;
+
+while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
+       midi_type = midi_msg1>>4;
+       midi_channel = midi_msg1&0x0f;
+       //midi_msg2 = midi_msg23&$xff; // note / controller
+       //midi_msg3 = midi_msg23>>8; // velocity / value
+
+       (midi_type == $x9 && midi_msg3 != 0) ? (
+              clear_note(note);
+              note_velocities[midi_msg2] = midi_msg3;
+              note_channel[midi_msg2] = midi_channel;
+              note_attack[midi_msg2] = rand()*note_spacing_samples;
+       ) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
+              note_release[midi_msg2] = 0;
+              note_velocities[midi_msg2] = 0;
+       ) : (midi_type == 10) ? (
+              // Polyphonic aftertouch - absorb and turn into velocity
+              note_velocities[midi_msg2] > 0 ? (
+                     note_velocities[midi_msg2] = max(1, midi_msg3);
               );
-              midi_offset += 1;
+       ) : (midi_type == 11) ? (
+              midisend(midi_offset, midi_msg1, midi_msg2, midi_msg3); // passthrough
+
+              // Controller
+              midi_msg2 == 121 ? (
+                     density_controller = 127;
+              ) : (midi_msg2 == 123 || midi_msg2 == 120) ? (
+                     note = 0;
+                     loop(128,
+                            note_velocities[note] > 0 ? (
+                                   clear_note(note);
+                                   note_velocities[note] = 0;
+                            );
+                            note += 1;
+                     );
+              ) : (
+                     synthx_controllers[midi_msg2] = midi_msg3;
+              );
+       ) : (
+              midisend(midi_offset, midi_msg1, midi_msg2, midi_msg3); // passthrough
        );
 );
 
-@gfx 450 130
-
-function gfx_ui_automate_slider(slidervar*, new_value) (
-	slidervar !== new_value ? (
-		slidervar = new_value;
-		slider_automate(slidervar);
-	);
-	new_value;
+note = 0;
+loop(128,
+       start_note = 0;
+       note_velocities[note] > 0 ? (
+              !note_active[note] || note_attack[note] > note_spacing_samples ? (
+                     density = velocity_density_curve ? pow(note_velocities[note]/100, velocity_density_curve) : 1;
+                     start_note = rand() < density*(note_active[note] ? note_rate_per_block : note_rate_per_block_first);
+              );
+              start_note ? (
+                     velocity = note_velocities[note]*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
+                     begin_note(note, velocity);
+              ) : (
+                     note_active[note] ? note_attack[note] += samplesblock;
+              );
+       ) : note_active[note] ? (
+              note_attack[note] += samplesblock;
+              note_release[note] += samplesblock;
+              note_release[note] > note_release_samples ? (
+                     clear_note(note);
+              );
+       );
+       note += 1;
 );
 
-function gfx_ui_layout_textnumber(title, value, format) local(h) (
-	h = max((ui_height() - 60)/2, ui_height()*0.2);
-	ui_split_top(h);
+@gfx 590 190
+
+function label_text_height() (
+	(ui_height() - 60)/2;
+);
+function labels(title, number, displaynumber, format, skipbottom) local(height) (
+	height = label_text_height();
+	ui_split_top(height);
 		ui_text(title);
 	ui_pop();
-	ui_split_bottom(h);
-		value = control_hidden_textnumber(value, value*1.00000001, format);
-	ui_pop();
-	value;
+	!skipbottom ? (
+		ui_split_bottom(height);
+			format >= 0 ? (
+				number = control_hidden_textnumber(number, displaynumber, format);
+			);
+		ui_pop();
+	);
+	number;
 );
-
-function gfx_ui_dial_rounded(slidervar*, low, high, bias, default, step) (
-	slidervar != floor(slidervar._ui_gen_float/step + 0.5)*step ? slidervar._ui_gen_float = slidervar;
-	slidervar._ui_gen_float = control_dial(slidervar._ui_gen_float, low, high, bias, default);
-	gfx_ui_automate_slider(slidervar, floor(slidervar._ui_gen_float/step + 0.5)*step);
+function labels(title, number, displaynumber, format) (
+	labels(title, number, displaynumber, format, 0);
+);
+function labels(title) (
+	labels(title, 0, 0, -1);
 );
 
 control_start("main", "tron");
 
 ui_screen() === "main" ? (
-	ui_split_topratio(1/1); // single row
-              ui_split_leftratio(1/6);
-                     ui_click() && ui_clickcount() == 2 ? (
-                            ui_screen_open("piano.select-key");
-                            ui_screen_arg(0, "slider");
-                            ui_screen_arg(1, 1); // 4th slider
+       ui_split_bottom(min(ui_height()*0.3, ui_width()*0.0728));
+              //ui_color(50, 58, 64);
+              //ui_fill();
+              piano.white_r = 40;
+              piano.white_g = 41;
+              piano.white_b = 42;
+              piano.black_r = 90;
+              piano.black_g = 92;
+              piano.black_b = 94;
+              piano_draw(0, 127);
+
+              g_note = 0;
+              loop(128,
+                     note_active[g_note] ? (
+                            g_velocity = note_active[g_note];
+                            g_attack_seconds = note_attack[g_note]/srate;
+                            ui_color(255*g_velocity/127, 255*(1 - g_velocity/127), 255, 1/(g_attack_seconds + 0.1));
+                            piano_fill_key(g_note, 0, 127);
                      );
+                     g_note += 1;
+              );
+              ui_color(0, 0, 0, 0.4);
+              ui_border_top();
+       ui_pop();
 
-                     gfx_ui_automate_slider(note_midi, gfx_ui_layout_textnumber("note", note_midi, "%i"));
-                     gfx_ui_dial_rounded(note_midi, 0, 127, 0, 0, 1);
+       ui_split_leftratio(3/5);
+              control_group("Density");
+              ui_split_leftratio(1/3);
+                     labels("Rate", note_rate_per_second, note_rate_per_second, note_rate_per_second > 10 ? "%i / s" : note_rate_per_second > 0.6 ? "%.1f / s" : "%.2f / s");
+                     ui_automate(note_rate_per_second, control_dial(note_rate_per_second, 0.01, 20, log(300), 1));
+              ui_split_next();
+                     labels("Regularity", note_spacing_factor, note_spacing_factor*100 + 0.5, "%i%%");
+                     ui_automate(note_spacing_factor, control_dial(note_spacing_factor, 0, 1, 0, 0.25));
+              ui_split_next();
+                     labels("Velocity", velocity_density_curve, velocity_density_curve*100 + 0.5, "%i%%");
+                     ui_automate(velocity_density_curve, control_dial(velocity_density_curve, 0, 1, 0, 0.25));
               ui_pop();
-              ui_split_leftratio(2/5);
-			// row 1, group 1
-                     control_group("timing");
-			ui_split_leftratio(1/2);
-				gfx_ui_automate_slider(note_interval, gfx_ui_layout_textnumber("interval", note_interval, "%.4f s"));
-				gfx_ui_automate_slider(note_interval, control_dial(note_interval, 0.01, 5, log(5/0.01), 0.1));
-			ui_split_next();
-				gfx_ui_automate_slider(note_interval_variation, gfx_ui_layout_textnumber("variation", note_interval_variation, "%.4f"));
-				gfx_ui_automate_slider(note_interval_variation, control_dial(note_interval_variation, 0, 5, 2, 1));
-			ui_pop();
-		ui_pop();
-		ui_split_leftratio(2/4);
-			// row 1, group 2
-                     control_group("velocity");
-			ui_split_leftratio(1/2);
-				gfx_ui_automate_slider(velocity_low, gfx_ui_layout_textnumber("low", velocity_low, "%i"));
-				gfx_ui_automate_slider(velocity_low, control_dial(velocity_low, 1, 127, 1, 1));
-			ui_split_next();
-				gfx_ui_automate_slider(velocity_high, gfx_ui_layout_textnumber("high", velocity_high, "%i"));
-				gfx_ui_automate_slider(velocity_high, control_dial(velocity_high, 1, 127, 1, 127));
-			ui_pop();
-		ui_pop();
-
-              ui_split_leftratio(1/1);
-                     gfx_ui_layout_textnumber("active", 0, only_when_playing ? "when playing" : "always");
-                     only_when_playing = control_switch(only_when_playing);
+       ui_pop();
+       ui_split_leftratio(2/2);
+              control_group("Notes");
+              ui_split_leftratio(1/2);
+                     labels("Release", note_release_seconds, note_release_seconds < 1 ? (note_release_seconds*1000 + 0.5) : note_release_seconds, note_release_seconds < 1 ? "%i ms" : "%.1f s");
+                     ui_automate(note_release_seconds, control_dial(note_release_seconds, 0.01, 10, log(1000), 0.25));
+              ui_split_next();
+                     labels("Velocity", velocity_response_curve, velocity_response_curve, "curve: %.1f");
+                     ui_automate(velocity_response_curve, control_dial(velocity_response_curve, 0, 2, 0, 0.25));
               ui_pop();
-	ui_pop();
-) : piano_screen() || control_system();
+       ui_pop();
+);
