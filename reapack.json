@@ -599,7 +599,8 @@
 		},
 		"Droplets": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "MIDI",
+			"summary": "randomly play the notes of a chord",
 			"files": {
 				"Droplets.jsfx": {
 					"main": false
@@ -608,6 +609,9 @@
 					"main": false
 				},
 				"piano-ui.jsfx-inc": {
+					"main": false
+				},
+				"Droplets.jsfx.rpl": {
 					"main": false
 				}
 			}

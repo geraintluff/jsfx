@@ -1,5 +1,8 @@
 @init
 
+piano.white_r = piano.white_g = piano.white_b = 255;
+piano.black_r = piano.black_g = piano.black_b = 0;
+
 function pianox_key_to_layout(key) local(octaveKey) (
 	octaveKey = key%12;
 	octave = (key - octaveKey)/12;
@@ -19,11 +22,11 @@ function piano_push_key(key, lowKey, highKey) local(layoutLow, layoutHigh, layou
 	layoutKey%2 === 0 ? (
 		left = ui_left() + (layoutKey - layoutLow)*keyWidth;
 		ui_push_rect(left, ui_top() + ui_height()*0.6, keyWidth*2, ui_height()*0.4);
-		ui_color(0, 0, 0);
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
 	) : (
 		left = ui_left() + (layoutKey - layoutLow + 0.2)*keyWidth;
 		ui_push_rect(left, ui_top(), keyWidth*1.6, ui_height()*0.6);
-		ui_color(255, 255, 255);
+		ui_color(piano.white_r, piano.white_g, piano.white_b);
 	);
 	ui_align(0.5, 0.9);
 );
@@ -125,9 +128,9 @@ function piano_draw(lowKey, highKey) local(octave, octaveKey, keyCount, keyWidth
 
 	ui_push();
 		ui_retina(1);
-		ui_color(255, 255, 255);
+		ui_color(piano.white_r, piano.white_g, piano.white_b);
 		ui_fill();
-		ui_color(0, 0, 0);
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
 		ui_border();
 
 		keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
@@ -136,6 +139,8 @@ function piano_draw(lowKey, highKey) local(octave, octaveKey, keyCount, keyWidth
 		top = ui_top();
 		whiteHeight = ui_height();
 		blackHeight = whiteHeight*0.6;
+
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
 
 		i = lowKey;
 		while (i <= highKey) (

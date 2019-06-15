@@ -211,7 +211,8 @@ h3 {
 [*][url=https://geraintluff.github.io/jsfx#Piano%20Display]Piano Display[/url] - Displays MIDI notes as a scrolling piano roll[/list]
 
 [b]MIDI[/b]
-[list][*][url=https://geraintluff.github.io/jsfx#MIDI%20Gate]MIDI Gate[/url] - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
+[list][*][url=https://geraintluff.github.io/jsfx#Droplets]Droplets[/url] - randomly play the notes of a chord
+[*][url=https://geraintluff.github.io/jsfx#MIDI%20Gate]MIDI Gate[/url] - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
 [*][url=https://geraintluff.github.io/jsfx#MIDI%20Harmony]MIDI Harmony[/url] - arpeggiator and auto-accompaniment plugin[/list]
 
 [b]Pitch Correction[/b]
@@ -253,7 +254,9 @@ h3 {
 </li>
 <li><a href="#Piano Display">Piano Display</a> - Displays MIDI notes as a scrolling piano roll
 </li></ul>
-<h3>MIDI</h3><ul><li><a href="#MIDI Gate">MIDI Gate</a> - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
+<h3>MIDI</h3><ul><li><a href="#Droplets">Droplets</a> - randomly play the notes of a chord
+</li>
+<li><a href="#MIDI Gate">MIDI Gate</a> - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
 </li>
 <li><a href="#MIDI Harmony">MIDI Harmony</a> - arpeggiator and auto-accompaniment plugin
 </li></ul>
@@ -336,6 +339,12 @@ h3 {
 <p>The filters fade out (go to 0dB) at some definable limit, so you can modulate some areas of the spectrum while leaving others in tact.</p>
 <p>It has a variable number of filters (up to 20), stereo phase-offset and a tempo-synced LFO.</p>
 <p><img src="doc/images/Ripple.png" alt="screenshot"></p>
+</div>
+<div class="reapack-package reapack-package-with-links" id="Droplets"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Droplets-01.mp3"></audio></div><h1 id="droplets">Droplets</h1>
+<p>This effect play the notes of a chord in a random fashion.  Each MIDI note in the input is retriggered randomly over time.</p>
+<p>You can control the retriggering rate (per note, per second), and how much this is affected by velocity.  &quot;Regularity&quot; prevents notes from playing too soon after their previous instance, and high settings produce patterns which evolve slowly over time.</p>
+<p><img src="doc/images/Droplets.png" alt="screenshot"></p>
+<p>&quot;Release&quot; allows the final generated note to ring on after the original MIDI note was released.  The velocity of the triggered notes is randomised (up to the original velocity), but you can tune the curve.  This effect supports polyphonic aftertouch, but assumes that it is on the same scale as velocity.</p>
 </div>
 <div class="reapack-package" id="Learning Sampler"><h1 id="learning-sampler">Learning Sampler</h1>
 <p>This sampler records samples from the incoming audio when in learning mode (selected by a controller switch), and plays them back when in playback mode.</p>

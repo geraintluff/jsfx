@@ -1827,13 +1827,16 @@
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.3/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
 			</version>
 		</reapack>
+		<reapack name="Droplets" type="effect">
+			<metadata>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Droplets-01.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Droplets\b}\line\line This effect play the notes of a chord in a random fashion.  Each MIDI note in the input is retriggered randomly over time.\line\line You can control the retriggering rate (per note, per second), and how much this is affected by velocity.  &quot;Regularity&quot; prevents notes from playing too soon after their previous instance, and high settings produce patterns which evolve slowly over time.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Droplets.png&quot;}}{\fldrslt screenshot}}\line\line &quot;Release&quot; allows the final generated note to ring on after the original MIDI note was released.  The velocity of the triggered notes is randomised (up to the original velocity), but you can tune the curve.  This effect supports polyphonic aftertouch, but assumes that it is on the same scale as velocity.\line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Droplets.png</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Droplets-01.mp3</link>
+			</metadata>
+		</reapack>
 	</category>
 	<category name="Misc">
 		<reapack name="MIDI Controller Control" type="effect">
-			<metadata>
-			</metadata>
-		</reapack>
-		<reapack name="Droplets" type="effect">
 			<metadata>
 			</metadata>
 		</reapack>
