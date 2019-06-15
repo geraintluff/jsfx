@@ -11,12 +11,13 @@ slider3:delay_ms=0<0,1000>-Delay (ms)
 slider4:delay_beats=0.75<0,4,0.25>-Delay (beats)
 slider5:feedback_ratio=0.5<0,0.99>-Feedback
 slider6:feedback_rotation=2.323<0,6.283185307179586>-Feedback rotation
-slider7:input_rotation=2.776<0,6.283185307179586>-Input rotation
+slider7:input_rotation_initial=2.776<0,6.283185307179586>-Input rotation
 slider8:output_dry=1<0,1>-Output Dry
 slider9:output_wet=0.5<0,1>-Output Wet
 slider10:filter_freq=2000<50,18000>-Filter Hz
 slider11:filter_db=2<0,24>-Filter dB (skirt)
 slider12:filter_bandwidth=2<0.1,5>-Filter bandwidth
+slider13:rotation_mode=0<0,1,1{fixed,LFO}>-Rotation mode
 
 filename:0,themes/bitmap-simple/theme-dark-cyan.png
 
@@ -60,19 +61,21 @@ smoother_init(filter_freq);
 smoother_init(filter_db);
 smoother_init(filter_bandwidth);
 
+input_cos = 1;
+input_sin = 0;
+rotation_speed = 0;
+
 function recalculate() (
 	input_mono = sqrt(0.5);
 	input_cos = cos((input_width + 1)*$pi/4);
 	input_sin = sin((input_width + 1)*$pi/4);
-	input_rot_cos = cos(smoother_value(input_rotation));
-	input_rot_sin = sin(smoother_value(input_rotation));
-	input_ll = input_rot_cos*input_sin - input_rot_sin*input_cos;
-	input_lr = input_rot_cos*input_cos - input_rot_sin*input_sin;
-	input_rl = input_rot_sin*input_sin + input_rot_cos*input_cos;
-	input_rr = input_rot_sin*input_cos + input_rot_cos*input_sin;
 
 	output_on_channel = output_variation + (1 - output_variation)/sqrt(2);
 	output_off_channel = (output_variation - 1)/sqrt(2);
+
+	delay_seconds = delay_ms*0.001 + delay_beats*60/tempo;
+	rotation_speed = -(feedback_rotation > $pi ? feedback_rotation - 2*$pi : feedback_rotation)/(sqrt(2) + 2*delay_beats);
+
 
 	filter_gain = pow(10, -smoother_value(filter_db)/20);
 
@@ -84,8 +87,33 @@ function recalculate() (
 	filter_right.filter_bandpass(smoother_value(filter_freq)/srate, smoother_value(filter_bandwidth), filter_gain);
 );
 recalculate();
+function recalculate_input_rotation() (
+	input_rot_cos = cos(smoother_value(input_rotation));
+	input_rot_sin = sin(smoother_value(input_rotation));
+	input_ll = input_rot_cos*input_sin - input_rot_sin*input_cos;
+	input_lr = input_rot_cos*input_cos - input_rot_sin*input_sin;
+	input_rl = input_rot_sin*input_sin + input_rot_cos*input_cos;
+	input_rr = input_rot_sin*input_cos + input_rot_cos*input_sin;
+);
+recalculate_input_rotation();
+
+rotation_offset = (rotation_mode == 1) ? beat_position*rotation_speed : 0;
 
 @block
+
+//rotation_seconds = 2;
+rotation_mode == 1 ? (
+	play_state == 1 || play_state == 5 ? (
+		rotation_offset = beat_position*rotation_speed;
+	) : (
+		// We're not playing, so just rotate freely at the correct pace
+		rotation_offset += rotation_speed*(tempo/60*samplesblock/srate);
+	);
+) : (
+	rotation_offset = 0;
+);
+rotation_offset = (rotation_offset - floor(rotation_offset));
+input_rotation = input_rotation_initial + 6.283185307179586*rotation_offset;
 
 smoothing = smoother_block(output_dry)
 	+ smoother_block(output_wet)
@@ -96,6 +124,7 @@ smoothing = smoother_block(output_dry)
 	+ smoother_block(filter_db)
 	+ smoother_block(filter_bandwidth);
 recalculate();
+recalculate_input_rotation();
 
 delay_seconds = delay_ms*0.001 + delay_beats*60/tempo;
 delay_samples_target = max(1, floor(delay_seconds*srate + 0.5));
@@ -123,6 +152,10 @@ smoothing ? (
 	smoother_sample(filter_bandwidth);
 
 	recalculate();
+	recalculate_input_rotation();
+) : rotation_mode == 1 ? (
+	smoother_sample(input_rotation);
+	recalculate_input_rotation();
 );
 
 vis_sample += 1;
@@ -162,17 +195,25 @@ buffer_read_index >= buffer_length ? (
 
 @gfx 490 486
 
-function labels(title, number, displaynumber, format) local(height) (
-	height = (ui_height() - 60)/2;
+function label_text_height() (
+	(ui_height() - 60)/2;
+);
+function labels(title, number, displaynumber, format, skipbottom) local(height) (
+	height = label_text_height();
 	ui_split_top(height);
 		ui_text(title);
 	ui_pop();
-	ui_split_bottom(height);
-		format >= 0 ? (
-			number = control_hidden_textnumber(number, displaynumber, format);
-		);
-	ui_pop();
+	!skipbottom ? (
+		ui_split_bottom(height);
+			format >= 0 ? (
+				number = control_hidden_textnumber(number, displaynumber, format);
+			);
+		ui_pop();
+	);
 	number;
+);
+function labels(title, number, displaynumber, format) (
+	labels(title, number, displaynumber, format, 0);
 );
 function labels(title) (
 	labels(title, 0, 0, -1);
@@ -240,11 +281,22 @@ ui_screen() == "main" ? (
 			labels("accents");
 			ui_automate(output_variation, control_dial(output_variation, 0, 1, 0, 0.5));
 		ui_split_next();
-			labels("rotation");
+			labels("rotation/step");
 			ui_automate(feedback_rotation, control_dial_angle(feedback_rotation));
 		ui_split_next();
-			labels("start");
-			ui_automate(input_rotation, control_dial_angle(input_rotation));
+			g_lh = label_text_height();
+			labels("start", 0, 0, -1, 1);
+			ui_split_bottom(g_lh);
+				ui_padtop(5);
+				ui_split_leftratio(0.5);
+					ui_pad(10, 3, 0, 3);
+					ui_automate(rotation_mode, control_switch(rotation_mode));
+				ui_split_next();
+					ui_text("LFO");
+				ui_pop();
+			ui_pop();
+
+			ui_automate(input_rotation_initial, control_dial_angle(input_rotation_initial));
 		ui_pop();
 	ui_pop();
 
@@ -291,7 +343,7 @@ ui_screen() == "main" ? (
 
 @serialize
 
-serialize_version = 2;
+serialize_version = 3;
 file_var(0, serialize_version);
 
 serialize_version < 2 ? (
@@ -299,4 +351,7 @@ serialize_version < 2 ? (
 	filter_freq = 2000;
 	filter_bandwidth = 2;
 	filter_db = 0;
+);
+serialize_version < 3 ? (
+	rotation_mode = 0;
 );
