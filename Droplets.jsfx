@@ -15,6 +15,8 @@ slider10:quantise_unit=1<0,4,1{1/16,1/8,1/4,1/2,1}>rhythm grid
 slider11:quantise_unit_triplets=0<0,1,1{off,on}>rhythm triplets
 slider12:kickstart_prob=0<0,1,0.01>kickstart probablilty
 
+slider13:polyphony_density_curve=0<0,1,0.01>polyphony density
+
 import ui-lib.jsfx-inc
 import piano-ui.jsfx-inc
 
@@ -29,13 +31,14 @@ freemem = ui_setup(freemem);
 
 freemem = (note_velocities = freemem) + 128;
 freemem = (note_transposed_velocities = freemem) + 128;
+freemem = (note_densities = freemem) + 128;
 freemem = (note_active = freemem) + 128;
-freemem = (note_kickstart = freemem) + 128;
 freemem = (note_scheduled_samples = freemem) + 128;
 freemem = (note_scheduled_velocity = freemem) + 128;
 freemem = (note_channel = freemem) + 128;
 freemem = (note_release = freemem) + 128;
 freemem = (note_attack = freemem) + 128;
+freemem = (note_kickstart = freemem) + 128;
 freemem = (controller_values = freemem) + 128;
 
 // Reset memory
@@ -68,7 +71,6 @@ function begin_note(note, velocity, minoffset, maxoffset) local(offset) (
               offset = beat_next_start + rand()*beat_interval_samples*(1 - quantise_strength);
               offset = floor(offset + 0.5);
        );
-
        velocity = max(1, velocity);
 
        offset < samplesblock ? (
@@ -97,7 +99,7 @@ note_rate_per_block = (note_remainder_samples > 0) ? samplesblock/note_remainder
 note_release_samples = note_release_seconds*srate;
 
 note = 0;
-loop(127,
+loop(128,
        note_kickstart[note] = samplesblock;
        note += 1;
 );
@@ -182,6 +184,23 @@ transpose_mode == 1 || transpose_mode == 2 ? (
        );
 );
 
+total_density = 0;
+max_density = 0;
+note = 0;
+loop(128,
+       note_velocity = note_transposed_velocities[note];
+       note_velocity > 0 ? (
+              density = note_densities[note] = (velocity_density_curve ? pow(note_velocity/100, velocity_density_curve) : 1);
+              total_density += density;
+              max_density = max(max_density, density);
+       ) : (
+              // Clean up any scheduled notes, otherwise they get accidentally triggered later
+              note_scheduled_samples[note] = 0;
+       );
+       note += 1;
+);
+density_factor = max_density > 0 ? pow(total_density/max_density, polyphony_density_curve - 1) : 1;
+
 note = 0;
 loop(128,
        start_note = 0;
@@ -203,9 +222,9 @@ loop(128,
                             note_scheduled_samples[note] -= samplesblock;
                      );
               );
-              note_kickstart[note] < samplesblock? (
-                     offset = note_kickstart[note];
+              note_kickstart[note] < samplesblock ? (
                      !note_active[note] && rand() < kickstart_prob ? (
+                            offset = note_kickstart[note];
                             velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
                             note_active[note] = velocity;
                             midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
@@ -216,8 +235,8 @@ loop(128,
               minoffset = 0;
               maxoffset = samplesblock;
               !note_active[note] || note_attack[note] + samplesblock > note_spacing_samples ? (
-                     minoffset = max(0, note_spacing_samples - note_attack[note]);
-                     density = (offsetrange/samplesblock)*velocity_density_curve ? pow(note_velocity/100, velocity_density_curve) : 1;
+                     note_active[note] ? minoffset = max(0, note_spacing_samples - note_attack[note]);
+                     density = (maxoffset - minoffset)/samplesblock*note_densities[note]*density_factor;
                      prob = density*(note_active[note] ? note_rate_per_block : note_rate_per_block_first);
                      prob > 1 ? (
                             start_note = 1;
