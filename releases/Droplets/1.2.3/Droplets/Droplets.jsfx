@@ -264,7 +264,7 @@ loop(128,
        note += 1;
 );
 
-@gfx 730 375
+@gfx 740 340
 
 function label_text_height() (
        (ui_height() - 60)/2;
