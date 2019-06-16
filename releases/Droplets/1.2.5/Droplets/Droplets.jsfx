@@ -1,0 +1,426 @@
+desc:Droplets (by Geraint Luff)
+
+slider1:log_note_rate_per_second=0<-4.6,3,0.01>-notes per second (log-scale)
+slider2:note_spacing_factor=0.25<0,0.99,0.01>-regularity
+slider3:note_release_seconds=0.5<0.01,10,0.1>-release
+slider4:velocity_density_curve=0.5<0,1,0.01>-velocity sensitivity (density)
+slider5:velocity_response_curve=1<0,2,0.01>-velocity randomness (velocity)
+
+slider6:transpose_mode=0<0,1,1{off,up,up/down}>-transpose mode
+slider7:transpose_target_note=60<0,127,1>-transpose target note
+slider8:transpose_target_note_range=12<3,36,1>-transpose target range
+
+slider9:quantise_strength=0<0,1,0.01>-quantise strength
+slider10:quantise_unit=1<0,4,1{1/16,1/8,1/4,1/2,1}>-rhythm grid
+slider11:quantise_unit_triplets=0<0,1,1{off,on}>-rhythm triplets
+slider12:kickstart_prob=0<0,1,0.01>-kickstart probablilty
+
+slider13:polyphony_density_curve=0.8<0,1,0.01>-polyphony density
+
+import ui-lib.jsfx-inc
+import piano-ui.jsfx-inc
+
+filename:0,themes/bitmap-simple/theme-dark-cyan.png
+// Modified from a photo by Isiah Gibson: https://unsplash.com/photos/xqFCy9AbHP4
+filename:1,themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png
+
+@init
+
+function quantiseFactor() (
+       (1 << quantise_unit)/4*(quantise_unit_triplets ? 2/3 : 1);
+);
+
+freemem = 0;
+freemem = ui_setup(freemem);
+
+freemem = (note_velocities = freemem) + 128;
+freemem = (note_transposed_velocities = freemem) + 128;
+freemem = (note_densities = freemem) + 128;
+freemem = (note_active = freemem) + 128;
+freemem = (note_scheduled_samples = freemem) + 128;
+freemem = (note_scheduled_velocity = freemem) + 128;
+freemem = (note_channel = freemem) + 128;
+freemem = (note_release = freemem) + 128;
+freemem = (note_attack = freemem) + 128;
+freemem = (note_kickstart = freemem) + 128;
+freemem = (controller_values = freemem) + 128;
+
+// Reset memory
+memset(note_velocities, 0, freemem - note_velocities);
+
+@block
+
+beat_samples = srate*60/tempo;
+beat_interval_samples = beat_samples*quantiseFactor();
+
+// Nearest beat
+beat_pos = beat_position/quantiseFactor();
+beat_pos -= floor(beat_pos);
+beat_start_samples = -beat_pos*beat_interval_samples;
+
+beat_prev_end = beat_start_samples + beat_interval_samples*(1 - quantise_strength)*0.5;
+beat_next_start = beat_start_samples + beat_interval_samples*(1 + quantise_strength)*0.5;
+
+function clear_note(note) (
+       note_active[note] ? (
+              midisend(midi_offset, ($x8<<4) + midi_channel[note], note, 0);
+              note_active[note] = 0;
+       );
+       note_scheduled_samples[note] = 0;
+       note_release[note] = 0;
+);
+function begin_note(note, velocity, minoffset, maxoffset) local(offset) (
+       offset = min(samplesblock - 1, max(0, floor(minoffset + rand()*(maxoffset - minoffset))));
+       offset > beat_prev_end ? (
+              offset = beat_next_start + rand()*beat_interval_samples*(1 - quantise_strength);
+              offset = floor(offset + 0.5);
+       );
+       velocity = max(1, velocity);
+
+       offset < samplesblock ? (
+              note_scheduled_samples[note] = 0;
+              note_active[note] ? (
+                     midisend(offset, ($x8<<4) + midi_channel[note], note, 0);
+              );
+
+              note_active[note] = velocity;
+              midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
+              note_attack[note] = samplesblock - offset;
+       ) : (
+              note_scheduled_samples[note] = offset - samplesblock;
+              note_scheduled_velocity[note] = velocity;
+       );
+       note_release[note] = 0;
+);
+
+note_rate_per_second = exp(log_note_rate_per_second);
+note_average_samples = srate/note_rate_per_second;
+note_spacing_samples = note_spacing_factor*note_average_samples;
+note_remainder_samples = (1 - note_spacing_factor)*note_average_samples;
+note_rate_per_block_first = samplesblock/note_average_samples;
+note_rate_per_block = (note_remainder_samples > 0) ? samplesblock/note_remainder_samples : 100000;
+
+note_release_samples = note_release_seconds*srate;
+
+note = 0;
+loop(128,
+       note_kickstart[note] = samplesblock;
+       note += 1;
+);
+
+while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
+       midi_type = midi_msg1>>4;
+       midi_channel = midi_msg1&0x0f;
+       //midi_msg2 = midi_msg23&$xff; // note / controller
+       //midi_msg3 = midi_msg23>>8; // velocity / value
+
+       (midi_type == $x9 && midi_msg3 != 0) ? (
+              note_channel[midi_msg2] != midi_channel ? (
+                     clear_note(note); // Otherwise we could get in a mess
+              );
+              !note_active[midi_msg] ? (
+                     note_kickstart[midi_msg2] = midi_offset;
+              );
+              note_velocities[midi_msg2] = midi_msg3;
+              note_channel[midi_msg2] = midi_channel;
+       ) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
+              note_release[midi_msg2] = 0;
+              note_velocities[midi_msg2] = 0;
+              note_velocities[midi_msg2] = 0;
+       ) : (midi_type == 10) ? (
+              // Polyphonic aftertouch - absorb and turn into velocity
+              note_velocities[midi_msg2] > 0 ? (
+                     note_velocities[midi_msg2] = max(1, midi_msg3);
+              );
+       ) : (midi_type == 11) ? (
+              midisend(midi_offset, midi_msg1, midi_msg2, midi_msg3); // passthrough
+
+              // Controller
+              midi_msg2 == 121 ? (
+                     0 // Reset controllers, but that's not relevant to us
+              ) : (midi_msg2 == 123 || midi_msg2 == 120) ? (
+                     note = 0;
+                     loop(128,
+                            clear_note(note);
+                            note_velocities[note] = 0;
+                            note += 1;
+                     );
+              );
+       ) : (
+              midisend(midi_offset, midi_msg1, midi_msg2, midi_msg3); // passthrough
+       );
+);
+
+transpose_mode == 1 || transpose_mode == 2 ? (
+       transpose_mode == 1 ? (
+              note = 0;
+              loop(128,
+                     note_transposed_velocities[note] = note_velocities[note];
+                     note += 1;
+              );
+       ) : (
+              note = 0;
+              loop(128,
+                     note_transposed_velocities[note] = 0;
+                     note_transposed_velocities[note%12] = max(note_transposed_velocities[note%12], note_velocities[note]);
+                     note_kickstart[note%12] = min(note_kickstart[note%12], note_kickstart[note]);
+                     note += 1;
+              );
+       );
+       note = 12;
+       loop(128 - 12,
+              note_transposed_velocities[note] = max(note_transposed_velocities[note], note_transposed_velocities[note - 12]);
+              note_kickstart[note] = min(note_kickstart[note], note_kickstart[note - 12]);
+              note += 1;
+       );
+       note = 0;
+       loop(128,
+              diff = abs(note - transpose_target_note);
+              factor = max(0, 1 - (diff/transpose_target_note_range));
+              note_transposed_velocities[note] *= factor;
+              note += 1;
+       );
+) : (
+       note = 0;
+       loop(128,
+              note_transposed_velocities[note] = note_velocities[note];
+              note += 1;
+       );
+);
+
+total_density = 0;
+max_density = 0;
+note = 0;
+loop(128,
+       note_velocity = note_transposed_velocities[note];
+       note_velocity > 0 ? (
+              density = note_densities[note] = (velocity_density_curve ? pow(note_velocity/100, velocity_density_curve) : 1);
+              total_density += density;
+              max_density = max(max_density, density);
+       ) : (
+              // Clean up any scheduled notes, otherwise they get accidentally triggered later
+              note_scheduled_samples[note] = 0;
+       );
+       note += 1;
+);
+density_factor = max_density > 0 ? pow(total_density/max_density, polyphony_density_curve - 1) : 1;
+
+note = 0;
+loop(128,
+       start_note = 0;
+       note_velocity = note_transposed_velocities[note];
+       note_velocity > 0 ? (
+              note_scheduled_samples[note] > 0 ? (
+                     note_scheduled_samples[note] < samplesblock ? (
+                            offset = note_scheduled_samples[note];
+                            velocity = note_scheduled_velocity[note];
+                            note_active[note] ? (
+                                   midisend(offset, ($x8<<4) + midi_channel[note], note, 0);
+                            );
+
+                            note_active[note] = velocity;
+                            midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
+                            note_attack[note] = samplesblock - offset;
+                            note_scheduled_samples[note] = 0;
+                     ) : (
+                            note_scheduled_samples[note] -= samplesblock;
+                     );
+              );
+              note_kickstart[note] < samplesblock ? (
+                     !note_active[note] && rand() < kickstart_prob ? (
+                            offset = note_kickstart[note];
+                            velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
+                            note_active[note] = note_velocity;
+                            midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
+                            note_attack[note] = rand()*note_spacing_samples;
+                     );
+              );
+
+              minoffset = 0;
+              maxoffset = samplesblock;
+              !note_active[note] || note_attack[note] + samplesblock > note_spacing_samples ? (
+                     note_active[note] ? minoffset = max(0, note_spacing_samples - note_attack[note]);
+                     density = (maxoffset - minoffset)/samplesblock*note_densities[note]*density_factor;
+                     prob = density*(note_active[note] ? note_rate_per_block : note_rate_per_block_first);
+                     prob > 1 ? (
+                            start_note = 1;
+                            maxoffset = minoffset;
+                     ) : (
+                            start_note = rand() < prob;
+                     );
+              );
+              start_note ? (
+                     velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
+                     begin_note(note, velocity, minoffset, maxoffset);
+              ) : (
+                     note_active[note] ? note_attack[note] += samplesblock;
+              );
+       ) : note_active[note] ? (
+              note_release[note] += samplesblock;
+              note_release[note] > note_release_samples ? (
+                     clear_note(note);
+              );
+       );
+       note += 1;
+);
+
+@gfx 730 375
+
+function label_text_height() (
+       (ui_height() - 60)/2;
+);
+function labels(title, number, displaynumber, format, skipbottom) local(height) (
+       height = label_text_height();
+       ui_split_top(height);
+              ui_text(title);
+       ui_pop();
+       !skipbottom ? (
+              ui_split_bottom(height);
+                     format >= 0 ? (
+                            number = control_hidden_textnumber(number, displaynumber, format);
+                     );
+              ui_pop();
+       );
+       number;
+);
+function labels(title, number, displaynumber, format) (
+       labels(title, number, displaynumber, format, 0);
+);
+function labels(title) (
+       labels(title, 0, 0, -1);
+);
+
+control_start("main", "bitmap-simple", 0);
+
+ui_screen() === "main" ? (
+       ui_split_bottom(min(ui_height()*0.3, ui_width()*0.0728));
+              //ui_color(50, 58, 64);
+              //ui_fill();
+              piano.white_r = 40;
+              piano.white_g = 41;
+              piano.white_b = 42;
+              piano.black_r = 90;
+              piano.black_g = 92;
+              piano.black_b = 94;
+              piano_draw(0, 127);
+
+              g_note = 0;
+              loop(128,
+                     note_active[g_note] ? (
+                            g_velocity = note_active[g_note];
+                            g_attack_seconds = note_attack[g_note]/srate;
+                            ui_color(255*g_velocity/127*0.8, 255*(0.5 + 0.5*g_velocity/127), 255*(0.6 - 0.4*g_velocity/127), 0.1 + 0.9/max(1, g_attack_seconds + 0.1));
+                            piano_fill_key(g_note, 0, 127);
+                     );
+                     g_note += 1;
+              );
+              ui_color(0, 0, 0, 0.4);
+              ui_border_top();
+       ui_pop();
+
+       ui_image_fill(1, 0.25);
+
+       ui_split_topratio(1/2);
+              ui_split_leftratio(0.45);
+                     control_group("Density");
+                     ui_split_leftratio(1/3);
+                            labels("Rate", exp(note_rate_per_second), exp(log_note_rate_per_second), exp(log_note_rate_per_second) > 10 ? "%i / s" : exp(log_note_rate_per_second) > 0.6 ? "%.1f / s" : "%.2f / s");
+                            ui_automate(log_note_rate_per_second, control_dial(log_note_rate_per_second, -4.6, 3, 0, 0));
+                     ui_split_next();
+                            labels("Velocity", velocity_density_curve, velocity_density_curve*100 + 0.5, "%i%%");
+                            ui_automate(velocity_density_curve, control_dial(velocity_density_curve, 0, 1, 0, 0.25));
+                     ui_split_next();
+                            labels("Independence", polyphony_density_curve, polyphony_density_curve*100 + 0.5, "%i%%");
+                            ui_automate(polyphony_density_curve, control_dial(polyphony_density_curve, 0, 1, 0, 0.8));
+                     ui_pop();
+              ui_pop();
+              ui_split_leftratio(3/3);
+                     control_group("Transpose");
+                     ui_split_leftratio(0.36);
+                            ui_align(0.5, 0.8);
+                            ui_split_topratio(1/3);
+                                   ui_split_right(35);
+                                          ui_automate(transpose_mode, control_radio(transpose_mode, 0));
+                                   ui_pop();
+                                   ui_align(1, -1);
+                                   ui_text("off");
+                            ui_split_next();
+                                   ui_split_right(35);
+                                          ui_automate(transpose_mode, control_radio(transpose_mode, 1));
+                                   ui_pop();
+                                   ui_align(1, -1);
+                                   ui_text("up only");
+                            ui_split_next();
+                                   ui_split_right(35);
+                                          ui_automate(transpose_mode, control_radio(transpose_mode, 2));
+                                   ui_pop();
+                                   ui_align(1, -1);
+                                   ui_text("up + down");
+                            ui_pop();
+                     ui_pop();
+                     ui_split_leftratio(1/2);
+                            labels("Target", transpose_target_note, transpose_target_note, piano_key_name(transpose_target_note));
+                            ui_automate(transpose_target_note, control_dial(transpose_target_note, 0, 127, 0));
+
+                            ui_click() && ui_clickcount() == 2 ? (
+                                   ui_screen_open("piano.select-key");
+                                   ui_screen_arg(0, "slider");
+                                   ui_screen_arg(1, 7); // 7th slider
+                            );
+                     ui_split_next();
+                            labels("Range", transpose_target_note_range, transpose_target_note_range + 0.5, "%i semitones");
+                            ui_automate(transpose_target_note_range, control_dial(transpose_target_note_range, 3, 36, 2, 12));
+                     ui_pop();
+              ui_pop();
+       ui_split_next();
+              ui_split_leftratio(2/6);
+                     control_group("Notes");
+                     ui_split_leftratio(1/2);
+                            labels("Release", note_release_seconds, note_release_seconds < 1 ? (note_release_seconds*1000 + 0.5) : note_release_seconds, note_release_seconds < 1 ? "%i ms" : "%.1f s");
+                            ui_automate(note_release_seconds, control_dial(note_release_seconds, 0.01, 10, log(1000), 0.25));
+                     ui_split_next();
+                            labels("Velocity", velocity_response_curve, velocity_response_curve, "curve: %.1f");
+                            ui_automate(velocity_response_curve, control_dial(velocity_response_curve, 0, 2, 0, 1));
+                     ui_pop();
+              ui_pop();
+              ui_split_leftratio(4/4);
+                     control_group("Rhythm");
+                     ui_split_leftratio(1/4);
+                            labels("Regularity", note_spacing_factor, note_spacing_factor*100 + 0.5, "%i%%");
+                            ui_automate(note_spacing_factor, control_dial(note_spacing_factor, 0, 1, 0, 0.25));
+                     ui_split_next();
+                            labels("Kickstart", kickstart_prob, kickstart_prob*100 + 0.5, "%i%%");
+                            ui_automate(kickstart_prob, control_dial(kickstart_prob, 0, 1, 0, 0.25));
+                     ui_split_next();
+                            ui_split_topratio(1/2);
+                                   sprintf(#unit_text, "1/%i", 16/(1 << quantise_unit));
+                                   ui_automate(quantise_unit, control_selector(quantise_unit, #unit_text, max(0, quantise_unit - 1), min(4, quantise_unit + 1)));
+                            ui_split_next();
+                                   ui_split_right(50);
+                                          ui_automate(quantise_unit_triplets, control_switch(quantise_unit_triplets));
+                                   ui_pop();
+                                   ui_text("triplets");
+                            ui_pop();
+                     ui_split_next();
+                            labels("Quantise", quantise_strength, quantise_strength*100 + 0.5, "%i%%");
+                            ui_automate(quantise_strength, control_dial(quantise_strength, 0, 1, 0, 0));
+                     ui_pop();
+              ui_pop();
+       ui_pop();
+) : piano_screen() || control_system();
+
+@serialize
+
+serialize_version = 2;
+file_var(0, serialize_version);
+
+serialize_version < 2 ? (
+       transpose_mode = 0;
+       transpose_target_note = 60;
+       transpose_target_note_range = 12;
+       quantise_strength = 0;
+       quantise_unit = 1;
+       quantise_unit_triplets = 0;
+       kickstart_prob = 0;
+       polyphony_density_curve = 1;
+);
