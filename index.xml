@@ -1862,6 +1862,14 @@
 				<source file="Droplets/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.0/Droplets/themes/bitmap-simple/theme-dark-cyan.png</source>
 				<source file="Droplets/themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.0/Droplets/themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png</source>
 			</version>
+			<version name="1.2.1" author="Geraint Luff" time="2019-06-16T12:06:52.841Z">
+				<source file="Droplets/Droplets.jsfx">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/Droplets.jsfx</source>
+				<source file="Droplets/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/ui-lib.jsfx-inc</source>
+				<source file="Droplets/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/piano-ui.jsfx-inc</source>
+				<source file="Droplets/Droplets.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/Droplets.jsfx.rpl</source>
+				<source file="Droplets/themes/bitmap-simple/theme-dark-cyan.png">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/themes/bitmap-simple/theme-dark-cyan.png</source>
+				<source file="Droplets/themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png">https://geraintluff.github.io/jsfx/releases/Droplets/1.2.1/Droplets/themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Misc">
