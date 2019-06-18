@@ -16,6 +16,7 @@ slider11:quantise_unit_triplets=0<0,1,1{off,on}>-rhythm triplets
 slider12:kickstart_prob=0<0,1,0.01>-kickstart probablilty
 
 slider13:polyphony_density_curve=0.8<0,1,0.01>-polyphony density
+slider14:use_sustain=0<0,1,1{off,on}>sustain
 
 import ui-lib.jsfx-inc
 import piano-ui.jsfx-inc
@@ -26,6 +27,8 @@ filename:1,themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png
 
 @init
 
+config_draw_possible_notes = 1;
+
 function quantiseFactor() (
        (1 << quantise_unit)/4*(quantise_unit_triplets ? 2/3 : 1);
 );
@@ -34,11 +37,13 @@ freemem = 0;
 freemem = ui_setup(freemem);
 
 freemem = (note_velocities = freemem) + 128;
+freemem = (note_sustain_velocities = freemem) + 128;
 freemem = (note_transposed_velocities = freemem) + 128;
 freemem = (note_densities = freemem) + 128;
 freemem = (note_active = freemem) + 128;
 freemem = (note_scheduled_samples = freemem) + 128;
 freemem = (note_scheduled_velocity = freemem) + 128;
+freemem = (note_scheduled_attack = freemem) + 128;
 freemem = (note_channel = freemem) + 128;
 freemem = (note_release = freemem) + 128;
 freemem = (note_attack = freemem) + 128;
@@ -69,7 +74,7 @@ function clear_note(note) (
        note_scheduled_samples[note] = 0;
        note_release[note] = 0;
 );
-function begin_note(note, velocity, minoffset, maxoffset) local(offset) (
+function begin_note(note, velocity, minoffset, maxoffset, fixedAttack) local(offset) (
        offset = min(samplesblock - 1, max(0, floor(minoffset + rand()*(maxoffset - minoffset))));
        offset > beat_prev_end ? (
               offset = beat_next_start + rand()*beat_interval_samples*(1 - quantise_strength);
@@ -85,10 +90,11 @@ function begin_note(note, velocity, minoffset, maxoffset) local(offset) (
 
               note_active[note] = velocity;
               midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
-              note_attack[note] = samplesblock - offset;
+              note_attack[note] = fixedAttack ? fixedAttack : samplesblock - offset;
        ) : (
               note_scheduled_samples[note] = offset - samplesblock;
               note_scheduled_velocity[note] = velocity;
+              note_scheduled_attack[note] = fixedAttack;
        );
        note_release[note] = 0;
 );
@@ -121,12 +127,15 @@ while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
               !note_active[midi_msg] ? (
                      note_kickstart[midi_msg2] = midi_offset;
               );
+              note_sustain_velocities[midi_msg2] = midi_msg3;
               note_velocities[midi_msg2] = midi_msg3;
               note_channel[midi_msg2] = midi_channel;
        ) : (midi_type == $x8 || (midi_type == $x9 && midi_msg3 == 0)) ? (
               note_release[midi_msg2] = 0;
               note_velocities[midi_msg2] = 0;
-              note_velocities[midi_msg2] = 0;
+              controller_values[64] < 64 ? (
+                     note_sustain_velocities[midi_msg2] = 0;
+              );
        ) : (midi_type == 10) ? (
               // Polyphonic aftertouch - absorb and turn into velocity
               note_velocities[midi_msg2] > 0 ? (
@@ -137,7 +146,8 @@ while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
 
               // Controller
               midi_msg2 == 121 ? (
-                     0 // Reset controllers, but that's not relevant to us
+                     // Reset controllers, but we only bother with the ones we care about
+                     controller_values[64] = 0;
               ) : (midi_msg2 == 123 || midi_msg2 == 120) ? (
                      note = 0;
                      loop(128,
@@ -145,7 +155,16 @@ while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
                             note_velocities[note] = 0;
                             note += 1;
                      );
+              ) : midi_msg2 == 64 ? (
+                     note = 0;
+                     controller_values[64] >= 64 && midi_msg3 < 64 ? (
+                            loop(128,
+                                   note_sustain_velocities[note] = note_velocities[note];
+                                   note += 1;
+                            );
+                     );
               );
+              controller_values[midi_msg2] = midi_msg3;
        ) : (
               midisend(midi_offset, midi_msg1, midi_msg2, midi_msg3); // passthrough
        );
@@ -155,14 +174,14 @@ transpose_mode == 1 || transpose_mode == 2 ? (
        transpose_mode == 1 ? (
               note = 0;
               loop(128,
-                     note_transposed_velocities[note] = note_velocities[note];
+                     note_transposed_velocities[note] = use_sustain ? note_sustain_velocities[note] : note_velocities[note];
                      note += 1;
               );
        ) : (
               note = 0;
               loop(128,
                      note_transposed_velocities[note] = 0;
-                     note_transposed_velocities[note%12] = max(note_transposed_velocities[note%12], note_velocities[note]);
+                     note_transposed_velocities[note%12] = max(note_transposed_velocities[note%12], use_sustain ? note_sustain_velocities[note] : note_velocities[note]);
                      note_kickstart[note%12] = min(note_kickstart[note%12], note_kickstart[note]);
                      note += 1;
               );
@@ -183,7 +202,7 @@ transpose_mode == 1 || transpose_mode == 2 ? (
 ) : (
        note = 0;
        loop(128,
-              note_transposed_velocities[note] = note_velocities[note];
+              note_transposed_velocities[note] = use_sustain ? note_sustain_velocities[note] : note_velocities[note];
               note += 1;
        );
 );
@@ -214,13 +233,14 @@ loop(128,
                      note_scheduled_samples[note] < samplesblock ? (
                             offset = note_scheduled_samples[note];
                             velocity = note_scheduled_velocity[note];
+                            fixedAttack = note_scheduled_attack[note];
                             note_active[note] ? (
                                    midisend(offset, ($x8<<4) + midi_channel[note], note, 0);
                             );
 
                             note_active[note] = velocity;
                             midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
-                            note_attack[note] = samplesblock - offset;
+                            note_attack[note] = fixedAttack > 0 ? fixedAttack : samplesblock - offset;
                             note_scheduled_samples[note] = 0;
                      ) : (
                             note_scheduled_samples[note] -= samplesblock;
@@ -230,9 +250,11 @@ loop(128,
                      !note_active[note] && rand() < kickstart_prob ? (
                             offset = note_kickstart[note];
                             velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
-                            note_active[note] = note_velocity;
-                            midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
-                            note_attack[note] = rand()*note_spacing_samples;
+                            begin_note(note, velocity, offset, offset, (1 - 0.5*rand()*note_spacing_factor)*note_spacing_samples);
+
+                            //note_active[note] = note_velocity;
+                            //midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
+                            //note_attack[note] = ;
                      );
               );
 
@@ -251,7 +273,7 @@ loop(128,
               );
               start_note ? (
                      velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
-                     begin_note(note, velocity, minoffset, maxoffset);
+                     begin_note(note, velocity, minoffset, maxoffset, 0);
               ) : (
                      note_active[note] ? note_attack[note] += samplesblock;
               );
@@ -306,6 +328,10 @@ ui_screen() === "main" ? (
 
               g_note = 0;
               loop(128,
+                     config_draw_possible_notes && note_transposed_velocities[g_note] > 0 ? (
+                            ui_color(255, 0, 0, note_transposed_velocities[g_note]/127*0.6 + 0.1);
+                            piano_fill_key(g_note, 0, 127);
+                     );
                      note_active[g_note] ? (
                             g_velocity = note_active[g_note];
                             g_attack_seconds = note_attack[g_note]/srate;
@@ -411,7 +437,7 @@ ui_screen() === "main" ? (
 
 @serialize
 
-serialize_version = 2;
+serialize_version = 3;
 file_var(0, serialize_version);
 
 serialize_version < 2 ? (
@@ -423,4 +449,7 @@ serialize_version < 2 ? (
        quantise_unit_triplets = 0;
        kickstart_prob = 0;
        polyphony_density_curve = 1;
+);
+serialize_version < 3 ? (
+       use_sustain = 0;
 );
