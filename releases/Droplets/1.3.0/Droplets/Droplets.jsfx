@@ -135,6 +135,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
                      note_velocities[midi_msg2] = max(1, midi_msg3);
               );
        ) : (midi_type == 11) ? (
+              prev_controller_value = controller_values[midi_msg2];
               controller_values[midi_msg2] = midi_msg3;
 
               // Controller
@@ -150,7 +151,7 @@ while (midirecv(midi_offset, midi_msg1, midi_msg2, midi_msg3)) (
                      );
               ) : midi_msg2 == 64 ? (
                      note = 0;
-                     controller_values[64] >= 64 && midi_msg3 < 64 ? (
+                     prev_controller_value >= 64 && midi_msg3 < 64 ? (
                             loop(128,
                                    note_sustain_velocities[note] = note_velocities[note];
                                    note += 1;
