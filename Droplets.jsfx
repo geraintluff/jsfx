@@ -99,13 +99,6 @@ function begin_note(note, velocity, minoffset, maxoffset, fixedAttack) local(off
        note_release[note] = 0;
 );
 
-note_rate_per_second = exp(log_note_rate_per_second);
-note_average_samples = srate/note_rate_per_second;
-note_spacing_samples = note_spacing_factor*note_average_samples;
-note_remainder_samples = (1 - note_spacing_factor)*note_average_samples;
-note_rate_per_block_first = samplesblock/note_average_samples;
-note_rate_per_block = (note_remainder_samples > 0) ? samplesblock/note_remainder_samples : 100000;
-
 note_release_samples = note_release_seconds*srate;
 
 note = 0;
@@ -222,7 +215,14 @@ loop(128,
        );
        note += 1;
 );
-density_factor = max_density > 0 ? pow(total_density/max_density, polyphony_density_curve - 1) : 1;
+rate_factor = max_density > 0 ? pow(total_density/max_density, polyphony_density_curve - 1) : 1;
+
+note_rate_per_second = rate_factor*exp(log_note_rate_per_second);
+note_average_samples = srate/note_rate_per_second;
+note_spacing_samples = note_spacing_factor*note_average_samples;
+note_remainder_samples = (1 - note_spacing_factor)*note_average_samples;
+note_rate_per_block_first = samplesblock/note_average_samples;
+note_rate_per_block = (note_remainder_samples > 0) ? samplesblock/note_remainder_samples : 100000;
 
 note = 0;
 loop(128,
@@ -249,8 +249,10 @@ loop(128,
               note_kickstart[note] < samplesblock ? (
                      !note_active[note] && rand() < kickstart_prob ? (
                             offset = note_kickstart[note];
-                            velocity = note_velocity*(velocity_response_curve ? pow(rand(), velocity_response_curve) : 1);
-                            begin_note(note, velocity, offset, offset, (1 - 0.5*rand()*note_spacing_factor)*note_spacing_samples);
+                            note_cycle_offset = rand();
+                            note_cycle_suppression = (1 - note_spacing_factor*note_cycle_offset); // If we're starting near the end of a regular cycle, reduce velocity
+                            velocity = note_velocity*(velocity_response_curve ? pow(rand()*note_cycle_suppression, velocity_response_curve) : 1);
+                            begin_note(note, velocity, offset, offset, note_cycle_offset*note_spacing_samples);
 
                             //note_active[note] = note_velocity;
                             //midisend(offset, ($x9<<4) + midi_channel[note], note, velocity);
@@ -262,7 +264,7 @@ loop(128,
               maxoffset = samplesblock;
               !note_active[note] || note_attack[note] + samplesblock > note_spacing_samples ? (
                      note_active[note] ? minoffset = max(0, note_spacing_samples - note_attack[note]);
-                     density = (maxoffset - minoffset)/samplesblock*note_densities[note]*density_factor;
+                     density = (maxoffset - minoffset)/samplesblock*note_densities[note];
                      prob = density*(note_active[note] ? note_rate_per_block : note_rate_per_block_first);
                      prob > 1 ? (
                             start_note = 1;
@@ -329,7 +331,7 @@ ui_screen() === "main" ? (
               g_note = 0;
               loop(128,
                      config_draw_possible_notes && note_transposed_velocities[g_note] > 0 ? (
-                            ui_color(255, 0, 0, note_transposed_velocities[g_note]/127*0.6 + 0.1);
+                            ui_color(255, 0, 0, sqrt(rate_factor)*note_densities[g_note]*0.6 + 0.1);
                             piano_fill_key(g_note, 0, 127);
                      );
                      note_active[g_note] ? (
