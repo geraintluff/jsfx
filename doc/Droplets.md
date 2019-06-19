@@ -8,4 +8,4 @@ You can control the retriggering rate, and how much this is affected by velocity
 
 "Regularity" prevents notes from playing too soon after their previous instance - high settings produce patterns which evolve slowly over time.  "Kickstart" will play incoming notes immediately, with the specified probability.  "Quantise" lets you specify that notes can only occur near beat boundaries.
 
-You can let the final notes ring on after the input ("Release"), and change the velocity randomisation curve, and how it reacts to the sustain pedal (ignore it, use it, or use it but don't send it on).
+You can let the final notes ring on after the input ("Release"), and change the velocity randomisation curve, add lookahead to shift the input forward, and set how it reacts to the sustain pedal (ignore it, use it, or use it but don't send it on).
