@@ -1,5 +1,8 @@
 desc:Droplets (by Geraint Luff)
 
+in_pin:none
+out_pin:none
+
 slider1:log_note_rate_per_second=0<-4.6,3,0.01>-notes per second (log-scale)
 slider2:note_spacing_factor=0.25<0,0.99,0.01>-regularity
 slider3:note_release_seconds=0.5<0.01,10,0.1>-release
@@ -17,6 +20,7 @@ slider12:kickstart_prob=0<0,1,0.01>-kickstart probablilty
 
 slider13:polyphony_density_curve=0.8<0,1,0.01>-polyphony density
 slider14:use_sustain=0<0,1,1{off,on,suppress}>-sustain
+slider15:lookahead_ms=0<0,1000,1>-lookahead (ms)
 
 import ui-lib.jsfx-inc
 import piano-ui.jsfx-inc
@@ -28,6 +32,8 @@ filename:1,themes/backgrounds/isiah-gibson-xqFCy9AbHP4-unsplash.png
 @init
 
 config_draw_possible_notes = 1;
+
+MAX_LOOKAHEAD_MS = 1000;
 
 function quantiseFactor() (
        (1 << quantise_unit)/4*(quantise_unit_triplets ? 2/3 : 1);
@@ -50,16 +56,82 @@ freemem = (note_attack = freemem) + 128;
 freemem = (note_kickstart = freemem) + 128;
 freemem = (controller_values = freemem) + 128;
 
+reset_beat_history = 1;
+beat_history_length = 1000;
+beat_history_index = 0;
+freemem = (beat_history_position = freemem) + beat_history_length;
+freemem = (beat_history_samples = freemem) + beat_history_length;
+
 // Reset memory
 memset(note_velocities, 0, freemem - note_velocities);
 
 @block
 
+lookahead_samples = floor(0.001*srate*lookahead_ms);
+pdc_delay = lookahead_samples;
+pdc_midi = 1;
+
+beat_step = beat_history_position[beat_history_index] > beat_position;
+
+historical_beat = beat_position;
 beat_samples = srate*60/tempo;
+
+reset_beat_history ? (
+       reset_beat_history = 0;
+       i = 0;
+       loop(beat_history_length,
+              beat_history_position[i] = beat_position;
+              beat_history_samples[i] = 10000000;
+              i += 1;
+       );
+) : beat_step < 0 || beat_step > samplesblock/beat_samples*3 ? (
+       // We've skipped forward or backwards in time - adjust everything accordingly
+       reset_beat_history ? (
+              i = 0;
+              loop(beat_history_length,
+                     beat_history_position[i] += beat_step;
+                     i += 1;
+              );
+       );
+);
+
+beat_history_index += 1;
+beat_history_index >= beat_history_length ? beat_history_index = 0;
+
+beat_history_position[beat_history_index] = beat_position;
+beat_history_samples[beat_history_index] = samplesblock;
+
+function get_delayed_beat(delay_samples, beat_var*, beat_samples_var*) local(delay_index, ratio, delay_pos, beat_before, beat_after, samples_step) (
+       beat_after = beat_before = beat_position;
+       samples_step = 0;
+
+       delay_index = 1;
+       while (delay_samples > samples_step && delay_index < beat_history_length) (
+              delay_samples -= samples_step;
+              delay_pos = beat_history_index - delay_index;
+              delay_pos < 0 ? delay_pos += beat_history_length;
+
+              beat_after = beat_before;
+              beat_before = beat_history_position[delay_pos];
+              samples_step = beat_history_samples[delay_pos];
+              delay_index += 1;
+       );
+
+       ratio = samples_step > 0 ? delay_samples/samples_step : 0;
+       beat_var = beat_after + ratio*(beat_before - beat_after);
+
+       samples_step > 0 && beat_after != beat_before ? (
+              beat_samples_var = samples_step/(beat_after - beat_before);
+       );
+
+       0;
+);
+get_delayed_beat(lookahead_samples, historical_beat, beat_samples);
+
 beat_interval_samples = beat_samples*quantiseFactor();
 
 // Nearest beat
-beat_pos = beat_position/quantiseFactor();
+beat_pos = historical_beat/quantiseFactor();
 beat_pos -= floor(beat_pos);
 beat_start_samples = -beat_pos*beat_interval_samples;
 
@@ -321,14 +393,12 @@ control_start("main", "bitmap-simple", 0);
 
 ui_screen() === "main" ? (
        ui_split_bottom(min(ui_height()*0.3, ui_width()*0.0728));
-              //ui_color(50, 58, 64);
-              //ui_fill();
               piano.white_r = 40;
-              piano.white_g = 41;
-              piano.white_b = 42;
+              piano.white_g = 42;
+              piano.white_b = 44;
               piano.black_r = 90;
-              piano.black_g = 92;
-              piano.black_b = 94;
+              piano.black_g = 94;
+              piano.black_b = 98;
               piano_draw(0, 127);
 
               g_note = 0;
@@ -352,7 +422,7 @@ ui_screen() === "main" ? (
        ui_image_fill(1, 0.25);
 
        ui_split_topratio(1/2);
-              ui_split_leftratio(0.45);
+              ui_split_leftratio(0.38);
                      control_group("Density");
                      ui_split_leftratio(1/3);
                             labels("Rate", exp(note_rate_per_second), exp(log_note_rate_per_second), exp(log_note_rate_per_second) > 10 ? "%i / s" : exp(log_note_rate_per_second) > 0.6 ? "%.1f / s" : "%.2f / s");
@@ -365,7 +435,7 @@ ui_screen() === "main" ? (
                             ui_automate(polyphony_density_curve, control_dial(polyphony_density_curve, 0, 1, 0, 0.8));
                      ui_pop();
               ui_pop();
-              ui_split_leftratio(3/3);
+              ui_split_leftratio(3/4.1);
                      control_group("Transpose");
                      ui_split_leftratio(0.36);
                             ui_align(0.5, 0.8);
@@ -403,40 +473,6 @@ ui_screen() === "main" ? (
                             ui_automate(transpose_target_note_range, control_dial(transpose_target_note_range, 3, 36, 2, 12));
                      ui_pop();
               ui_pop();
-       ui_split_next();
-              ui_split_leftratio(2/7.1);
-                     control_group("Notes");
-                     ui_split_leftratio(1/2);
-                            labels("Release", note_release_seconds, note_release_seconds < 1 ? (note_release_seconds*1000 + 0.5) : note_release_seconds, note_release_seconds < 1 ? "%i ms" : "%.1f s");
-                            ui_automate(note_release_seconds, control_dial(note_release_seconds, 0.01, 10, log(1000), 0.25));
-                     ui_split_next();
-                            labels("Velocity", velocity_response_curve, velocity_response_curve, "curve: %.1f");
-                            ui_automate(velocity_response_curve, control_dial(velocity_response_curve, 0, 2, 0, 1));
-                     ui_pop();
-              ui_pop();
-              ui_split_leftratio(4/5.1);
-                     control_group("Rhythm");
-                     ui_split_leftratio(1/4);
-                            labels("Regularity", note_spacing_factor, note_spacing_factor*100 + 0.5, "%i%%");
-                            ui_automate(note_spacing_factor, control_dial(note_spacing_factor, 0, 1, 0, 0.25));
-                     ui_split_next();
-                            labels("Kickstart", kickstart_prob, kickstart_prob*100 + 0.5, "%i%%");
-                            ui_automate(kickstart_prob, control_dial(kickstart_prob, 0, 1, 0, 0.25));
-                     ui_split_next();
-                            ui_split_topratio(1/2);
-                                   sprintf(#unit_text, "1/%i", 16/(1 << quantise_unit));
-                                   ui_automate(quantise_unit, control_selector(quantise_unit, #unit_text, max(0, quantise_unit - 1), min(4, quantise_unit + 1)));
-                            ui_split_next();
-                                   ui_split_right(50);
-                                          ui_automate(quantise_unit_triplets, control_switch(quantise_unit_triplets));
-                                   ui_pop();
-                                   ui_text("triplets");
-                            ui_pop();
-                     ui_split_next();
-                            labels("Quantise", quantise_strength, quantise_strength*100 + 0.5, "%i%%");
-                            ui_automate(quantise_strength, control_dial(quantise_strength, 0, 1, 0, 0));
-                     ui_pop();
-              ui_pop();
               ui_split_leftratio(1/1);
                      control_group("Sustain");
 
@@ -461,12 +497,49 @@ ui_screen() === "main" ? (
                             ui_text("absorb");
                      ui_pop();
               ui_pop();
+       ui_split_next();
+              ui_split_leftratio(3/7);
+                     control_group("Notes");
+                     ui_split_leftratio(1/3);
+                            labels("Release", note_release_seconds, note_release_seconds < 1 ? (note_release_seconds*1000 + 0.5) : note_release_seconds, note_release_seconds < 1 ? "%i ms" : "%.1f s");
+                            ui_automate(note_release_seconds, control_dial(note_release_seconds, 0.01, 10, log(1000), 0.25));
+                     ui_split_next();
+                            labels("Velocity", velocity_response_curve, velocity_response_curve, "curve: %.1f");
+                            ui_automate(velocity_response_curve, control_dial(velocity_response_curve, 0, 2, 0, 1));
+                     ui_split_next();
+                            labels("Lookahead", lookahead_ms, lookahead_ms, "%.1f ms");
+                            ui_automate(lookahead_ms, control_dial(lookahead_ms, 0, 1000, 3, 0));
+                     ui_pop();
+              ui_pop();
+              ui_split_leftratio(4/4);
+                     control_group("Rhythm");
+                     ui_split_leftratio(1/4);
+                            labels("Regularity", note_spacing_factor, note_spacing_factor*100 + 0.5, "%i%%");
+                            ui_automate(note_spacing_factor, control_dial(note_spacing_factor, 0, 1, 0, 0.25));
+                     ui_split_next();
+                            labels("Kickstart", kickstart_prob, kickstart_prob*100 + 0.5, "%i%%");
+                            ui_automate(kickstart_prob, control_dial(kickstart_prob, 0, 1, 0, 0.25));
+                     ui_split_next();
+                            ui_split_topratio(1/2);
+                                   sprintf(#unit_text, "1/%i", 16/(1 << quantise_unit));
+                                   ui_automate(quantise_unit, control_selector(quantise_unit, #unit_text, max(0, quantise_unit - 1), min(4, quantise_unit + 1)));
+                            ui_split_next();
+                                   ui_split_right(50);
+                                          ui_automate(quantise_unit_triplets, control_switch(quantise_unit_triplets));
+                                   ui_pop();
+                                   ui_text("triplets");
+                            ui_pop();
+                     ui_split_next();
+                            labels("Quantise", quantise_strength, quantise_strength*100 + 0.5, "%i%%");
+                            ui_automate(quantise_strength, control_dial(quantise_strength, 0, 1, 0, 0));
+                     ui_pop();
+              ui_pop();
        ui_pop();
 ) : piano_screen() || control_system();
 
 @serialize
 
-serialize_version = 3;
+serialize_version = 4;
 file_var(0, serialize_version);
 
 serialize_version < 2 ? (
@@ -481,4 +554,7 @@ serialize_version < 2 ? (
 );
 serialize_version < 3 ? (
        use_sustain = 0;
+);
+serialize_version < 4 ? (
+       lookahead_ms = 0;
 );

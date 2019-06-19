@@ -120,7 +120,7 @@ function piano_mouse_key(lowKey, highKey) local(layoutLow, layoutHigh, layoutKey
 	key + octave*12;
 );
 
-function piano_draw(lowKey, highKey) local(octave, octaveKey, keyCount, keyWidth, left, top, whiteHeight, blackHeight) (
+function piano_draw(lowKey, highKey) local(i, octave, octaveKey, keyCount, keyWidth, left, top, whiteHeight, blackHeight) (
 	layoutLow = pianox_key_to_layout(lowKey);
 	//layoutLow%2 ? layoutLow -= 1;
 	layoutHigh = pianox_key_to_layout(highKey);
