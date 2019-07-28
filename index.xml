@@ -507,6 +507,10 @@
 				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.10/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
 				<changelog><![CDATA[slightly better undo behaviour]]></changelog>
 			</version>
+			<version name="1.2.11" author="Geraint Luff" time="2019-07-28T05:37:38.299Z">
+				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.11/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
+				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.11/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
+			</version>
 			<version name="1.2.2" author="Geraint Luff" time="2018-02-12T17:22:22.158Z">
 				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.2/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
 				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.2.2/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>

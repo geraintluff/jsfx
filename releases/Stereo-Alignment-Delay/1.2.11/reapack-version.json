@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Delay",
+	"summary": "delay and phase/delay analysis (stereo channels, or between instances)",
+	"files": {
+		"Stereo-Alignment-Delay/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx": {
+			"main": false
+		}
+	},
+	"version": "1.2.11",
+	"links": {},
+	"readme": "doc/Stereo Alignment Delay.md",
+	"package": "Stereo Alignment Delay",
+	"time": "2019-07-28T05:37:38.299Z"
+}
