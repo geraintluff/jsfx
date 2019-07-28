@@ -20,6 +20,9 @@ import ui-lib.jsfx-inc
 
 @init
 
+SILENCE_DB = -120;
+SILENCE_POWER = pow(10, SILENCE_DB/10);
+
 gfx_ext_retina = 1;
 
 send_routing_id == 0 ? send_routing_id = rand()*1048576 + 1;
@@ -133,7 +136,7 @@ currently_sending = (gmem[0] === send_routing_id);
 
 @sample
 
-function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase) (
+function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, rB, iB, mag2, factor, max_abs, max_index, max_phase, energySum) (
 	action_delay_analysis_reset ? (
 		delay_peak_minsample = delay_peak_maxsample = 0;
 	);
@@ -254,6 +257,7 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 		max_phase = 1;
 		max_index = 0;
 
+		energySum = 0;
 		i = 0;
 		while (i < delay_fftsize) (
 			i2 = (i + delay_fftsize/2)%delay_fftsize;
@@ -270,8 +274,10 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 					max_phase = delay_bufferSum[i2] < 0 ? -1 : 1;
 				);
 			);
+			energySum += value*value;
 			i += 1;
 		);
+		delay_bufferSum_energy = energySum/delay_fftsize;
 
 		delay_samples = max_index;
 		delay_phase = max_phase;
@@ -476,6 +482,7 @@ gmem[0] === send_routing_id ? (
 		ui_pop();
 	ui_pop();
 ) : ui_screen() == "delay-analysis" ? (
+	g_enough_energy = (delay_bufferSum_energy > SILENCE_POWER);
 	control_dialog("Delay analysis", gfx_w*0.9, gfx_h*0.8, receive_routing_id && gmem[_GMEM_SOURCE_CORRECT_SENDING] ? "correct remote" : "correct", "cancel") == 1 ? (
 		receive_routing_id ? (
 			g_adjust_ms = delay_samples*1000/srate;
@@ -543,85 +550,89 @@ gmem[0] === send_routing_id ? (
 
 	display_size = delay_fftsize*0.3;
 	control_background_technical();
-	ui_push();
-		ui_retina(1);
-		ui_color(255, 255, 255, 0.15);
-		delay_peak_minsample != delay_peak_maxsample ? (
-			peak_x1 = ui_left() + (0.5 + delay_peak_minsample/display_size)*ui_width() + 0.5;
-			peak_x2 = ui_left() + (0.5 + delay_peak_maxsample/display_size)*ui_width() + 0.5;
-			gfx_rect(min(peak_x1, peak_x2), ui_top(), abs(peak_x2 - peak_x1) + 1, ui_height());
-		);
-
-		ui_color(255, 255, 255, 0.5);
-		peak_x = ui_left() + (0.5 + delay_samples/display_size)*ui_width() + 0.5;
-		gfx_line(peak_x, ui_top(), peak_x, ui_bottom() - 1);
-	ui_pop();
-
-       ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
-       ui_hover() ? (
-	mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
-
-		ui_color(255, 128, 128, 0.8);
-		ui_retina(1);
-		ui_align(1, 1);
-		ui_textnumber(mouse_sample, "%i samples");
-		ui_align(0, 1);
-		ui_textnumber(mouse_sample/srate*1000, "%fms");
-
-		ui_mouse_down() ? (
-			delay_peak_minsample = mouse_sample;
-			delay_peak_maxsample = mouse_sample;
-		);
-		ui_press() ? (
-			delay_peak_maxsample = mouse_sample;
-		);
-
-		ui_color(255, 128, 128, 0.5);
-		gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
-       );
-
-	ui_push();
-		ui_color(255, 255, 255);
-		ui_align(delay_samples >= delay_fftsize*0.1 ? 0 : 1, 0);
-		ui_split_top(ui_texth());
-			g_ms = delay_samples/srate*1000;
-			g_ms >= 0 ? (
-				amplitude_mode === 2 ? (
-					receive_routing_id ? (
-						ui_textnumber(g_ms, "Local is %fms behind");
-					) : (
-						ui_textnumber(g_ms, "Ch0 is %fms behind");
-					);
-				) : (
-					receive_routing_id ? (
-						ui_textnumber(g_ms, "Remote is %fms ahead");
-					) : (
-						ui_textnumber(g_ms, "Ch1 is %fms ahead");
-					);
-				);
-			) : (
-				amplitude_mode === 1 ? (
-					receive_routing_id ? (
-						ui_textnumber(-g_ms, "Remote is %fms behind");
-					) : (
-						ui_textnumber(-g_ms, "Ch1 is %fms behind");
-					);
-				) : (
-					receive_routing_id ? (
-						ui_textnumber(-g_ms, "Local is %fms ahead");
-					) : (
-						ui_textnumber(-g_ms, "Ch0 is %fms ahead");
-					);
-				);
+	g_enough_energy ? (
+		ui_push();
+			ui_retina(1);
+			ui_color(255, 255, 255, 0.15);
+			delay_peak_minsample != delay_peak_maxsample ? (
+				peak_x1 = ui_left() + (0.5 + delay_peak_minsample/display_size)*ui_width() + 0.5;
+				peak_x2 = ui_left() + (0.5 + delay_peak_maxsample/display_size)*ui_width() + 0.5;
+				gfx_rect(min(peak_x1, peak_x2), ui_top(), abs(peak_x2 - peak_x1) + 1, ui_height());
 			);
+
+			ui_color(255, 255, 255, 0.5);
+			peak_x = ui_left() + (0.5 + delay_samples/display_size)*ui_width() + 0.5;
+			gfx_line(peak_x, ui_top(), peak_x, ui_bottom() - 1);
 		ui_pop();
-		ui_split_top(ui_texth());
-			ui_textnumber(delay_samples, "(peak at %i samples)");
+
+		ui_graph_step(delay_bufferSum + floor((delay_fftsize - display_size)*0.5), display_size, 1, 0, 0);
+	       ui_hover() ? (
+			mouse_sample = ceil((ui_mouse_xratio() - 0.5)*display_size);
+
+			ui_color(255, 128, 128, 0.8);
+			ui_retina(1);
+			ui_align(1, 1);
+			ui_textnumber(mouse_sample, "%i samples");
+			ui_align(0, 1);
+			ui_textnumber(mouse_sample/srate*1000, "%fms");
+
+			ui_mouse_down() ? (
+				delay_peak_minsample = mouse_sample;
+				delay_peak_maxsample = mouse_sample;
+			);
+			ui_press() ? (
+				delay_peak_maxsample = mouse_sample;
+			);
+
+			ui_color(255, 128, 128, 0.5);
+			gfx_line(mouse_x, ui_top(), mouse_x, ui_bottom());
+	       );
+
+		ui_push();
+			ui_color(255, 255, 255);
+			ui_align(delay_samples >= delay_fftsize*0.1 ? 0 : 1, 0);
+			ui_split_top(ui_texth());
+				g_ms = delay_samples/srate*1000;
+				g_ms >= 0 ? (
+					amplitude_mode === 2 ? (
+						receive_routing_id ? (
+							ui_textnumber(g_ms, "Local is %fms behind");
+						) : (
+							ui_textnumber(g_ms, "Ch0 is %fms behind");
+						);
+					) : (
+						receive_routing_id ? (
+							ui_textnumber(g_ms, "Remote is %fms ahead");
+						) : (
+							ui_textnumber(g_ms, "Ch1 is %fms ahead");
+						);
+					);
+				) : (
+					amplitude_mode === 1 ? (
+						receive_routing_id ? (
+							ui_textnumber(-g_ms, "Remote is %fms behind");
+						) : (
+							ui_textnumber(-g_ms, "Ch1 is %fms behind");
+						);
+					) : (
+						receive_routing_id ? (
+							ui_textnumber(-g_ms, "Local is %fms ahead");
+						) : (
+							ui_textnumber(-g_ms, "Ch0 is %fms ahead");
+						);
+					);
+				);
+			ui_pop();
+			ui_split_top(ui_texth());
+				ui_textnumber(delay_samples, "(peak at %i samples)");
+			ui_pop();
+			ui_split_top(ui_texth());
+				ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
+			ui_pop();
 		ui_pop();
-		ui_split_top(ui_texth());
-			ui_text(delay_phase > 0 ? "Phase: aligned" : "Phase: inverted");
-		ui_pop();
-	ui_pop();
+	) : (
+		ui_text("not enough input");
+	);
 
 	receive_routing_id ? (
 		ui_align(0.5, 0.9);

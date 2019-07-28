@@ -2322,6 +2322,9 @@ function uix_control_dragvalue(value, range_low, range_high, curve_bias) local(v
 	ui_drag() || ui_scroll_y() ? (
 		valueratio = uix_slider_value_to_ratio(value, range_low, range_high, curve_bias);
 		deltay = ui_mouse_dy()/uix_drag_scale*exp(-abs(ui_drag_x())/uix_drag_scale) - ui_scroll_y()/5000;
+		mouse_cap&24 ? ( // Shift or Ctrl
+			deltay *= 0.1;
+		);
 		value = uix_slider_ratio_to_value(valueratio - deltay, range_low, range_high, curve_bias);
 	);
 	ui_scroll_y() ? uix_undo_point(1);
