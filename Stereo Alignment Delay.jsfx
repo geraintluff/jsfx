@@ -257,11 +257,15 @@ function perform_delay_analysis() local(i, delay_index, ratio, window, rA, iA, r
 		max_phase = 1;
 		max_index = 0;
 
+		analysis_decay_invsamples = analysis_decay_hz/srate;
+		analysis_decay_samples = srate / analysis_decay_hz;
+		analysis_decay_factor = analysis_decay_hz === 0 ? 1 : exp(-delay_fftinterval/analysis_decay_samples);
+
 		energySum = 0;
 		i = 0;
 		while (i < delay_fftsize) (
 			i2 = (i + delay_fftsize/2)%delay_fftsize;
-			value = delay_bufferSum[i2] += fft_bufferA[2*i];
+			value = delay_bufferSum[i2] = delay_bufferSum[i2]*analysis_decay_factor + fft_bufferA[2*i];
 			abs(value) >= max_abs ? (
 				i_wrapped = (i > delay_fftsize/2) ? i - delay_fftsize : i;
 
@@ -518,8 +522,9 @@ gmem[0] === send_routing_id ? (
 		);
 	);
 
-	ui_split_bottomtext(-1);
-		ui_split_leftratio(0.4);
+	ui_split_bottom(30);
+		ui_fontsize(14);
+		ui_split_leftratio(0.3);
 			receive_routing_id ? (
 				control_button("cancel receive") ? (
 					gmem[0] = 0;
@@ -527,14 +532,23 @@ gmem[0] === send_routing_id ? (
 			) : (
 				ui_align(0, 0.5);
 				amplitude_mode_text = amplitude_mode == 1 ? (
-					"match right to left"
+					"right -> left"
 				) : amplitude_mode == 2 ? (
-					"match left to right"
+					"left -> right"
 				) : amplitude_mode == 3 ? (
 					"sym. sharp"
 				) : "symmetrical";
 				amplitude_mode = control_selector(amplitude_mode, amplitude_mode_text, (amplitude_mode + 1)%4, (amplitude_mode + 3)%4);
 			);
+		ui_pop();
+
+		ui_split_rightratio(0.3);
+			ui_split_right(30);
+				analysis_decay_hz = control_dial(analysis_decay_hz, 5, 0, -3);
+			ui_pop();
+			ui_padright(4);
+			ui_align(1, 0.5);
+			ui_text("period");
 		ui_pop();
 
 		ui_split_righttext("16384 (XYZms)");
@@ -647,5 +661,13 @@ gmem[0] === send_routing_id ? (
 
 @serialize
 
-// Do nothing, but prevent it from zeroing out our memory
-tmp = tmp;
+preset_version = 0;
+file_var(0, preset_version);
+
+preset_version <= 0 ? (
+	file_avail(0) >= 0 ? (
+		analysis_decay_hz = 0;
+	);
+);
+
+file_var(0, analysis_decay_hz);
