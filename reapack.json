@@ -595,7 +595,10 @@
 					"main": false
 				}
 			},
-			"version": "1.2.7"
+			"version": "1.2.7",
+			"links": {
+				"youtube": "https://www.youtube.com/watch?v=Os7b_yzYZlw&list=PLflIiXZOocKqgKexrkTxxtl6igGUWnpXK"
+			}
 		},
 		"Droplets": {
 			"type": "effect",
