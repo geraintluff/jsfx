@@ -1968,6 +1968,11 @@
 		<reapack name="Vocoder" type="effect">
 			<metadata>
 			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2021-12-14T14:15:33.482Z">
+				<source file="Vocoder/Vocoder.jsfx">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/Vocoder.jsfx</source>
+				<source file="Vocoder/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/bitmap-simple/theme-dark-blue.png</source>
+				<source file="Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png</source>
+			</version>
 		</reapack>
 	</category>
 </index>

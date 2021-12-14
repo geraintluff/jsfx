@@ -639,7 +639,8 @@
 				"themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png": {
 					"main": false
 				}
-			}
+			},
+			"version": "1.0.0"
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

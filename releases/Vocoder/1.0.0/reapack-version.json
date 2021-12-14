@@ -1,0 +1,18 @@
+{
+	"type": "effect",
+	"category": "Misc",
+	"files": {
+		"Vocoder/Vocoder.jsfx": {
+			"main": false
+		},
+		"Vocoder/themes/bitmap-simple/theme-dark-blue.png": {
+			"main": false
+		},
+		"Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png": {
+			"main": false
+		}
+	},
+	"version": "1.0.0",
+	"package": "Vocoder",
+	"time": "2021-12-14T14:15:33.482Z"
+}
