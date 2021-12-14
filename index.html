@@ -208,15 +208,13 @@ h3 {
 [list][*][url=https://geraintluff.github.io/jsfx#Spectrum%20Matcher]Spectrum Matcher[/url] - analyse the difference between an input and a model, and optionally correct with EQ
 [*][url=https://geraintluff.github.io/jsfx#Smooth%20Limiter]Smooth Limiter[/url] - a limiter that aims to have the correction curve as smooth as possible
 [*][url=https://geraintluff.github.io/jsfx#Panalysis]Panalysis[/url] - visualise and manipulate the stereo field of the audio
-[*][url=https://geraintluff.github.io/jsfx#Piano%20Display]Piano Display[/url] - Displays MIDI notes as a scrolling piano roll[/list]
+[*][url=https://geraintluff.github.io/jsfx#Piano%20Display]Piano Display[/url] - Displays MIDI notes as a scrolling piano roll
+[*][url=https://geraintluff.github.io/jsfx#Vocoder]Vocoder[/url] - FFT-based vocoder[/list]
 
 [b]MIDI[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#Droplets]Droplets[/url] - randomly play the notes of a chord
 [*][url=https://geraintluff.github.io/jsfx#MIDI%20Gate]MIDI Gate[/url] - a velocity-sensitive MIDI-controlled gate. Audio passes through only when MIDI note is down (or up, in &quot;mute&quot; mode).
 [*][url=https://geraintluff.github.io/jsfx#MIDI%20Harmony]MIDI Harmony[/url] - arpeggiator and auto-accompaniment plugin[/list]
-
-[b]Misc[/b]
-[list][*][url=https://geraintluff.github.io/jsfx#Vocoder]Vocoder[/url] - Misc effect[/list]
 
 [b]Pitch Correction[/b]
 [list][*][url=https://geraintluff.github.io/jsfx#Warble]Warble[/url] - a basic pitch-editing effect[/list]
@@ -256,6 +254,8 @@ h3 {
 <li><a href="#Panalysis">Panalysis</a> - visualise and manipulate the stereo field of the audio
 </li>
 <li><a href="#Piano Display">Piano Display</a> - Displays MIDI notes as a scrolling piano roll
+</li>
+<li><a href="#Vocoder">Vocoder</a> - FFT-based vocoder
 </li></ul>
 <h3>MIDI</h3><ul><li><a href="#Droplets">Droplets</a> - randomly play the notes of a chord
 </li>
@@ -263,7 +263,6 @@ h3 {
 </li>
 <li><a href="#MIDI Harmony">MIDI Harmony</a> - arpeggiator and auto-accompaniment plugin
 </li></ul>
-<h3>Misc</h3><ul><li><a href="#Vocoder">Vocoder</a> - Misc effect</li></ul>
 <h3>Pitch Correction</h3><ul><li><a href="#Warble">Warble</a> - a basic pitch-editing effect
 </li></ul></div>
 <!--/reapack:nav-->
@@ -414,7 +413,12 @@ h3 {
 <p>The &quot;Lookahead&quot; dial controls how much latency is added.  With this at 0, sometimes the start of a note can sometimes be momentarily detuned because of ongoing vibrato.  To prevent this completely, turn the dial to its maximum value (which scales according to the LFO Rate value).</p>
 <p><em>(background by Tom Barrett on <a href="https://unsplash.com/photos/-bSucp2nUdQ">Unsplash</a>)</em></p>
 </div>
-<div class="reapack-package" id="Vocoder"><h1>Vocoder</h1></div>
+<div class="reapack-package reapack-package-with-links" id="Vocoder"><div class="reapack-links"><audio controls preload="none" src="audio-demos/Vocoder-drums-voice-texture.mp3"></audio></div><h1 id="vocoder">Vocoder</h1>
+<p>This is an FFT-based vocoder.  It takes 4 channels (stereo main and aux), and alters the spectrum of the main input to match the aux input.</p>
+<p><img src="doc/images/Vocoder.png" alt="screenshot"></p>
+<p>Longer windows will better for low sounds in the main input, but will be less reactive.  The &quot;smoothing&quot; dial averages the energy (from both inputs) over a short period, which can reduce growly artefacts.</p>
+<p><em>(background by Umberto on <a href="https://unsplash.com/photos/jXd2FSvcRr8">Unsplash</a>)</em></p>
+</div>
 <div class="reapack-package reapack-package-with-links" id="Warble"><div class="reapack-links"><audio controls preload="none" src="audio-demos/warble-formant-mod.mp3"></audio><audio controls preload="none" src="audio-demos/warble-original.mp3"></audio><audio controls preload="none" src="audio-demos/warble-shifted.mp3"></audio><audio controls preload="none" src="audio-demos/warble-subtle.mp3"></audio></div><h1 id="warble">Warble</h1>
 <p>Warble is a relatively basic pitch-editing plugin.  It analyses incoming audio, stores and displays it on a zoomable graph (middle mouse and scroll wheel). (demo: <a href="audio-demos/warble-original.mp3">original</a>, <a href="audio-demos/warble-subtle.mp3">minor correction</a>, <a href="audio-demos/warble-shifted.mp3">major alterations</a>, <a href="audio-demos/warble-formant-mod.mp3">formant LFO</a>)</p>
 <p>There are three tools: nudge, erase and smooth.  You use these tools with the mouse (left/right buttons do different things) to define how much it should be shifted.  The current change amount is displayed in red.</p>

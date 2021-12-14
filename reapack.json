@@ -628,7 +628,8 @@
 		},
 		"Vocoder": {
 			"type": "effect",
-			"category": "Misc",
+			"category": "Utility",
+			"summary": "FFT-based vocoder",
 			"files": {
 				"Vocoder.jsfx": {
 					"main": false

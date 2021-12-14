@@ -385,6 +385,18 @@
 				<source file="Piano-Display/synth-framework-obj.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Piano-Display/1.0.1/Piano-Display/synth-framework-obj.jsfx-inc</source>
 			</version>
 		</reapack>
+		<reapack name="Vocoder" type="effect">
+			<metadata>
+				<description>{\rtf1\ansi\fs24Links: {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/audio-demos/Vocoder-drums-voice-texture.mp3&quot;}}{\fldrslt audio demo}}\line\line {\fs48\b Vocoder\b}\line\line This is an FFT-based vocoder.  It takes 4 channels (stereo main and aux), and alters the spectrum of the main input to match the aux input.\line\line {\field{\*\fldinst{HYPERLINK &quot;https://geraintluff.github.io/jsfx/doc/images/Vocoder.png&quot;}}{\fldrslt screenshot}}\line\line Longer windows will better for low sounds in the main input, but will be less reactive.  The &quot;smoothing&quot; dial averages the energy (from both inputs) over a short period, which can reduce growly artefacts.\line\line \i (background by Umberto on {\field{\*\fldinst{HYPERLINK &quot;https://unsplash.com/photos/jXd2FSvcRr8&quot;}}{\fldrslt Unsplash}})\i0 \line\line }</description>
+				<link rel="screenshot">https://geraintluff.github.io/jsfx/doc/images/Vocoder.png</link>
+				<link rel="audio">https://geraintluff.github.io/jsfx/audio-demos/Vocoder-drums-voice-texture.mp3</link>
+			</metadata>
+			<version name="1.0.0" author="Geraint Luff" time="2021-12-14T14:15:33.482Z">
+				<source file="Vocoder/Vocoder.jsfx">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/Vocoder.jsfx</source>
+				<source file="Vocoder/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/bitmap-simple/theme-dark-blue.png</source>
+				<source file="Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png</source>
+			</version>
+		</reapack>
 	</category>
 	<category name="Delay">
 		<reapack name="Spring-Box" type="effect">
@@ -1964,15 +1976,6 @@
 		<reapack name="MIDI Controller Control" type="effect">
 			<metadata>
 			</metadata>
-		</reapack>
-		<reapack name="Vocoder" type="effect">
-			<metadata>
-			</metadata>
-			<version name="1.0.0" author="Geraint Luff" time="2021-12-14T14:15:33.482Z">
-				<source file="Vocoder/Vocoder.jsfx">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/Vocoder.jsfx</source>
-				<source file="Vocoder/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/bitmap-simple/theme-dark-blue.png</source>
-				<source file="Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png</source>
-			</version>
 		</reapack>
 	</category>
 </index>
