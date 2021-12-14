@@ -625,6 +625,21 @@
 				}
 			},
 			"version": "1.3.4"
+		},
+		"Vocoder": {
+			"type": "effect",
+			"category": "Misc",
+			"files": {
+				"Vocoder.jsfx": {
+					"main": false
+				},
+				"themes/bitmap-simple/theme-dark-blue.png": {
+					"main": false
+				},
+				"themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png": {
+					"main": false
+				}
+			}
 		}
 	},
 	"url": "https://geraintluff.github.io/jsfx",

@@ -1965,5 +1965,9 @@
 			<metadata>
 			</metadata>
 		</reapack>
+		<reapack name="Vocoder" type="effect">
+			<metadata>
+			</metadata>
+		</reapack>
 	</category>
 </index>
