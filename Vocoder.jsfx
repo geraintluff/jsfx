@@ -30,14 +30,10 @@ function setup_stft_state(fft_size, freemem) (
 	
 	i = 0;
 	loop(bins,
-		main_energy[i] = 0;
-		aux_energy[i] = 0;
+		main_energy_bins[i] = 0;
+		aux_energy_bins[i] = 0;
 		i += 1;
 	);
-	//////////////////////// Setup block
-	// This is called when playback starts, or when the FFT size is changed
-	0;
-	////////////////////////
 );
 
 function process_stft_segment(fft_buffer_main, fft_buffer_aux, fft_size) local(fft_bin, left_real, left_imag, right_real, right_imag) (
@@ -100,9 +96,44 @@ freemem = (input_buffer = freemem) + buffer_length*2;
 freemem = (aux_buffer = freemem) + buffer_length*2;
 freemem = (output_buffer = freemem) + buffer_length*2;
 
-function window(r) local(s, s2, gaussian_width, x) (
-	// When squared, the Hann window adds up perfectly for overlap >= 4, so it's suitable for perfect reconstruction
-	(0.5 - 0.5*cos(r*2*$pi))/sqrt(0.375);
+function bessel0(x) local(significanceLimit, result, term, m) (
+	result = 0;
+	term = 1;
+	m = 0;
+	while (term  > result*0.000001) (
+		result += term;
+		m += 1;
+		term *= (x*x)/(4*m*m);
+	);
+	result;
+);
+function kaiser_fill(buffer, length, beta) local(invB0, i, r, arg) (
+	invB0 = 1/bessel0(beta);
+	i = 0;
+	loop(length,
+		r = (2*i + 1)/length - 1;
+		arg = sqrt(1 - r*r);
+		buffer[i] = bessel0(beta*arg)*invB0;
+		i += 1;
+	);
+);
+function force_perfect_reconstruction(buffer, size, stride) local(i, i2, sum2, factor) (
+	i = 0;
+	loop (stride,
+		sum2 = 0;
+		i2 = i;
+		while (i2 < size) (
+			sum2 += buffer[i2]*buffer[i2];
+			i2 += stride;
+		);
+		factor = sqrt(1/sum2);
+		i2 = i;
+		while (i2 < size) (
+			buffer[i2] = buffer[i2]*factor;
+			i2 += stride;
+		);
+		i += 1;
+	);
 );
 
 fft_size = 0;
@@ -118,20 +149,20 @@ while (fft_size < window_samples) (
 	fft_size *= 2;
 );
 fft_interval = ceil(window_samples/overlap_factor);
-window_samples = fft_size - 3;
-fft_scaling_factor = 1/window_samples*(fft_interval/fft_size);
+fft_scaling_factor = 1/fft_size;
 
 window_samples != prev_window_samples ? (
 	prev_window_samples = window_samples;
-	// Fill window buffer
-	i = 0;
-	while (i < window_samples) (
-		r = (i + 0.5)/window_samples;
-		window_buffer[i] = window(r);
-		i += 1;
-	);
+
+	kaiser_bandwidth = overlap_factor + 2/(overlap_factor*overlap_factor); // heuristic optimal
+	kaiser_alpha = sqrt(kaiser_bandwidth*kaiser_bandwidth*0.25 - 1);
+	kaiser_fill(window_buffer, window_samples, kaiser_alpha*$pi);
+	force_perfect_reconstruction(window_buffer, window_samples, fft_interval);
+
+	i = window_samples;
 	while (i < fft_size) (
 		window_buffer[i] = 0;
+		i += 1;
 	);
 );
 
