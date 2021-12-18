@@ -1,0 +1,300 @@
+desc:Vocoder (by Geraint Luff)
+
+slider1:window_ms=10<1,50>-window length (ms)
+slider2:smoothing_ms=5<0,20,1>-energy smoothing (ms)
+slider3:max_gain_db=40<0,100,1>-max band gain (dB)
+slider4:switch_order=0<0,1,1{main to aux, aux to main}>-max band gain (dB)
+
+in_pin:main L
+in_pin:main R
+in_pin:aux L
+in_pin:aux R
+out_pin:out L
+out_pin:out R
+
+import ui-lib.jsfx-inc
+filename:0,themes/bitmap-simple/theme-dark-blue.png
+// https://unsplash.com/photos/jXd2FSvcRr8
+filename:1,themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png
+
+@init
+
+gfx_ext_retina = 1;
+
+max_gain = 100;
+
+function setup_stft_state(fft_size, freemem) (
+	bins = fft_size/2;
+	main_energy_bins = freemem;
+	aux_energy_bins = freemem + bins;
+	
+	i = 0;
+	loop(bins,
+		main_energy_bins[i] = 0;
+		aux_energy_bins[i] = 0;
+		i += 1;
+	);
+);
+
+function process_stft_segment(fft_buffer_main, fft_buffer_aux, fft_size) local(fft_bin, left_real, left_imag, right_real, right_imag) (
+	interval_ms = fft_interval*1000/srate;
+	main_slew = aux_slew = 1/(smoothing_ms/interval_ms + 1);
+
+	fft_bin = 0; // FFT bin number
+	loop(fft_size/2,
+		fft_bin2 = fft_bin ? (fft_size - fft_bin) : 0;
+
+		// Unfold complex spectrum into two real spectra
+		left_real = fft_buffer_main[2*fft_bin] + fft_buffer_main[2*fft_bin2];
+		left_imag = fft_buffer_main[2*fft_bin + 1] - fft_buffer_main[2*fft_bin2 + 1];
+		right_real = fft_buffer_main[2*fft_bin + 1] + fft_buffer_main[2*fft_bin2 + 1];
+		right_imag = -fft_buffer_main[2*fft_bin] + fft_buffer_main[2*fft_bin2];
+		aux_left_real = fft_buffer_aux[2*fft_bin] + fft_buffer_aux[2*fft_bin2];
+		aux_left_imag = fft_buffer_aux[2*fft_bin + 1] - fft_buffer_aux[2*fft_bin2 + 1];
+		aux_right_real = fft_buffer_aux[2*fft_bin + 1] + fft_buffer_aux[2*fft_bin2 + 1];
+		aux_right_imag = -fft_buffer_aux[2*fft_bin] + fft_buffer_aux[2*fft_bin2];
+
+		//////////////////////// Main STFT block
+		input_energy = left_real*left_real + left_imag*left_imag + right_real*right_real + right_imag*right_imag;
+		aux_energy = aux_left_real*aux_left_real + aux_left_imag*aux_left_imag + aux_right_real*aux_right_real + aux_right_imag*aux_right_imag;
+
+		main_energy_bins[fft_bin] += (input_energy - main_energy_bins[fft_bin])*main_slew;
+		input_energy = main_energy_bins[fft_bin];
+		aux_energy_bins[fft_bin] += (aux_energy - aux_energy_bins[fft_bin])*aux_slew;
+		aux_energy = aux_energy_bins[fft_bin];
+
+		energy_ratio = aux_energy/(aux_energy/max_gain + input_energy + 0.000001);
+		gain = sqrt(energy_ratio);
+		
+		left_real *= gain;
+		left_imag *= gain;
+		right_real *= gain;
+		right_imag *= gain;
+		////////////////////////
+
+		// Re-fold back into complex spectrum
+		fft_buffer_main[2*fft_bin] = (left_real - right_imag)*0.5;
+		fft_buffer_main[2*fft_bin + 1] = (left_imag + right_real)*0.5;
+		fft_buffer_main[2*fft_bin2] = (left_real + right_imag)*0.5;
+		fft_buffer_main[2*fft_bin2 + 1] = (-left_imag + right_real)*0.5;
+
+		fft_bin += 1;
+	);
+);
+
+MAX_FFT_SIZE = 32768;
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = (fft_buffer = freemem) + MAX_FFT_SIZE*2;
+freemem = (fft_buffer2 = freemem) + MAX_FFT_SIZE*2;
+freemem = (window_buffer = freemem) + MAX_FFT_SIZE;
+
+buffer_length = MAX_FFT_SIZE;
+buffer_index = 0;
+freemem = (input_buffer = freemem) + buffer_length*2;
+freemem = (aux_buffer = freemem) + buffer_length*2;
+freemem = (output_buffer = freemem) + buffer_length*2;
+
+function bessel0(x) local(significanceLimit, result, term, m) (
+	result = 0;
+	term = 1;
+	m = 0;
+	while (term  > result*0.000001) (
+		result += term;
+		m += 1;
+		term *= (x*x)/(4*m*m);
+	);
+	result;
+);
+function kaiser_fill(buffer, length, beta) local(invB0, i, r, arg) (
+	invB0 = 1/bessel0(beta);
+	i = 0;
+	loop(length,
+		r = (2*i + 1)/length - 1;
+		arg = sqrt(1 - r*r);
+		buffer[i] = bessel0(beta*arg)*invB0;
+		i += 1;
+	);
+);
+function force_perfect_reconstruction(buffer, size, stride) local(i, i2, sum2, factor) (
+	i = 0;
+	loop (stride,
+		sum2 = 0;
+		i2 = i;
+		while (i2 < size) (
+			sum2 += buffer[i2]*buffer[i2];
+			i2 += stride;
+		);
+		factor = sqrt(1/sum2);
+		i2 = i;
+		while (i2 < size) (
+			buffer[i2] = buffer[i2]*factor;
+			i2 += stride;
+		);
+		i += 1;
+	);
+);
+
+fft_size = 0;
+
+@block
+
+max_gain = pow(10, max_gain_db*0.05);
+
+overlap_factor = 6;
+window_samples = min(ceil(window_ms*0.001*srate), MAX_FFT_SIZE);
+fft_size = 16;
+while (fft_size < window_samples) (
+	fft_size *= 2;
+);
+fft_interval = ceil(window_samples/overlap_factor);
+fft_scaling_factor = 1/fft_size;
+
+window_samples != prev_window_samples ? (
+	prev_window_samples = window_samples;
+
+	kaiser_bandwidth = overlap_factor + 2/(overlap_factor*overlap_factor); // heuristic optimal
+	kaiser_alpha = sqrt(kaiser_bandwidth*kaiser_bandwidth*0.25 - 1);
+	kaiser_fill(window_buffer, window_samples, kaiser_alpha*$pi);
+	force_perfect_reconstruction(window_buffer, window_samples, fft_interval);
+
+	i = window_samples;
+	while (i < fft_size) (
+		window_buffer[i] = 0;
+		i += 1;
+	);
+);
+
+fft_size != prev_fft_size ? (
+	setup_stft_state(fft_size, freemem);
+	prev_fft_size = fft_size;
+);
+
+pdc_delay = window_samples;
+pdc_bot_ch = 0;
+pdc_top_ch = 2;
+
+@sample
+
+input_buffer[buffer_index*2] = spl0;
+input_buffer[buffer_index*2 + 1] = spl1;
+aux_buffer[buffer_index*2] = spl2;
+aux_buffer[buffer_index*2 + 1] = spl3;
+
+fft_counter += 1;
+fft_counter >= fft_interval ? (
+	fft_counter = 0;
+
+	// Copy input to buffer
+	bi = buffer_index - window_samples;
+	i = 0;
+	loop(window_samples,
+		i2 = bi + i;
+		i2 < 0 ? i2 += buffer_length;
+
+		// main
+		fft_buffer[2*i] = input_buffer[2*i2]*window_buffer[i];
+		fft_buffer[2*i + 1] = input_buffer[2*i2 + 1]*window_buffer[i];
+		// aux
+		fft_buffer2[2*i] = aux_buffer[2*i2]*window_buffer[i];
+		fft_buffer2[2*i + 1] = aux_buffer[2*i2 + 1]*window_buffer[i];
+
+		i += 1;
+	);
+	loop(fft_size - window_samples,
+		fft_buffer[2*i] = 0;
+		fft_buffer[2*i + 1] = 0;
+		fft_buffer2[2*i] = 0;
+		fft_buffer2[2*i + 1] = 0;
+		i += 1;
+	);
+
+	// Process buffer
+	fft(fft_buffer, fft_size);
+	fft_permute(fft_buffer, fft_size);
+	fft(fft_buffer2, fft_size);
+	fft_permute(fft_buffer2, fft_size);
+
+	switch_order ? (
+		out_fft_buffer = fft_buffer2;
+		process_stft_segment(fft_buffer2, fft_buffer, fft_size);
+	) : (
+		out_fft_buffer = fft_buffer;
+		process_stft_segment(fft_buffer, fft_buffer2, fft_size);
+	);
+	fft_ipermute(out_fft_buffer, fft_size);
+	ifft(out_fft_buffer, fft_size);
+
+	// Add to output
+	i = 0;
+	loop(window_samples,
+		i2 = buffer_index + i;
+		(i2 >= buffer_length) ? i2 -= buffer_length;
+
+		output_buffer[2*i2] += out_fft_buffer[2*i]*fft_scaling_factor*window_buffer[i];
+		output_buffer[2*i2 + 1] += out_fft_buffer[2*i + 1]*fft_scaling_factor*window_buffer[i];
+
+		i += 1;
+	);
+);
+
+output_index = buffer_index;
+spl0 = output_buffer[output_index*2];
+spl1 = output_buffer[output_index*2 + 1];
+output_buffer[output_index*2] = 0; // clear the sample we just read
+output_buffer[output_index*2 + 1] = 0;
+
+buffer_index = (buffer_index + 1)%buffer_length;
+
+@gfx 420 150
+
+function labelled_dial(value, low, high, bias, default, label, format) (
+	ui_push_height(50);
+		value = control_dial(value, low, high, bias, default);
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_textnumber(value, format);
+	ui_pop();
+	value;
+);
+
+function labelled_switch(value, label, valueText) (
+	ui_push_height(35);
+		ui_push_width(60);
+			value = control_switch(value);
+		ui_pop();
+	ui_pop();
+	ui_push_above(50);
+		ui_text(label);
+	ui_pop();
+	ui_push_below(50);
+		ui_text(valueText);
+	ui_pop();
+	value;
+);
+
+control_start("main", "bitmap-simple", 0);
+
+gfx_a = 0.8;
+g_scale = max(gfx_w/450, gfx_h/300);
+gfx_x = (gfx_w - 450*g_scale)*0.5;
+gfx_y = (gfx_h - 300*g_scale)*0.5;
+gfx_mode = 2;
+gfx_blit(1, g_scale, 0);
+gfx_mode = 0;
+
+ui_screen() == "main" ? (
+	ui_split_leftratio(1/4);
+		ui_automate(window_ms, labelled_dial(window_ms, 1, 50, 2, 10, "window", "%i ms"));
+	ui_split_next();
+		ui_automate(smoothing_ms, labelled_dial(smoothing_ms, 0, 20, 2, 5, "smoothing", "%i ms"));
+	ui_split_next();
+		ui_automate(max_gain_db, labelled_dial(max_gain_db, 0, 100, 2, 40, "max gain", "%i dB"));
+	ui_split_next();
+		ui_automate(switch_order, labelled_switch(switch_order, "swap inputs", switch_order ? "on" : "off"));
+	ui_pop();
+) : control_system();

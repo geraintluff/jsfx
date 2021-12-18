@@ -396,6 +396,11 @@
 				<source file="Vocoder/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/bitmap-simple/theme-dark-blue.png</source>
 				<source file="Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.0/Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png</source>
 			</version>
+			<version name="1.0.1" author="Geraint Luff" time="2021-12-18T16:36:22.212Z">
+				<source file="Vocoder/Vocoder.jsfx">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.1/Vocoder/Vocoder.jsfx</source>
+				<source file="Vocoder/themes/bitmap-simple/theme-dark-blue.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.1/Vocoder/themes/bitmap-simple/theme-dark-blue.png</source>
+				<source file="Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png">https://geraintluff.github.io/jsfx/releases/Vocoder/1.0.1/Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png</source>
+			</version>
 		</reapack>
 	</category>
 	<category name="Delay">

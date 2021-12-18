@@ -1,0 +1,19 @@
+{
+	"type": "effect",
+	"category": "Utility",
+	"summary": "FFT-based vocoder",
+	"files": {
+		"Vocoder/Vocoder.jsfx": {
+			"main": false
+		},
+		"Vocoder/themes/bitmap-simple/theme-dark-blue.png": {
+			"main": false
+		},
+		"Vocoder/themes/backgrounds/umberto-jXd2FSvcRr8-unsplash.png": {
+			"main": false
+		}
+	},
+	"version": "1.0.1",
+	"package": "Vocoder",
+	"time": "2021-12-18T16:36:22.212Z"
+}
