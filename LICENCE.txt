@@ -1,0 +1,7 @@
+Copyright (c) 2016 and later by Geraint Luff
+
+You may download, and use this software for any personal or commercial purpose.  This does not imply any warranty, liability or other agreement between you and the author.
+
+The unmodified source code may be shared, with credit and (where possible) a link to a version provided by the author, for discussion and analysis or for educational purposes.
+
+You may not otherwise publicly redistribute this software in whole or in part, in original or modified form, without permission from the author.
