@@ -1,0 +1,25 @@
+{
+	"type": "effect",
+	"category": "MIDI",
+	"summary": "arpeggiator and auto-accompaniment plugin",
+	"files": {
+		"MIDI-Harmony/synth-framework.jsfx-inc": {
+			"main": false
+		},
+		"MIDI-Harmony/MIDI Harmony.jsfx": {
+			"main": false
+		},
+		"MIDI-Harmony/ui-lib.jsfx-inc": {
+			"main": false
+		},
+		"MIDI-Harmony/MIDI Harmony.jsfx.rpl": {
+			"main": false
+		},
+		"MIDI-Harmony/piano-ui.jsfx-inc": {
+			"main": false
+		}
+	},
+	"version": "1.0.4",
+	"package": "MIDI Harmony",
+	"time": "2022-12-15T23:54:05.577Z"
+}
