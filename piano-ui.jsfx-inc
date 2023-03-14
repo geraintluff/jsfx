@@ -64,6 +64,25 @@ function piano_fill_key(key, lowKey, highKey) local(retina, layoutLow, layoutHig
 	ui_retina(retina);
 );
 
+function piano_keyed_name_letter_only(string, key) local(octaveKey, format) (
+	key = floor(key + 0.5);
+	octaveKey = key%12;
+
+	format = (octaveKey === 0) ? "C"
+		: octaveKey === 1 ? "C#"
+		: octaveKey === 2 ? "D"
+		: octaveKey === 3 ? "D#"
+		: octaveKey === 4 ? "E"
+		: octaveKey === 5 ? "F"
+		: octaveKey === 6 ? "F#"
+		: octaveKey === 7 ? "G"
+		: octaveKey === 8 ? "G#"
+		: octaveKey === 9 ? "A"
+		: octaveKey === 10 ? "A#"
+		: "B";
+	sprintf(string, format);
+);
+
 function piano_key_name(string, key) local(octaveKey, octave, format) (
 	key = floor(key + 0.5);
 	octaveKey = key%12;
