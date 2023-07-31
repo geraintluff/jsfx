@@ -1,0 +1,211 @@
+@init
+
+piano.white_r = piano.white_g = piano.white_b = 255;
+piano.black_r = piano.black_g = piano.black_b = 0;
+
+function pianox_key_to_layout(key) local(octaveKey) (
+	octaveKey = key%12;
+	octave = (key - octaveKey)/12;
+	octaveKey > 4 ? octaveKey += 1;
+	octave*14 + octaveKey;
+);
+
+function piano_push_key(key, lowKey, highKey) local(layoutLow, layoutHigh, layoutKey, left) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+
+	layoutKey = pianox_key_to_layout(key);
+	layoutKey%2 === 0 ? (
+		left = ui_left() + (layoutKey - layoutLow)*keyWidth;
+		ui_push_rect(left, ui_top() + ui_height()*0.6, keyWidth*2, ui_height()*0.4);
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
+	) : (
+		left = ui_left() + (layoutKey - layoutLow + 0.2)*keyWidth;
+		ui_push_rect(left, ui_top(), keyWidth*1.6, ui_height()*0.6);
+		ui_color(piano.white_r, piano.white_g, piano.white_b);
+	);
+	ui_align(0.5, 0.9);
+);
+
+function piano_fill_key(key, lowKey, highKey) local(retina, layoutLow, layoutHigh, layoutKey, octaveKey, left, top) (
+	retina = ui_retina(1);
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+	top = ui_top();
+	octaveKey = key%12;
+
+	layoutKey = pianox_key_to_layout(key);
+	layoutKey%2 === 0 ? (
+		left = floor(ui_left() + (layoutKey - layoutLow)*keyWidth);
+		right = floor(ui_left() + (layoutKey - layoutLow + 2)*keyWidth);
+		gfx_rect(left, top + ui_height()*0.6, right - left, ui_height()*0.4);
+		// Narrow
+		octaveKey === 0 || octaveKey === 5 ? (
+			right = floor(ui_left() + (layoutKey - layoutLow + 1.2)*keyWidth);
+		) : octaveKey === 4 || octaveKey === 11 ? (
+			left = floor(floor(ui_left() + (layoutKey - layoutLow - 0.8)*keyWidth) + keyWidth*1.6);
+		) : (
+			left = floor(floor(ui_left() + (layoutKey - layoutLow - 0.8)*keyWidth) + keyWidth*1.6);
+			right = floor(ui_left() + (layoutKey - layoutLow + 1.2)*keyWidth);
+		);
+		gfx_rect(left, top, right - left, ui_height()*0.6);
+	) : (
+		left = ui_left() + (layoutKey - layoutLow + 0.2)*keyWidth;
+		gfx_rect(left, ui_top(), keyWidth*1.6, ui_height()*0.6);
+	);
+	ui_retina(retina);
+);
+
+function piano_key_name(string, key) local(octaveKey, octave, format) (
+	key = floor(key + 0.5);
+	octaveKey = key%12;
+	octave = floor((key - octaveKey)/12 + 0.5) - 1;
+
+	format = (octaveKey === 0) ? "C%i"
+		: octaveKey === 1 ? "C#%i"
+		: octaveKey === 2 ? "D%i"
+		: octaveKey === 3 ? "D#%i"
+		: octaveKey === 4 ? "E%i"
+		: octaveKey === 5 ? "F%i"
+		: octaveKey === 6 ? "F#%i"
+		: octaveKey === 7 ? "G%i"
+		: octaveKey === 8 ? "G#%i"
+		: octaveKey === 9 ? "A%i"
+		: octaveKey === 10 ? "A#%i"
+		: "B%i";
+	sprintf(string, format, octave);
+);
+
+function piano_key_name(key) (
+	piano_key_name(#piano_key_name, key);
+	#piano_key_name;
+);
+
+function piano_mouse_key(lowKey, highKey) local(layoutLow, layoutHigh, layoutKey, octave, key) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	layoutHigh = pianox_key_to_layout(highKey);
+
+	layoutKey = ui_mouse_xratio()*(layoutHigh - layoutLow + 1) + layoutLow + 0.5;
+	octave = floor(layoutKey/14);
+	layoutKey -= octave*14;
+	layoutKey < 1 ? (
+		key = 0;
+	) : layoutKey < 5 ? (
+		ui_mouse_yratio() > 0.6 ? (
+			key = floor(layoutKey/2)*2;
+		) : (
+			key = floor(layoutKey/2 - 0.5)*2 + 1;
+		);
+	) : layoutKey < 6 ? (
+		key = 4;
+	) : layoutKey < 7 ? (
+		key = 5;
+	) : layoutKey < 13 ? (
+		ui_mouse_yratio() > 0.6 ? (
+			key = floor(layoutKey/2)*2 - 1;
+		) : (
+			key = floor(layoutKey/2 - 0.5)*2;
+		);
+	) : (
+		key = 11;
+	);
+	key + octave*12;
+);
+
+function piano_draw(lowKey, highKey) local(i, octave, octaveKey, keyCount, keyWidth, left, top, whiteHeight, blackHeight) (
+	layoutLow = pianox_key_to_layout(lowKey);
+	//layoutLow%2 ? layoutLow -= 1;
+	layoutHigh = pianox_key_to_layout(highKey);
+	//layoutHigh%2 ? layoutHigh += 1;
+
+	ui_push();
+		ui_retina(1);
+		ui_color(piano.white_r, piano.white_g, piano.white_b);
+		ui_fill();
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
+		ui_border();
+
+		keyWidth = ui_width()/(layoutHigh - layoutLow + 2);
+
+		left = ui_left();
+		top = ui_top();
+		whiteHeight = ui_height();
+		blackHeight = whiteHeight*0.6;
+
+		ui_color(piano.black_r, piano.black_g, piano.black_b);
+
+		i = lowKey;
+		while (i <= highKey) (
+			layoutKey = pianox_key_to_layout(i);
+
+			layoutKey%2 === 0 ? (
+				// Draw left edge
+				gfx_x = floor(left + (layoutKey - layoutLow)*keyWidth);
+				gfx_line(gfx_x, top, gfx_x, top + whiteHeight);
+			) : (
+				gfx_x = floor(left + (layoutKey - layoutLow + 0.2)*keyWidth);
+				gfx_rect(gfx_x, top, keyWidth*1.6, blackHeight);
+			);
+			i += 1;
+		);
+
+		i = 12*ceil(lowKey/12 - 0.001);
+		while (i < highKey) (
+			piano_push_key(i, lowKey, highKey);
+				piano_key_name(#key_name, i);
+				ui_text(#key_name);
+			ui_pop();
+			i += 12;
+		);
+	ui_pop();
+);
+
+function piano_screen() local(key, value_mode, arg1, hover_key) (
+	ui_screen() == "piano.select-key" ? (
+		value_mode = ui_screen_arg(0);
+		arg1 = ui_screen_arg(1);
+		value_mode === "slider" ? (
+			key = floor(slider(arg1) + 0.5);
+		) : ui_error("Invalid value mode for piano.select-key\n\"slider\"");
+
+		control_dialog("Select key", gfx_w, gfx_w*0.15, "Done", -1);
+
+		piano_draw(0, 127);
+		ui_color(64, 256, 0, 0.8);
+		piano_fill_key(key, 0, 127);
+
+		ui_hover() ? (
+			ui_color(256, 128, 0, 0.25);
+			hover_key = piano_mouse_key(0, 127);
+			hover_key >= 0 && hover_key <= 127 ? (
+				piano_fill_key(hover_key, 0, 127);
+
+				ui_click() || ui_press() ? (
+					key = hover_key;
+				);
+			);
+		);
+
+		ui_key() === 'left' ? (
+			key = max(0, key - (mouse_cap&8 ? 12 : 1));
+			ui_key_next();
+		) : ui_key() === 'rght' ? (
+			key = min(127, key + (mouse_cap&8 ? 12 : 1));
+			ui_key_next();
+		);
+
+		value_mode === "slider" ? (
+			slider(arg1) = key;
+		);
+
+		1;
+	) : 0;
+);

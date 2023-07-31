@@ -565,6 +565,10 @@
 				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.3.0/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
 				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.3.0/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
 			</version>
+			<version name="1.3.1" author="Geraint Luff" time="2023-07-31T10:53:21.061Z">
+				<source file="Stereo-Alignment-Delay/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.3.1/Stereo-Alignment-Delay/ui-lib.jsfx-inc</source>
+				<source file="Stereo-Alignment-Delay/Stereo Alignment Delay.jsfx">https://geraintluff.github.io/jsfx/releases/Stereo-Alignment-Delay/1.3.1/Stereo-Alignment-Delay/Stereo%20Alignment%20Delay.jsfx</source>
+			</version>
 		</reapack>
 		<reapack name="Echo-Cycles" type="effect">
 			<metadata>
@@ -1873,6 +1877,13 @@
 				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.4/MIDI-Harmony/ui-lib.jsfx-inc</source>
 				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.4/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
 				<source file="MIDI-Harmony/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.4/MIDI-Harmony/piano-ui.jsfx-inc</source>
+			</version>
+			<version name="1.0.5" author="Geraint Luff" time="2023-07-31T10:37:58.312Z">
+				<source file="MIDI-Harmony/synth-framework.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.5/MIDI-Harmony/synth-framework.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.5/MIDI-Harmony/MIDI%20Harmony.jsfx</source>
+				<source file="MIDI-Harmony/ui-lib.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.5/MIDI-Harmony/ui-lib.jsfx-inc</source>
+				<source file="MIDI-Harmony/MIDI Harmony.jsfx.rpl">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.5/MIDI-Harmony/MIDI%20Harmony.jsfx.rpl</source>
+				<source file="MIDI-Harmony/piano-ui.jsfx-inc">https://geraintluff.github.io/jsfx/releases/MIDI-Harmony/1.0.5/MIDI-Harmony/piano-ui.jsfx-inc</source>
 			</version>
 		</reapack>
 		<reapack name="Droplets" type="effect">
