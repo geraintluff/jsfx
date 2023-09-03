@@ -1,0 +1,267 @@
+desc:Piano Display COS version (by Geraint Luff & El Diablo)
+
+in_pin:none
+out_pin:none
+
+import ui-lib.jsfx-inc
+import piano-ui.jsfx-inc
+import synth-framework-obj.jsfx-inc
+
+@init
+
+freemem = 0;
+freemem = ui_setup(freemem);
+freemem = synth_setup(freemem);
+synth_setup_each(synth1);
+synth_setup_each(synth2);
+synth_setup_each(synth3);
+synth_setup_each(synth4);
+synth_setup_each(synth5);
+synth_setup_each(synth6);
+synth_setup_each(synth7);
+synth_setup_each(synth8);
+synth_setup_each(synth9);
+synth_setup_each(synth10);
+synth_setup_each(synth11);
+synth_setup_each(synth12);
+synth_setup_each(synth13);
+synth_setup_each(synth14);
+synth_setup_each(synth15);
+synth_setup_each(synth16);
+
+attack_samples = 0.01*srate;
+release_samples = 0.01*srate;
+
+@block
+
+synth_preblock_each(synth1)
+&& synth_preblock_each(synth2)
+&& synth_preblock_each(synth3)
+&& synth_preblock_each(synth4)
+&& synth_preblock_each(synth5)
+&& synth_preblock_each(synth6)
+&& synth_preblock_each(synth7)
+&& synth_preblock_each(synth8)
+&& synth_preblock_each(synth9)
+&& synth_preblock_each(synth10)
+&& synth_preblock_each(synth11)
+&& synth_preblock_each(synth12)
+&& synth_preblock_each(synth13)
+&& synth_preblock_each(synth14)
+&& synth_preblock_each(synth15)
+&& synth_preblock_each(synth16);
+synth_block();
+synth_block_each(synth1)
+&& synth_block_each(synth2)
+&& synth_block_each(synth3)
+&& synth_block_each(synth4)
+&& synth_block_each(synth5)
+&& synth_block_each(synth6)
+&& synth_block_each(synth7)
+&& synth_block_each(synth8)
+&& synth_block_each(synth9)
+&& synth_block_each(synth10)
+&& synth_block_each(synth11)
+&& synth_block_each(synth12)
+&& synth_block_each(synth13)
+&& synth_block_each(synth14)
+&& synth_block_each(synth15)
+&& synth_block_each(synth16);
+
+@sample
+
+function process_note(note*) (
+	synth_sample_each(note) ? (
+		synth_release(note) >= 0 ? (
+			synth_stop(note);
+		);
+	);
+	synth_continue(note);
+);
+
+process_note(synth1)
+&& process_note(synth2)
+&& process_note(synth3)
+&& process_note(synth4)
+&& process_note(synth5)
+&& process_note(synth6)
+&& process_note(synth7)
+&& process_note(synth8)
+&& process_note(synth9)
+&& process_note(synth10)
+&& process_note(synth11)
+&& process_note(synth12)
+&& process_note(synth13)
+&& process_note(synth14)
+&& process_note(synth15)
+&& process_note(synth16);
+
+@gfx 1168 170
+
+PIANO_ROLL_SCREEN = 1;
+PIANO_ROLL_PERIOD = 1;
+ui_reserve_image(PIANO_ROLL_SCREEN);
+
+// Created a more colorful piano session - El Diablo
+// color based on https://www.flutopedia.com/sound_color.htm
+function set_colour(note*) local(redgui, bluegui, greengui, alphagui) (
+	// init variables
+	redgui = 255*synth_velocity(note)/127;
+	bluegui = 255*(1 - synth_velocity(note)/127);
+	greengui = 0;
+	alphagui = 255;
+
+	my_note = synth_midinote(note);
+
+	piano_keyed_name_letter_only(#color_note_name, my_note);
+
+	my_key_name = #color_note_name;
+	
+	match("F", my_key_name) == 1 ? (
+		redgui = 82;
+		bluegui = 0;
+		greengui = 0;
+	) : match("F#", my_key_name) == 1 ? (
+		redgui = 116;
+		bluegui = 0;
+		greengui = 0;
+	) : match("G", my_key_name) == 1 ? (
+		redgui = 179;
+		bluegui = 0;
+		greengui = 0;
+	) : match("G#", my_key_name) == 1 ? (
+		redgui = 238;
+		bluegui = 0;
+		greengui = 0;
+	) : match("A", my_key_name) == 1 ? (
+		redgui = 255;
+		bluegui = 99;
+		greengui = 0;
+	) : match("A#", my_key_name) == 1 ? (
+		redgui = 255;
+		bluegui = 236;
+		greengui = 0;
+	) : match("B", my_key_name) == 1 ? (
+		redgui = 153;
+		bluegui = 255;
+		greengui = 0;
+	) : match("C", my_key_name) == 1 ? (
+		redgui = 40;
+		bluegui = 255;
+		greengui = 0;
+	) : match("C#", my_key_name) == 1 ? (
+		redgui = 0;
+		bluegui = 255;
+		greengui = 232;
+	) : match("D", my_key_name) == 1 ? (
+		redgui = 0;
+		bluegui = 124;
+		greengui = 255;
+	) : match("D#", my_key_name) == 1 ? (
+		redgui = 5;
+		bluegui = 0;
+		greengui = 255;
+	) : match("E", my_key_name) == 1 ? (
+		redgui = 69;
+		bluegui = 0;
+		greengui = 234;
+	) : match("F", my_key_name) == 1 ? (
+		redgui = 87;
+		bluegui = 0;
+		greengui = 158;
+);
+
+	ui_color(redgui, bluegui, greengui, synth_velocity(note));
+);
+
+function set_colour_random(note*) (
+	ui_color(rand(255*synth_velocity(note)/127), rand(255*(1 - synth_velocity(note)/127)), 255);
+);
+
+function draw_note(note*) (
+	synth_on(note) ? (
+		set_colour(note);
+		piano_fill_key(synth_midinote(note), 0, 127);
+		piano_push_key(synth_midinote(note), 0, 127);
+			ui_color(0, 0, 0);
+			piano_key_name(#note, synth_midinote(note));
+			ui_text(#note);
+		ui_pop();
+	);
+	synth_continue(note);
+);
+
+function draw_roll_note(note*, g_w, g_h, pixels) local(left) (
+	synth_on(note) ? (
+		set_colour(note);
+		gfx_a = 0.6 + 0.4*exp(-synth_attack_seconds(note));
+		left = g_w*(synth_midinote(note) + synth_pitchbend_semitones())/128 + 0.5;
+		gfx_rect(left, g_h - pixels, g_w/128, pixels);
+	);
+	synth_continue(note);
+);
+
+ui_start("main");
+ui_screen() === "main" ? (
+	ui_split_bottom(ui_width()*0.0728);
+		piano_draw(0, 127);
+
+		draw_note(synth1)
+		&& draw_note(synth2)
+		&& draw_note(synth3)
+		&& draw_note(synth4)
+		&& draw_note(synth5)
+		&& draw_note(synth6)
+		&& draw_note(synth7)
+		&& draw_note(synth8)
+		&& draw_note(synth9)
+		&& draw_note(synth10)
+		&& draw_note(synth11)
+		&& draw_note(synth12)
+		&& draw_note(synth13)
+		&& draw_note(synth14)
+		&& draw_note(synth15)
+		&& draw_note(synth16);
+	ui_pop();
+
+	gfx_dest = PIANO_ROLL_SCREEN;
+	gfx_getimgdim(PIANO_ROLL_SCREEN, g_w, g_h);
+	g_w != ui_width() || g_h != ui_height() ? (
+		gfx_setimgdim(PIANO_ROLL_SCREEN, g_w = ui_width(), g_h = ui_height());
+		gfx_r = gfx_g = gfx_b = 0;
+		gfx_a = 1;
+		gfx_rect(0, 0, g_w, g_h);
+	);
+
+	g_t = time_precise();
+	g_dt = g_t - g_t_old;
+	g_t_old = g_t;
+	pixels = ceil(g_dt/PIANO_ROLL_PERIOD*g_h);
+	gfx_blit(PIANO_ROLL_SCREEN, 1, 0, 0, pixels, g_w, g_h - pixels, 0, 0, g_w, g_h - pixels);
+	gfx_r = gfx_g = gfx_b = 0;
+	gfx_rect(0, g_h - pixels, g_w, pixels);
+
+	draw_roll_note(synth1, g_w, g_h, pixels)
+	&& draw_roll_note(synth2, g_w, g_h, pixels)
+	&& draw_roll_note(synth3, g_w, g_h, pixels)
+	&& draw_roll_note(synth4, g_w, g_h, pixels)
+	&& draw_roll_note(synth5, g_w, g_h, pixels)
+	&& draw_roll_note(synth6, g_w, g_h, pixels)
+	&& draw_roll_note(synth7, g_w, g_h, pixels)
+	&& draw_roll_note(synth8, g_w, g_h, pixels)
+	&& draw_roll_note(synth9, g_w, g_h, pixels)
+	&& draw_roll_note(synth10, g_w, g_h, pixels)
+	&& draw_roll_note(synth11, g_w, g_h, pixels)
+	&& draw_roll_note(synth12, g_w, g_h, pixels)
+	&& draw_roll_note(synth13, g_w, g_h, pixels)
+	&& draw_roll_note(synth14, g_w, g_h, pixels)
+	&& draw_roll_note(synth15, g_w, g_h, pixels)
+	&& draw_roll_note(synth16, g_w, g_h, pixels);
+	gfx_a = 1;
+
+	gfx_dest = -1;
+	gfx_blit(PIANO_ROLL_SCREEN, 1, 0, 0, 0, g_w, g_h, ui_left(), ui_top());
+	control_finish_technical();
+	ui_color(255, 255, 255, 0.3);
+	ui_border();
+);
